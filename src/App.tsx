@@ -18,8 +18,9 @@ import { IntroOverlay } from './ui/IntroOverlay';
 export const App: React.FC = () => {
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const gameInstanceRef = useRef<Phaser.Game | null>(null);
-
   const [gameState, setGameState] = useState<GameState>('MAIN_MENU');
+  const gameStateRef = useRef<GameState>(gameState);
+  gameStateRef.current = gameState;
   const [highScore, setHighScore] = useState<number>(() => Storage.getHighScore());
   const [musicEnabled, setMusicEnabled] = useState<boolean>(() => Storage.getMusicEnabled());
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => Storage.getSoundEnabled());
@@ -115,16 +116,11 @@ export const App: React.FC = () => {
 
     // Listen for Toggle Pause via ESC key
     EventBus.on('game:togglePause', () => {
-      setGameState((currentState) => {
-        if (currentState === 'PLAYING') {
-          handlePause();
-          return 'PAUSED';
-        } else if (currentState === 'PAUSED') {
-          handleResume();
-          return 'PLAYING';
-        }
-        return currentState;
-      });
+      if (gameStateRef.current === 'PLAYING') {
+        handlePause();
+      } else if (gameStateRef.current === 'PAUSED') {
+        handleResume();
+      }
     });
 
     // Track changes

@@ -153,6 +153,76 @@ npm run preview
 
 ---
 
+## Performance Considerations
+
+- **Entity Pooling & Capping**: Projectiles are strictly capped at 36 active instances, and enemies at 18 active instances. Inactive objects are pooled using `getFirstDead()` and recycled instead of allocated dynamically during combat.
+- **Throttled React HUD Updates**: The physics loop runs at hardware 60 FPS in Phaser, but stats emitted to React via `EventBus` are throttled to ~10 Hz (every 85ms). This avoids React reconciliation overhead during intense combat.
+- **On-Demand Audio Loading**: Audio elements use `preload = 'metadata'` to eliminate mobile first-load stalls on cellular connections. Audio tracks load on-demand upon player sortie initiation.
+- **Procedural Audio Synthesizer**: Web Audio API oscillators are generated on-the-fly and automatically disconnected/stopped with exponential decay ramps to prevent audio node leakage.
+- **RAF & Timer Lifecycle Safety**: Animation loops and intervals track cancellation handles and unmount cleanups to guarantee zero background memory leaks.
+
+---
+
+## Developer Extension Guides
+
+### 1. How to Add a New Enemy Archetype
+1. Open `src/game/config/LevelConfig.ts` and add the archetype name to the `EnemyType` union:
+   ```typescript
+   export type EnemyType = 'scout' | 'interceptor' | 'shooter' | 'tank' | 'bomber' | 'elite' | 'your_enemy';
+   ```
+2. In `src/game/scenes/GameScene.ts`:
+   - Register the enemy texture in `preload()` if using a custom sprite or procedural graphics generator.
+   - Configure health, velocity, and bounty inside `createEnemy(type, x, y)`.
+   - Implement motion and attack logic inside `updateEnemies(time, dt)`.
+3. Add the new enemy archetype into the target sector's `enemyPool` array in `LevelConfig.ts`.
+
+### 2. How to Add a New Sector / Level
+1. Open `src/game/config/LevelConfig.ts` and locate the `SECTORS` array.
+2. Append a new `SectorConfig` entry:
+   ```typescript
+   {
+     id: 8,
+     name: 'SECTOR 08',
+     codename: 'HYPERION GATE',
+     subtitle: 'TERMINAL CONVERGENCE',
+     startSecond: 420,
+     endSecond: 480,
+     starSpeedMult: 2.2,
+     nebulaColors: { primary: 0x3b82f6, secondary: 0x1d4ed8, core: 0x0284c7 },
+     enemySpawnInterval: 650,
+     enemyPool: ['interceptor', 'bomber', 'elite'],
+     asteroidDensity: 0.35,
+     debrisFrequency: 0.25,
+     signatureEvent: 'VOID_DISTORTION',
+     bossType: 'boss_galactic_core',
+     bossHp: 8000,
+   }
+   ```
+3. The progression engine seamlessly transitions to the sector when `survivalTime >= startSecond`.
+
+### 3. How to Add or Replace Soundtrack Tracks
+1. Place the `.mp3` asset inside `/public/audio/` (e.g. `/public/audio/my-track.mp3`).
+2. Open `src/audio/MusicManager.ts` and add a new track configuration to `PLAYLIST`:
+   ```typescript
+   {
+     id: 'my-track',
+     title: 'Track Title',
+     artist: 'Artist Name',
+     url: '/audio/my-track.mp3',
+   }
+   ```
+3. The sequential playlist cycle automatically includes the new track (e.g. 1 -> 2 -> 3 -> 4 -> 5 -> 1).
+
+---
+
+## Troubleshooting
+
+- **Audio Autoplay Policy**: Modern browsers restrict unmuted audio before user interaction. Music starts automatically upon clicking "PLAY" on the main menu.
+- **Viewport Scaling**: If the canvas appears cropped on specific mobile viewports, verify that `viewport-fit=cover` and dynamic viewport units (`100dvh`) are preserved on the root container.
+- **Virtual Joystick Not Appearing**: Touch controls automatically initialize on touch devices or screens under 1024px width. On desktop browsers with emulation, toggle Device Mode in Chrome DevTools and reload.
+
+---
+
 ## Deployment Guidelines
 
 The project compiles to pure static HTML/JS/CSS assets with zero server dependencies:

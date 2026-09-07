@@ -10,6 +10,14 @@ export default defineConfig({
   },
   build: {
     assetsInlineLimit: 4096,
-    chunkSizeWarningLimit: 1500,
+    chunkSizeWarningLimit: 1600,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          phaser: ['phaser'],
+          vendor: ['react', 'react-dom', 'lucide-react', 'canvas-confetti'],
+        },
+      },
+    },
   }
 });

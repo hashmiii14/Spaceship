@@ -5,14 +5,14 @@
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,5 95,95 50,75 5,95' fill='%23ff0033'/><polygon points='50,15 85,85 50,68 15,85' fill='%23ffffff'/></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#030306" />
-    <title>STARFALL — Browser Space Shooter</title>
-    <meta name="description" content="A fast-paced futuristic browser space shooter with smooth gameplay, progressive levels, high scores and desktop + mobile support." />
+    <title>STARFALL — Defend the Galaxy</title>
+    <meta name="description" content="A fast-paced futuristic browser space shooter. Survive waves of enemies, level up, and chase the high score." />
 
     <!-- Open Graph / Facebook / LinkedIn / WhatsApp / Discord -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://spacegame-ten.vercel.app/" />
-    <meta property="og:title" content="STARFALL — Browser Space Shooter" />
-    <meta property="og:description" content="A fast-paced futuristic browser space shooter with smooth gameplay, progressive levels, high scores and desktop + mobile support." />
+    <meta property="og:title" content="STARFALL — Defend the Galaxy" />
+    <meta property="og:description" content="A fast-paced futuristic browser space shooter. Survive waves of enemies, level up, and chase the high score." />
     <meta property="og:image" content="https://spacegame-ten.vercel.app/og-image.jpg" />
     <meta property="og:image:width" content="1024" />
     <meta property="og:image:height" content="1024" />
@@ -21,8 +21,8 @@
     <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://spacegame-ten.vercel.app/" />
-    <meta name="twitter:title" content="STARFALL — Browser Space Shooter" />
-    <meta name="twitter:description" content="A fast-paced futuristic browser space shooter with smooth gameplay, progressive levels, high scores and desktop + mobile support." />
+    <meta name="twitter:title" content="STARFALL — Defend the Galaxy" />
+    <meta name="twitter:description" content="A fast-paced futuristic browser space shooter. Survive waves of enemies, level up, and chase the high score." />
     <meta name="twitter:image" content="https://spacegame-ten.vercel.app/og-image.jpg" />
 
     <!-- Sci-Fi Google Fonts (Fast render-blocking-free display=swap) -->
@@ -31,7 +31,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
   </head>
   <body class="bg-black text-white select-none overflow-hidden touch-none">
-    <div id="root"></div>
+    <div id="root">
+      <!-- Lightweight Instant Sci-Fi Boot Screen (Zero JS, Instant First Paint) -->
+      <div id="boot-loader" style="position:fixed;inset:0;background:#030306;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;font-family:system-ui,-apple-system,sans-serif;color:#ffffff;user-select:none;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:14px;">
+          <div style="width:44px;height:44px;border:2px solid rgba(255,0,51,0.2);border-top:2px solid #ff0033;border-radius:50%;animation:starfallSpin 0.8s linear infinite;"></div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;letter-spacing:0.3em;color:#ffffff;text-shadow:0 0 16px rgba(255,0,51,0.8);text-transform:uppercase;">
+            STARFALL
+          </div>
+          <div style="font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.25em;color:#f43f5e;text-transform:uppercase;">
+            INITIALIZING COMBAT SYSTEMS...
+          </div>
+        </div>
+        <style>
+          @keyframes starfallSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        </style>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -7,7 +7,9 @@ class EventEmitter {
     if (!this.events[event]) {
       this.events[event] = [];
     }
-    this.events[event].push(callback);
+    if (!this.events[event].includes(callback)) {
+      this.events[event].push(callback);
+    }
   }
 
   off(event: string, callback: Callback): void {

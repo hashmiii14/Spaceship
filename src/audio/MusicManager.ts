@@ -46,6 +46,7 @@ class MusicManagerClass {
   private isInitialized: boolean = false;
   private consecutiveErrors: number = 0;
   private isTransitioning: boolean = false;
+  private fadeInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
     this.isMuted = !Storage.getMusicEnabled();
@@ -210,10 +211,17 @@ class MusicManagerClass {
    * Pause music while strictly preserving currentTime
    */
   public pause(): void {
-    if (this.audio && !this.audio.paused) {
-      try {
-        this.audio.pause();
-      } catch {}
+    if (this.fadeInterval) {
+      clearInterval(this.fadeInterval);
+      this.fadeInterval = null;
+    }
+    if (this.audio) {
+      this.audio.volume = this.volume;
+      if (!this.audio.paused) {
+        try {
+          this.audio.pause();
+        } catch {}
+      }
     }
     this.isPlaying = false;
     this.emitState();
@@ -326,6 +334,10 @@ class MusicManagerClass {
   }
 
   public fadeOut(durationMs: number = 600): void {
+    if (this.fadeInterval) {
+      clearInterval(this.fadeInterval);
+      this.fadeInterval = null;
+    }
     if (!this.audio || this.audio.paused) return;
     const startVol = this.audio.volume;
     const steps = 12;
@@ -333,13 +345,16 @@ class MusicManagerClass {
     const volStep = startVol / steps;
 
     let currentStep = 0;
-    const interval = setInterval(() => {
+    this.fadeInterval = setInterval(() => {
       currentStep++;
       if (this.audio) {
         this.audio.volume = Math.max(0, this.audio.volume - volStep);
       }
       if (currentStep >= steps) {
-        clearInterval(interval);
+        if (this.fadeInterval) {
+          clearInterval(this.fadeInterval);
+          this.fadeInterval = null;
+        }
         this.pause();
         if (this.audio) {
           this.audio.volume = this.volume;

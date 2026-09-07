@@ -80,17 +80,11 @@ export const HUD: React.FC<HUDProps> = React.memo(({
       timestamp: Date.now(),
     };
 
-    setCurrentAlert((prev) => {
-      // If no active alert or new alert has equal/higher priority, show immediately
-      if (!prev || newAlert.priority >= prev.priority) {
-        if (alertTimerRef.current) clearTimeout(alertTimerRef.current);
-        alertTimerRef.current = setTimeout(() => {
-          setCurrentAlert(null);
-        }, 2400);
-        return newAlert;
-      }
-      return prev;
-    });
+    if (alertTimerRef.current) clearTimeout(alertTimerRef.current);
+    setCurrentAlert(newAlert);
+    alertTimerRef.current = setTimeout(() => {
+      setCurrentAlert(null);
+    }, 2400);
   };
 
   useEffect(() => {
@@ -202,7 +196,7 @@ export const HUD: React.FC<HUDProps> = React.memo(({
   };
 
   return (
-    <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-between p-3 sm:p-5 select-none">
+    <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-between p-2 sm:p-5 select-none">
       {/* Critical Low Hull Warning Banner & Red Threat Vignette */}
       {isLowHp && (
         <>

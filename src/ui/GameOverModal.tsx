@@ -25,12 +25,15 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   onMainMenu,
 }) => {
   useEffect(() => {
+    let animId: number;
+    let isActive = true;
     if (isNewHighScore) {
       SoundEffects.playHighScore();
       const end = Date.now() + 2.5 * 1000;
       const colors = ['#00f0ff', '#ff0055', '#facc15', '#a855f7'];
 
-      (function frame() {
+      const frame = () => {
+        if (!isActive) return;
         confetti({
           particleCount: 4,
           angle: 60,
@@ -47,10 +50,15 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
         });
 
         if (Date.now() < end) {
-          requestAnimationFrame(frame);
+          animId = requestAnimationFrame(frame);
         }
-      })();
+      };
+      animId = requestAnimationFrame(frame);
     }
+    return () => {
+      isActive = false;
+      cancelAnimationFrame(animId);
+    };
   }, [isNewHighScore]);
 
   const totalSecs = Math.floor(survivalTime);

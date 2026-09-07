@@ -486,6 +486,10 @@ export class GameScene extends Phaser.Scene {
         this.waveSpawnTimer.destroy();
         this.waveSpawnTimer = null;
       }
+      this.enemyMines.forEach((m) => {
+        if (m.sprite && m.sprite.active) m.sprite.destroy();
+      });
+      this.enemyMines = [];
     });
 
     // 7. Responsive Window Resize Handler
