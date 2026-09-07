@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Heart, Trophy, Pause, Music, Zap, Flame, Crosshair, Award } from 'lucide-react';
+import { Shield, Heart, Trophy, Pause, Music, Zap, Flame, Crosshair, Award, Clock, AlertTriangle } from 'lucide-react';
 import { PlayerStats, BossInfo, AudioTrack, PowerUpType } from '../types/game';
 import { SoundEffects } from '../audio/SoundEffects';
 
@@ -15,9 +15,16 @@ const POWERUP_ICONS: Record<PowerUpType, { label: string; color: string; icon: R
   SHIELD: { label: 'SHIELD', color: '#00f0ff', icon: <Shield className="w-3.5 h-3.5" /> },
   RAPID_FIRE: { label: 'RAPID', color: '#facc15', icon: <Zap className="w-3.5 h-3.5" /> },
   DOUBLE_DAMAGE: { label: 'OVERCHARGE', color: '#ec4899', icon: <Flame className="w-3.5 h-3.5" /> },
-  TRIPLE_SHOT: { label: 'TRIPLE', color: '#fb923c', icon: <Crosshair className="w-3.5 h-3.5" /> },
+  SPREAD_SHOT: { label: 'SPREAD', color: '#fb923c', icon: <Crosshair className="w-3.5 h-3.5" /> },
+  PLASMA_CANNON: { label: 'PLASMA', color: '#00f0ff', icon: <Zap className="w-3.5 h-3.5" /> },
+  HYPERBEAM: { label: 'HYPERBEAM', color: '#38bdf8', icon: <Flame className="w-3.5 h-3.5" /> },
+  SLOW_MO: { label: 'CHRONO', color: '#818cf8', icon: <Clock className="w-3.5 h-3.5" /> },
+  NUKE: { label: 'NUKE', color: '#f43f5e', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
   HEALTH: { label: 'REPAIR', color: '#22c55e', icon: <Heart className="w-3.5 h-3.5" /> },
   SCORE_BOOST: { label: '2X SCORE', color: '#a855f7', icon: <Award className="w-3.5 h-3.5" /> },
+  TRIPLE_SHOT: { label: 'TRIPLE', color: '#fb923c', icon: <Crosshair className="w-3.5 h-3.5" /> },
+  DOUBLE_SHOT: { label: 'DOUBLE', color: '#ec4899', icon: <Flame className="w-3.5 h-3.5" /> },
+  SLOW_MOTION: { label: 'CHRONO', color: '#818cf8', icon: <Clock className="w-3.5 h-3.5" /> },
 };
 
 export const HUD: React.FC<HUDProps> = ({
@@ -29,6 +36,14 @@ export const HUD: React.FC<HUDProps> = ({
 }) => {
   const hpPercent = Math.max(0, Math.min(100, (stats.health / stats.maxHealth) * 100));
   const shieldPercent = Math.max(0, Math.min(100, (stats.shield / stats.maxShield) * 100));
+  const xpPercent = stats.nextLevelXp > 0 ? Math.max(0, Math.min(100, (stats.xp / stats.nextLevelXp) * 100)) : 0;
+  const isLowHp = stats.health <= 25 && stats.health > 0;
+
+  // Format survival time MM:SS
+  const totalSecs = Math.floor(stats.survivalTime || 0);
+  const mins = Math.floor(totalSecs / 60);
+  const secs = totalSecs % 60;
+  const timeFormatted = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 
   const handlePauseClick = () => {
     SoundEffects.playClick();
@@ -37,32 +52,47 @@ export const HUD: React.FC<HUDProps> = ({
 
   return (
     <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-between p-3 sm:p-5 select-none">
+      {/* Critical Low Hull Warning Banner */}
+      {isLowHp && (
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-red-950/80 border border-red-500 text-red-300 px-4 py-1 rounded-full text-xs font-mono font-bold tracking-widest flex items-center gap-2 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.6)]">
+          <AlertTriangle className="w-4 h-4 text-red-400" />
+          <span>WARNING: CRITICAL HULL INTEGRITY</span>
+        </div>
+      )}
+
       {/* Top Header Grid */}
       <div className="flex items-start justify-between w-full">
-        {/* Top Left: Score & Hull / Shield Stats */}
+        {/* Top Left: Score & Vitals */}
         <div className="flex flex-col gap-2 pointer-events-auto">
           {/* Score Box */}
           <div className="cyber-panel px-4 py-2 flex flex-col">
-            <span className="text-[10px] sm:text-xs font-mono tracking-widest text-cyan-400 font-bold uppercase">
-              SCORE
-            </span>
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] sm:text-xs font-mono tracking-widest text-cyan-400 font-bold uppercase">
+                SCORE
+              </span>
+              {stats.activeWeapon && (
+                <span className="text-[9px] font-mono tracking-wider text-purple-300 font-bold px-1.5 py-0.5 rounded bg-purple-950/60 border border-purple-500/40 uppercase">
+                  {stats.activeWeapon}
+                </span>
+              )}
+            </div>
             <span className="text-xl sm:text-2xl md:text-3xl font-black font-mono tracking-wider text-white neon-glow-cyan">
               {stats.score.toString().padStart(6, '0')}
             </span>
           </div>
 
-          {/* Vitals: HP & Shield Bars */}
-          <div className="cyber-panel px-3 py-2 flex flex-col gap-1.5 w-44 sm:w-56">
+          {/* Vitals: HP, Shield, and XP Bars */}
+          <div className="cyber-panel px-3 py-2.5 flex flex-col gap-2 w-48 sm:w-60">
             {/* Hull HP */}
             <div className="flex items-center gap-2">
               <Heart className="w-3.5 h-3.5 text-red-400 shrink-0" />
               <div className="bar-track flex-1 h-2.5 sm:h-3">
                 <div
-                  className="bar-fill-hp"
+                  className="bar-fill-hp transition-all duration-150"
                   style={{ width: `${hpPercent}%` }}
                 />
               </div>
-              <span className="text-[11px] font-mono font-bold text-gray-300 w-7 text-right">
+              <span className="text-[11px] font-mono font-bold text-gray-300 w-8 text-right">
                 {Math.round(stats.health)}%
               </span>
             </div>
@@ -72,21 +102,37 @@ export const HUD: React.FC<HUDProps> = ({
               <Shield className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
               <div className="bar-track flex-1 h-2.5 sm:h-3">
                 <div
-                  className="bar-fill-shield"
+                  className="bar-fill-shield transition-all duration-150"
                   style={{ width: `${shieldPercent}%` }}
                 />
               </div>
-              <span className="text-[11px] font-mono font-bold text-cyan-300 w-7 text-right">
+              <span className="text-[11px] font-mono font-bold text-cyan-300 w-8 text-right">
                 {Math.round(stats.shield)}%
+              </span>
+            </div>
+
+            {/* Level & XP Bar */}
+            <div className="flex items-center gap-2 pt-1 border-t border-gray-800">
+              <span className="text-[10px] font-mono font-black text-purple-400 shrink-0 uppercase">
+                LVL {stats.level}
+              </span>
+              <div className="bar-track flex-1 h-2 bg-gray-900">
+                <div
+                  className="h-full bg-gradient-to-r from-purple-600 to-pink-500 rounded-full transition-all duration-200"
+                  style={{ width: `${xpPercent}%` }}
+                />
+              </div>
+              <span className="text-[10px] font-mono font-bold text-purple-300 w-8 text-right">
+                {Math.round(xpPercent)}%
               </span>
             </div>
           </div>
         </div>
 
-        {/* Top Center: Wave Badge / Boss Warning */}
+        {/* Top Center: Sector / Boss Warning / Boss HP Bar / Kill Combo Meter */}
         <div className="flex flex-col items-center pointer-events-auto">
           {bossWarning ? (
-            <div className="cyber-panel-danger animate-boss-alert px-5 py-2 rounded-lg flex flex-col items-center">
+            <div className="cyber-panel-danger animate-boss-alert px-6 py-2.5 rounded-lg flex flex-col items-center">
               <span className="text-xs font-mono font-black text-red-300 tracking-[0.25em] uppercase">
                 CRITICAL EMERGENCY
               </span>
@@ -95,17 +141,17 @@ export const HUD: React.FC<HUDProps> = ({
               </span>
             </div>
           ) : (
-            <div className="cyber-panel px-5 py-2 flex flex-col items-center">
+            <div className="cyber-panel px-6 py-2 flex flex-col items-center">
               <span className="text-[10px] sm:text-xs font-mono tracking-[0.2em] text-cyan-400 font-bold uppercase">
                 SECTOR
               </span>
               <span className="text-lg sm:text-2xl font-black font-['Orbitron'] tracking-widest text-cyan-200">
-                WAVE {stats.wave}
+                LEVEL {stats.wave}
               </span>
             </div>
           )}
 
-          {/* Boss Health Bar (if active) */}
+          {/* Boss Health Bar */}
           {bossInfo.active && (
             <div className="cyber-panel-danger mt-2 px-4 py-2 w-64 sm:w-80 md:w-96 flex flex-col gap-1 pointer-events-auto animate-pulse-glow">
               <div className="flex justify-between items-center text-xs font-mono font-bold">
@@ -118,7 +164,7 @@ export const HUD: React.FC<HUDProps> = ({
               </div>
               <div className="bar-track h-3 sm:h-3.5">
                 <div
-                  className="bar-fill-boss"
+                  className="bar-fill-boss transition-all duration-100"
                   style={{
                     width: `${Math.max(0, (bossInfo.currentHp / bossInfo.maxHp) * 100)}%`,
                   }}
@@ -126,9 +172,25 @@ export const HUD: React.FC<HUDProps> = ({
               </div>
             </div>
           )}
+
+          {/* Kill Combo Multiplier Meter */}
+          {stats.combo > 1 && (
+            <div className="mt-2.5 px-4 py-1.5 rounded-full bg-black/80 border border-yellow-500/60 flex items-center gap-2 shadow-[0_0_20px_rgba(250,204,21,0.4)] animate-bounce">
+              <Zap className="w-4 h-4 text-yellow-400 animate-pulse" />
+              <span className="text-xs sm:text-sm font-black font-['Orbitron'] text-yellow-300 tracking-wider">
+                COMBO x{stats.comboMultiplier} ({stats.combo} KILLS)
+              </span>
+              <div className="w-12 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-yellow-400 transition-all duration-75"
+                  style={{ width: `${((stats.comboTimer || 0) / 2.5) * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Top Right: High Score & Pause Button */}
+        {/* Top Right: High Score & Pause */}
         <div className="flex flex-col items-end gap-2 pointer-events-auto">
           <div className="flex items-center gap-2">
             <div className="cyber-panel px-3 py-1.5 flex items-center gap-2">
@@ -153,6 +215,13 @@ export const HUD: React.FC<HUDProps> = ({
             </button>
           </div>
 
+          {/* Survival Time Display */}
+          <div className="cyber-panel px-3 py-1 flex items-center gap-2 text-xs font-mono text-gray-300">
+            <Clock className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+            <span className="text-gray-400 font-bold">TIME:</span>
+            <span className="font-bold text-white tracking-wider">{timeFormatted}</span>
+          </div>
+
           {/* Now Playing Music Indicator */}
           {currentTrack && (
             <div className="cyber-panel px-3 py-1 flex items-center gap-2 text-[10px] sm:text-xs font-mono text-cyan-300 max-w-[200px] sm:max-w-xs truncate">
@@ -168,7 +237,7 @@ export const HUD: React.FC<HUDProps> = ({
 
       {/* Bottom Center: Active Power-Ups Row */}
       {stats.activePowerUps.length > 0 && (
-        <div className="flex items-center justify-center gap-2 sm:gap-3 w-full mb-12 sm:mb-4 pointer-events-none">
+        <div className="flex items-center justify-center gap-2 sm:gap-3 w-full mb-12 sm:mb-4 pointer-events-none flex-wrap">
           {stats.activePowerUps.map((p) => {
             const conf = POWERUP_ICONS[p.type] || {
               label: p.type,

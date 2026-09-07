@@ -1,7 +1,8 @@
-import React from 'react';
-import { Play, RotateCcw, Home, Music, Volume2, VolumeX } from 'lucide-react';
+import React, { useState } from 'react';
+import { Play, RotateCcw, Home, Music, Volume2, Settings } from 'lucide-react';
 import { SoundEffects } from '../audio/SoundEffects';
 import { AudioTrack } from '../types/game';
+import { SettingsModal } from './SettingsModal';
 
 interface PauseModalProps {
   onResume: () => void;
@@ -24,17 +25,19 @@ export const PauseModal: React.FC<PauseModalProps> = ({
   onToggleSound,
   currentTrack,
 }) => {
+  const [showSettings, setShowSettings] = useState(false);
+
   return (
     <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 select-none pointer-events-auto">
       <div className="cyber-panel w-full max-w-sm p-6 sm:p-8 flex flex-col items-center text-center border-cyan-500/50 shadow-[0_0_50px_rgba(0,240,255,0.3)]">
-        <h2 className="text-4xl font-black font-['Orbitron'] tracking-widest text-cyan-300 neon-glow-cyan mb-2">
+        <h2 className="text-3xl sm:text-4xl font-black font-['Orbitron'] tracking-widest text-cyan-300 neon-glow-cyan mb-2">
           SYSTEM PAUSED
         </h2>
-        <div className="h-0.5 w-24 bg-gradient-to-r from-transparent via-cyan-400 to-transparent mb-6" />
+        <div className="h-0.5 w-24 bg-gradient-to-r from-transparent via-cyan-400 to-transparent mb-5" />
 
         {/* Current Song in Pause Menu */}
         {currentTrack && (
-          <div className="w-full bg-cyan-950/40 border border-cyan-500/30 rounded-lg p-2.5 mb-6 flex items-center justify-center gap-2 text-xs font-mono text-cyan-300">
+          <div className="w-full bg-cyan-950/40 border border-cyan-500/30 rounded-lg p-2.5 mb-5 flex items-center justify-center gap-2 text-xs font-mono text-cyan-300">
             <Music className="w-4 h-4 text-cyan-400 shrink-0" />
             <div className="truncate">
               <span className="text-gray-400 mr-1">PLAYING:</span>
@@ -44,13 +47,13 @@ export const PauseModal: React.FC<PauseModalProps> = ({
         )}
 
         {/* Action Buttons */}
-        <div className="flex flex-col gap-3.5 w-full">
+        <div className="flex flex-col gap-3 w-full">
           <button
             onClick={() => {
               SoundEffects.playClick();
               onResume();
             }}
-            className="cyber-btn py-3 w-full flex items-center justify-center gap-2 text-lg"
+            className="cyber-btn py-3 w-full flex items-center justify-center gap-2 text-lg font-bold"
           >
             <Play className="w-5 h-5 fill-cyan-400" />
             RESUME
@@ -61,20 +64,31 @@ export const PauseModal: React.FC<PauseModalProps> = ({
               SoundEffects.playClick();
               onRestart();
             }}
-            className="cyber-btn cyber-btn-secondary py-3 w-full flex items-center justify-center gap-2"
+            className="cyber-btn cyber-btn-secondary py-2.5 w-full flex items-center justify-center gap-2"
           >
             <RotateCcw className="w-5 h-5" />
-            RESTART
+            RESTART MISSION
           </button>
 
-          {/* Audio Toggles Row */}
+          <button
+            onClick={() => {
+              SoundEffects.playClick();
+              setShowSettings(true);
+            }}
+            className="cyber-btn cyber-btn-secondary py-2.5 w-full flex items-center justify-center gap-2"
+          >
+            <Settings className="w-4 h-4 text-cyan-400" />
+            SETTINGS & AUDIO
+          </button>
+
+          {/* Quick Audio Toggles */}
           <div className="grid grid-cols-2 gap-2 my-1">
             <button
               onClick={() => {
                 SoundEffects.playClick();
                 onToggleMusic();
               }}
-              className={`p-2.5 rounded-lg border text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${
+              className={`p-2 rounded-lg border text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${
                 musicEnabled
                   ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300'
                   : 'bg-black/40 border-gray-700 text-gray-500'
@@ -89,13 +103,13 @@ export const PauseModal: React.FC<PauseModalProps> = ({
                 SoundEffects.playClick();
                 onToggleSound();
               }}
-              className={`p-2.5 rounded-lg border text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${
+              className={`p-2 rounded-lg border text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${
                 soundEnabled
                   ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300'
                   : 'bg-black/40 border-gray-700 text-gray-500'
               }`}
             >
-              {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+              <Volume2 className="w-3.5 h-3.5" />
               SFX {soundEnabled ? 'ON' : 'OFF'}
             </button>
           </div>
@@ -105,13 +119,15 @@ export const PauseModal: React.FC<PauseModalProps> = ({
               SoundEffects.playClick();
               onMainMenu();
             }}
-            className="cyber-btn cyber-btn-secondary py-3 w-full flex items-center justify-center gap-2 text-gray-400 hover:text-white"
+            className="cyber-btn cyber-btn-secondary py-2.5 w-full flex items-center justify-center gap-2 text-gray-400 hover:text-white"
           >
             <Home className="w-5 h-5" />
             MAIN MENU
           </button>
         </div>
       </div>
+
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </div>
   );
 };

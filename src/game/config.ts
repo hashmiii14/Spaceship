@@ -8,10 +8,10 @@ export const createGameConfig = (parent: HTMLElement): Phaser.Types.Core.GameCon
   parent: parent,
   backgroundColor: '#030712',
   scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: 800,
-    height: 900,
+    mode: Phaser.Scale.RESIZE,
+    parent: parent,
+    width: '100%',
+    height: '100%',
   },
   physics: {
     default: 'arcade',
@@ -24,5 +24,6 @@ export const createGameConfig = (parent: HTMLElement): Phaser.Types.Core.GameCon
   render: {
     pixelArt: false,
     antialias: true,
+    powerPreference: 'high-performance',
   },
 });

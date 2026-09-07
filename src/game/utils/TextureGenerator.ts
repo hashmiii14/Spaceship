@@ -1,165 +1,305 @@
 import Phaser from 'phaser';
+import { ShipSkinId } from '../../types/game';
 
 export class TextureGenerator {
   public static generateTextures(scene: Phaser.Scene): void {
-    // 1. Player Ship (56 x 64)
-    if (!scene.textures.exists('player_ship')) {
-      const canvas = document.createElement('canvas');
-      canvas.width = 64;
-      canvas.height = 72;
-      const ctx = canvas.getContext('2d')!;
+    // 1. Player Ship Skins (5 Varieties: NEON, VOID, SOLAR, CRIMSON, CYBER)
+    const skinThemes: Record<ShipSkinId, { primary: string; secondary: string; trim: string; glow: string; cockpit: string; engine: string }> = {
+      NEON: {
+        primary: '#0a192f',
+        secondary: '#172a45',
+        trim: '#00f0ff',
+        glow: '#00f0ff',
+        cockpit: '#00f0ff',
+        engine: '#00f0ff',
+      },
+      VOID: {
+        primary: '#120726',
+        secondary: '#250f4a',
+        trim: '#c084fc',
+        glow: '#a855f7',
+        cockpit: '#e9d5ff',
+        engine: '#9333ea',
+      },
+      SOLAR: {
+        primary: '#241402',
+        secondary: '#451a03',
+        trim: '#facc15',
+        glow: '#fb923c',
+        cockpit: '#fef08a',
+        engine: '#f97316',
+      },
+      CRIMSON: {
+        primary: '#1c050d',
+        secondary: '#3b0717',
+        trim: '#f43f5e',
+        glow: '#ff0055',
+        cockpit: '#fecdd3',
+        engine: '#ff0055',
+      },
+      CYBER: {
+        primary: '#022117',
+        secondary: '#064e3b',
+        trim: '#10b981',
+        glow: '#34d399',
+        cockpit: '#a7f3d0',
+        engine: '#059669',
+      },
+    };
 
-      // Glow effect
+    (Object.keys(skinThemes) as ShipSkinId[]).forEach((skinKey) => {
+      const theme = skinThemes[skinKey];
+      const texKey = `player_ship_${skinKey.toLowerCase()}`;
+
+      if (!scene.textures.exists(texKey)) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 72;
+        canvas.height = 80;
+        const ctx = canvas.getContext('2d')!;
+
+        ctx.shadowColor = theme.glow;
+        ctx.shadowBlur = 12;
+
+        // Main Hull
+        ctx.fillStyle = theme.primary;
+        ctx.beginPath();
+        ctx.moveTo(36, 4);     // Nose tip
+        ctx.lineTo(68, 62);    // Right wing tip
+        ctx.lineTo(52, 58);    // Wing recess
+        ctx.lineTo(44, 72);    // Right engine nozzle
+        ctx.lineTo(36, 66);    // Center rear
+        ctx.lineTo(28, 72);    // Left engine nozzle
+        ctx.lineTo(20, 58);    // Left wing recess
+        ctx.lineTo(4, 62);     // Left wing tip
+        ctx.closePath();
+        ctx.fill();
+
+        // Neon Trim Outline
+        ctx.strokeStyle = theme.trim;
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        // Inner Hull Armor Layer
+        ctx.fillStyle = theme.secondary;
+        ctx.beginPath();
+        ctx.moveTo(36, 16);
+        ctx.lineTo(56, 56);
+        ctx.lineTo(44, 54);
+        ctx.lineTo(36, 60);
+        ctx.lineTo(28, 54);
+        ctx.lineTo(16, 56);
+        ctx.closePath();
+        ctx.fill();
+
+        // High-tech Wings Accents
+        ctx.strokeStyle = theme.trim;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(36, 26);
+        ctx.lineTo(36, 56);
+        ctx.moveTo(22, 44);
+        ctx.lineTo(50, 44);
+        ctx.stroke();
+
+        // Cockpit Canopy (Glow Glass)
+        const cockpitGrad = ctx.createLinearGradient(36, 20, 36, 42);
+        cockpitGrad.addColorStop(0, '#ffffff');
+        cockpitGrad.addColorStop(0.5, theme.cockpit);
+        cockpitGrad.addColorStop(1, theme.primary);
+        ctx.fillStyle = cockpitGrad;
+        ctx.beginPath();
+        ctx.ellipse(36, 32, 7, 15, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Dual Wing Laser Cannons
+        ctx.fillStyle = theme.trim;
+        ctx.fillRect(66, 44, 4, 16);
+        ctx.fillRect(2, 44, 4, 16);
+
+        // Twin Engine Flame Ports
+        ctx.fillStyle = theme.engine;
+        ctx.fillRect(27, 70, 6, 6);
+        ctx.fillRect(39, 70, 6, 6);
+
+        scene.textures.addCanvas(texKey, canvas);
+        if (!scene.textures.exists(`player_ship_${skinKey}`)) {
+          scene.textures.addCanvas(`player_ship_${skinKey}`, canvas);
+        }
+        if (skinKey === 'NEON' && !scene.textures.exists('player_ship')) {
+          scene.textures.addCanvas('player_ship', canvas);
+        }
+      }
+
+      // Engine Glow Particle for each skin
+      const engineKey = `engine_glow_${skinKey}`;
+      if (!scene.textures.exists(engineKey)) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 20;
+        canvas.height = 20;
+        const ctx = canvas.getContext('2d')!;
+        const grad = ctx.createRadialGradient(10, 10, 1, 10, 10, 10);
+        grad.addColorStop(0, '#ffffff');
+        grad.addColorStop(0.4, theme.engine);
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 20, 20);
+        scene.textures.addCanvas(engineKey, canvas);
+      }
+    });
+
+    // Default alias
+    if (!scene.textures.exists('player_ship')) {
+      const defaultCanvas = scene.textures.get('player_ship_NEON').getSourceImage() as HTMLCanvasElement;
+      if (defaultCanvas) {
+        scene.textures.addCanvas('player_ship', defaultCanvas);
+      }
+    }
+    if (!scene.textures.exists('engine_glow')) {
+      const defaultEngine = scene.textures.get('engine_glow_NEON').getSourceImage() as HTMLCanvasElement;
+      if (defaultEngine) {
+        scene.textures.addCanvas('engine_glow', defaultEngine);
+      }
+    }
+
+    // 2. Player Weapon Projectiles (7 Weapons)
+    // 2.1 Blaster (Standard Neon Cyan) (12 x 30)
+    if (!scene.textures.exists('laser_blaster')) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 14;
+      canvas.height = 32;
+      const ctx = canvas.getContext('2d')!;
       ctx.shadowColor = '#00f0ff';
       ctx.shadowBlur = 10;
-
-      // Main Wings (Futuristic Delta)
-      ctx.fillStyle = '#0a192f';
-      ctx.beginPath();
-      ctx.moveTo(32, 4);    // Nose
-      ctx.lineTo(60, 56);   // Right wing tip
-      ctx.lineTo(46, 52);   // Right wing recess
-      ctx.lineTo(38, 64);   // Right engine
-      ctx.lineTo(32, 58);   // Center rear
-      ctx.lineTo(26, 64);   // Left engine
-      ctx.lineTo(18, 52);   // Left wing recess
-      ctx.lineTo(4, 56);    // Left wing tip
-      ctx.closePath();
-      ctx.fill();
-
-      // Wing Armor Plating (Neon Cyan Trim)
-      ctx.strokeStyle = '#00f0ff';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Inner Wing Decals
-      ctx.fillStyle = '#172a45';
-      ctx.beginPath();
-      ctx.moveTo(32, 14);
-      ctx.lineTo(50, 50);
-      ctx.lineTo(38, 48);
-      ctx.lineTo(32, 52);
-      ctx.lineTo(26, 48);
-      ctx.lineTo(14, 50);
-      ctx.closePath();
-      ctx.fill();
-
-      // Cockpit Canopy (Glowing Neon Cyan/White)
-      const grad = ctx.createLinearGradient(32, 18, 32, 38);
+      const grad = ctx.createLinearGradient(7, 0, 7, 32);
       grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.5, '#00f0ff');
-      grad.addColorStop(1, '#00558f');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.ellipse(32, 28, 6, 14, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Wing Cannons
-      ctx.fillStyle = '#00f0ff';
-      ctx.fillRect(58, 40, 3, 14);
-      ctx.fillRect(3, 40, 3, 14);
-
-      // Engine Nozzles
-      ctx.fillStyle = '#ff0055';
-      ctx.fillRect(25, 62, 5, 4);
-      ctx.fillRect(34, 62, 5, 4);
-
-      scene.textures.addCanvas('player_ship', canvas);
-    }
-
-    // 2. Engine Glow Particle (16 x 16)
-    if (!scene.textures.exists('engine_glow')) {
-      const canvas = document.createElement('canvas');
-      canvas.width = 16;
-      canvas.height = 16;
-      const ctx = canvas.getContext('2d')!;
-      const grad = ctx.createRadialGradient(8, 8, 1, 8, 8, 8);
-      grad.addColorStop(0, 'rgba(0, 240, 255, 1)');
-      grad.addColorStop(0.4, 'rgba(0, 150, 255, 0.8)');
-      grad.addColorStop(1, 'rgba(0, 100, 255, 0)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 16, 16);
-      scene.textures.addCanvas('engine_glow', canvas);
-    }
-
-    // 3. Player Lasers
-    // Cyan Standard Bolt (8 x 24)
-    if (!scene.textures.exists('laser_player')) {
-      const canvas = document.createElement('canvas');
-      canvas.width = 12;
-      canvas.height = 28;
-      const ctx = canvas.getContext('2d')!;
-      ctx.shadowColor = '#00f0ff';
-      ctx.shadowBlur = 8;
-      const grad = ctx.createLinearGradient(6, 0, 6, 28);
-      grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.5, '#00f0ff');
+      grad.addColorStop(0.4, '#00f0ff');
       grad.addColorStop(1, 'rgba(0, 240, 255, 0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.ellipse(6, 14, 4, 12, 0, 0, Math.PI * 2);
+      ctx.ellipse(7, 16, 5, 14, 0, 0, Math.PI * 2);
       ctx.fill();
+      scene.textures.addCanvas('laser_blaster', canvas);
       scene.textures.addCanvas('laser_player', canvas);
     }
 
-    // Heavy Magenta Laser (16 x 36)
-    if (!scene.textures.exists('laser_heavy')) {
+    // 2.2 Rapid Fire Needle (Yellow/Gold) (8 x 26)
+    if (!scene.textures.exists('laser_rapid')) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 10;
+      canvas.height = 26;
+      const ctx = canvas.getContext('2d')!;
+      ctx.shadowColor = '#facc15';
+      ctx.shadowBlur = 8;
+      const grad = ctx.createLinearGradient(5, 0, 5, 26);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.5, '#facc15');
+      grad.addColorStop(1, 'rgba(250, 204, 21, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.ellipse(5, 13, 3.5, 11, 0, 0, Math.PI * 2);
+      ctx.fill();
+      scene.textures.addCanvas('laser_rapid', canvas);
+    }
+
+    // 2.3 Double Shot Heavy (Cyan/White) (16 x 34)
+    if (!scene.textures.exists('laser_double')) {
       const canvas = document.createElement('canvas');
       canvas.width = 18;
       canvas.height = 36;
       const ctx = canvas.getContext('2d')!;
-      ctx.shadowColor = '#ff0055';
+      ctx.shadowColor = '#38bdf8';
       ctx.shadowBlur = 12;
       const grad = ctx.createLinearGradient(9, 0, 9, 36);
       grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.5, '#ff0055');
-      grad.addColorStop(1, 'rgba(255, 0, 85, 0.2)');
+      grad.addColorStop(0.5, '#0284c7');
+      grad.addColorStop(1, 'rgba(2, 132, 199, 0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.ellipse(9, 18, 6, 16, 0, 0, Math.PI * 2);
       ctx.fill();
-      scene.textures.addCanvas('laser_heavy', canvas);
+      scene.textures.addCanvas('laser_double', canvas);
     }
 
-    // Triple Golden Laser (10 x 24)
+    // 2.4 Triple Shot (Orange Gold) (12 x 28)
     if (!scene.textures.exists('laser_triple')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 12;
-      canvas.height = 24;
+      canvas.width = 14;
+      canvas.height = 28;
       const ctx = canvas.getContext('2d')!;
-      ctx.shadowColor = '#ffb700';
-      ctx.shadowBlur = 8;
-      const grad = ctx.createLinearGradient(6, 0, 6, 24);
+      ctx.shadowColor = '#fb923c';
+      ctx.shadowBlur = 10;
+      const grad = ctx.createLinearGradient(7, 0, 7, 28);
       grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.6, '#ffb700');
-      grad.addColorStop(1, 'rgba(255, 183, 0, 0.1)');
+      grad.addColorStop(0.5, '#ea580c');
+      grad.addColorStop(1, 'rgba(234, 88, 12, 0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.ellipse(6, 12, 4, 10, 0, 0, Math.PI * 2);
+      ctx.ellipse(7, 14, 5, 12, 0, 0, Math.PI * 2);
       ctx.fill();
       scene.textures.addCanvas('laser_triple', canvas);
     }
 
-    // 4. Enemy Laser (Red/Orange plasma bolt)
-    if (!scene.textures.exists('laser_enemy')) {
+    // 2.5 Spread Shot (Emerald Green) (12 x 24)
+    if (!scene.textures.exists('laser_spread')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 12;
-      canvas.height = 22;
+      canvas.width = 14;
+      canvas.height = 26;
       const ctx = canvas.getContext('2d')!;
-      ctx.shadowColor = '#ff3b30';
-      ctx.shadowBlur = 8;
-      const grad = ctx.createRadialGradient(6, 11, 2, 6, 11, 8);
+      ctx.shadowColor = '#10b981';
+      ctx.shadowBlur = 9;
+      const grad = ctx.createLinearGradient(7, 0, 7, 26);
       grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.5, '#ff3b30');
-      grad.addColorStop(1, 'rgba(255, 59, 48, 0)');
+      grad.addColorStop(0.5, '#059669');
+      grad.addColorStop(1, 'rgba(5, 150, 105, 0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.ellipse(6, 11, 5, 9, 0, 0, Math.PI * 2);
+      ctx.ellipse(7, 13, 4.5, 11, 0, 0, Math.PI * 2);
       ctx.fill();
-      scene.textures.addCanvas('laser_enemy', canvas);
+      scene.textures.addCanvas('laser_spread', canvas);
     }
 
-    // 5. Enemy 1: Scout (Crimson Dart) (40 x 44)
+    // 2.6 Hyperbeam (Magenta Piercing Beam) (20 x 48)
+    if (!scene.textures.exists('laser_hyperbeam')) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 22;
+      canvas.height = 52;
+      const ctx = canvas.getContext('2d')!;
+      ctx.shadowColor = '#ff0055';
+      ctx.shadowBlur = 16;
+      const grad = ctx.createLinearGradient(11, 0, 11, 52);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.4, '#ff0055');
+      grad.addColorStop(1, 'rgba(255, 0, 85, 0.1)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.ellipse(11, 26, 7, 24, 0, 0, Math.PI * 2);
+      ctx.fill();
+      scene.textures.addCanvas('laser_hyperbeam', canvas);
+      scene.textures.addCanvas('laser_heavy', canvas);
+    }
+
+    // 2.7 Plasma Shot (Massive Swirling Orb) (32 x 32)
+    if (!scene.textures.exists('laser_plasma')) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 36;
+      canvas.height = 36;
+      const ctx = canvas.getContext('2d')!;
+      ctx.shadowColor = '#818cf8';
+      ctx.shadowBlur = 16;
+      const grad = ctx.createRadialGradient(18, 18, 2, 18, 18, 16);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.4, '#6366f1');
+      grad.addColorStop(0.8, '#4338ca');
+      grad.addColorStop(1, 'rgba(67, 56, 202, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(18, 18, 16, 0, Math.PI * 2);
+      ctx.fill();
+      scene.textures.addCanvas('laser_plasma', canvas);
+    }
+
+    // 3. Enemy Textures (6 Archetypes)
+    // 3.1 Scout (Crimson Dart) (44 x 48)
     if (!scene.textures.exists('enemy_scout')) {
       const canvas = document.createElement('canvas');
       canvas.width = 44;
@@ -167,286 +307,400 @@ export class TextureGenerator {
       const ctx = canvas.getContext('2d')!;
       ctx.shadowColor = '#ff0055';
       ctx.shadowBlur = 8;
-
       ctx.fillStyle = '#1e050b';
       ctx.beginPath();
-      ctx.moveTo(22, 44);   // Nose pointing down
-      ctx.lineTo(4, 6);     // Left wing
-      ctx.lineTo(16, 12);   // Inset
-      ctx.lineTo(22, 8);    // Rear center
+      ctx.moveTo(22, 44);
+      ctx.lineTo(4, 6);
+      ctx.lineTo(16, 12);
+      ctx.lineTo(22, 8);
       ctx.lineTo(28, 12);
-      ctx.lineTo(40, 6);    // Right wing
+      ctx.lineTo(40, 6);
       ctx.closePath();
       ctx.fill();
-
       ctx.strokeStyle = '#ff0055';
       ctx.lineWidth = 2;
       ctx.stroke();
-
-      // Glowing Cockpit
       ctx.fillStyle = '#ff3366';
       ctx.beginPath();
       ctx.arc(22, 26, 4, 0, Math.PI * 2);
       ctx.fill();
-
       scene.textures.addCanvas('enemy_scout', canvas);
     }
 
-    // 6. Enemy 2: Striker (Golden Fast Interceptor) (36 x 40)
-    if (!scene.textures.exists('enemy_striker')) {
+    // 3.2 Interceptor (Golden Striker) (42 x 46)
+    if (!scene.textures.exists('enemy_interceptor')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 40;
-      canvas.height = 44;
+      canvas.width = 44;
+      canvas.height = 48;
       const ctx = canvas.getContext('2d')!;
-      ctx.shadowColor = '#ffcc00';
-      ctx.shadowBlur = 8;
-
-      ctx.fillStyle = '#1a1403';
+      ctx.shadowColor = '#facc15';
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = '#1c1502';
       ctx.beginPath();
-      ctx.moveTo(20, 42);
-      ctx.lineTo(38, 10);
-      ctx.lineTo(30, 4);
-      ctx.lineTo(20, 14);
+      ctx.moveTo(22, 46);
+      ctx.lineTo(42, 12);
+      ctx.lineTo(34, 4);
+      ctx.lineTo(22, 16);
       ctx.lineTo(10, 4);
-      ctx.lineTo(2, 10);
+      ctx.lineTo(2, 12);
       ctx.closePath();
       ctx.fill();
-
-      ctx.strokeStyle = '#ffcc00';
+      ctx.strokeStyle = '#eab308';
       ctx.lineWidth = 2;
       ctx.stroke();
-
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(18, 16, 4, 12);
-
+      ctx.fillRect(20, 18, 4, 14);
+      scene.textures.addCanvas('enemy_interceptor', canvas);
       scene.textures.addCanvas('enemy_striker', canvas);
     }
 
-    // 7. Enemy 3: Cruiser (Heavy Armored Warship) (58 x 62)
-    if (!scene.textures.exists('enemy_cruiser')) {
+    // 3.3 Tank (Dreadnought Fortress) (68 x 72)
+    if (!scene.textures.exists('enemy_tank')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 64;
-      canvas.height = 68;
+      canvas.width = 72;
+      canvas.height = 76;
       const ctx = canvas.getContext('2d')!;
       ctx.shadowColor = '#a855f7';
-      ctx.shadowBlur = 10;
-
-      ctx.fillStyle = '#160b29';
+      ctx.shadowBlur = 12;
+      ctx.fillStyle = '#18072b';
       ctx.beginPath();
-      ctx.moveTo(32, 64);   // Front ram
-      ctx.lineTo(58, 40);
-      ctx.lineTo(58, 10);
-      ctx.lineTo(42, 4);
-      ctx.lineTo(32, 12);
-      ctx.lineTo(22, 4);
-      ctx.lineTo(6, 10);
-      ctx.lineTo(6, 40);
+      ctx.moveTo(36, 70);
+      ctx.lineTo(66, 44);
+      ctx.lineTo(66, 12);
+      ctx.lineTo(48, 4);
+      ctx.lineTo(36, 14);
+      ctx.lineTo(24, 4);
+      ctx.lineTo(6, 12);
+      ctx.lineTo(6, 44);
       ctx.closePath();
       ctx.fill();
-
-      ctx.strokeStyle = '#a855f7';
-      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#9333ea';
+      ctx.lineWidth = 3;
       ctx.stroke();
-
-      // Armor plating lines
       ctx.strokeStyle = '#c084fc';
       ctx.lineWidth = 1.5;
-      ctx.strokeRect(16, 20, 32, 22);
-
-      // Core Reactor
-      const radGrad = ctx.createRadialGradient(32, 31, 2, 32, 31, 8);
+      ctx.strokeRect(18, 22, 36, 24);
+      const radGrad = ctx.createRadialGradient(36, 34, 2, 36, 34, 10);
       radGrad.addColorStop(0, '#ffffff');
       radGrad.addColorStop(0.5, '#c084fc');
       radGrad.addColorStop(1, '#581c87');
       ctx.fillStyle = radGrad;
       ctx.beginPath();
-      ctx.arc(32, 31, 8, 0, Math.PI * 2);
+      ctx.arc(36, 34, 10, 0, Math.PI * 2);
       ctx.fill();
-
+      scene.textures.addCanvas('enemy_tank', canvas);
       scene.textures.addCanvas('enemy_cruiser', canvas);
     }
 
-    // 8. Enemy 4: Gunship (Cyan Shooter) (48 x 50)
-    if (!scene.textures.exists('enemy_gunship')) {
+    // 3.4 Shooter (Tactical Gunship) (52 x 56)
+    if (!scene.textures.exists('enemy_shooter')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 52;
-      canvas.height = 54;
+      canvas.width = 56;
+      canvas.height = 60;
       const ctx = canvas.getContext('2d')!;
       ctx.shadowColor = '#06b6d4';
-      ctx.shadowBlur = 8;
-
-      ctx.fillStyle = '#041f29';
+      ctx.shadowBlur = 9;
+      ctx.fillStyle = '#031c26';
       ctx.beginPath();
-      ctx.moveTo(26, 50);
-      ctx.lineTo(48, 22);
-      ctx.lineTo(44, 6);
-      ctx.lineTo(32, 10);
-      ctx.lineTo(26, 4);
-      ctx.lineTo(20, 10);
-      ctx.lineTo(8, 6);
-      ctx.lineTo(4, 22);
+      ctx.moveTo(28, 54);
+      ctx.lineTo(52, 24);
+      ctx.lineTo(46, 6);
+      ctx.lineTo(34, 12);
+      ctx.lineTo(28, 4);
+      ctx.lineTo(22, 12);
+      ctx.lineTo(10, 6);
+      ctx.lineTo(4, 24);
       ctx.closePath();
       ctx.fill();
-
-      ctx.strokeStyle = '#06b6d4';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#0891b2';
+      ctx.lineWidth = 2.5;
       ctx.stroke();
-
-      // Dual forward cannons
       ctx.fillStyle = '#22d3ee';
-      ctx.fillRect(14, 40, 4, 10);
-      ctx.fillRect(34, 40, 4, 10);
-
+      ctx.fillRect(16, 42, 5, 12);
+      ctx.fillRect(35, 42, 5, 12);
+      scene.textures.addCanvas('enemy_shooter', canvas);
       scene.textures.addCanvas('enemy_gunship', canvas);
     }
 
-    // 9. Enemy 5: Reaper Elite (Crimson & Gold Flagship) (62 x 64)
-    if (!scene.textures.exists('enemy_reaper')) {
+    // 3.5 Bomber (Kamikaze Volatile Drone) (40 x 44)
+    if (!scene.textures.exists('enemy_bomber')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 68;
-      canvas.height = 70;
+      canvas.width = 44;
+      canvas.height = 48;
       const ctx = canvas.getContext('2d')!;
-      ctx.shadowColor = '#f43f5e';
+      ctx.shadowColor = '#ea580c';
       ctx.shadowBlur = 12;
-
-      ctx.fillStyle = '#1c040d';
+      ctx.fillStyle = '#260a02';
       ctx.beginPath();
-      ctx.moveTo(34, 66);
-      ctx.lineTo(64, 30);
-      ctx.lineTo(54, 8);
-      ctx.lineTo(42, 16);
-      ctx.lineTo(34, 6);
-      ctx.lineTo(26, 16);
-      ctx.lineTo(14, 8);
-      ctx.lineTo(4, 30);
+      ctx.moveTo(22, 46);
+      ctx.lineTo(40, 10);
+      ctx.lineTo(22, 20);
+      ctx.lineTo(4, 10);
       ctx.closePath();
       ctx.fill();
-
-      ctx.strokeStyle = '#fb7185';
+      ctx.strokeStyle = '#f97316';
       ctx.lineWidth = 2.5;
       ctx.stroke();
-
-      // Energy Shield Rings
-      ctx.strokeStyle = '#fbbf24';
-      ctx.lineWidth = 1.5;
+      const nukeGrad = ctx.createRadialGradient(22, 28, 1, 22, 28, 8);
+      nukeGrad.addColorStop(0, '#ffffff');
+      nukeGrad.addColorStop(0.5, '#f97316');
+      nukeGrad.addColorStop(1, '#9a3412');
+      ctx.fillStyle = nukeGrad;
       ctx.beginPath();
-      ctx.arc(34, 34, 14, 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.arc(22, 28, 8, 0, Math.PI * 2);
+      ctx.fill();
+      scene.textures.addCanvas('enemy_bomber', canvas);
+    }
 
+    // 3.6 Elite Reaper (Shielded Crimson Flagship) (72 x 76)
+    if (!scene.textures.exists('enemy_elite')) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 76;
+      canvas.height = 80;
+      const ctx = canvas.getContext('2d')!;
+      ctx.shadowColor = '#f43f5e';
+      ctx.shadowBlur = 14;
+      ctx.fillStyle = '#1c030d';
+      ctx.beginPath();
+      ctx.moveTo(38, 74);
+      ctx.lineTo(72, 34);
+      ctx.lineTo(60, 8);
+      ctx.lineTo(48, 18);
+      ctx.lineTo(38, 6);
+      ctx.lineTo(28, 18);
+      ctx.lineTo(16, 8);
+      ctx.lineTo(4, 34);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#fb7185';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(38, 38, 16, 0, Math.PI * 2);
+      ctx.stroke();
       ctx.fillStyle = '#fb7185';
       ctx.beginPath();
-      ctx.arc(34, 34, 6, 0, Math.PI * 2);
+      ctx.arc(38, 38, 7, 0, Math.PI * 2);
       ctx.fill();
-
+      scene.textures.addCanvas('enemy_elite', canvas);
       scene.textures.addCanvas('enemy_reaper', canvas);
     }
 
-    // 10. Boss: Omega Mothership (180 x 140)
-    if (!scene.textures.exists('boss_mothership')) {
+    // 4. Enemy Weapons
+    if (!scene.textures.exists('laser_enemy')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 200;
-      canvas.height = 160;
+      canvas.width = 12;
+      canvas.height = 24;
       const ctx = canvas.getContext('2d')!;
       ctx.shadowColor = '#ff0055';
-      ctx.shadowBlur = 16;
-
-      // Colossal Battleship Hull
-      ctx.fillStyle = '#0f0517';
+      ctx.shadowBlur = 8;
+      const grad = ctx.createRadialGradient(6, 12, 2, 6, 12, 8);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.5, '#ff0055');
+      grad.addColorStop(1, 'rgba(255, 0, 85, 0)');
+      ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.moveTo(100, 154);  // Front Main Ram / Cannon
-      ctx.lineTo(135, 125);
-      ctx.lineTo(185, 100);  // Outer Right Wing Tip
-      ctx.lineTo(195, 45);
-      ctx.lineTo(165, 30);
-      ctx.lineTo(140, 48);
-      ctx.lineTo(120, 20);   // Rear center right
-      ctx.lineTo(100, 32);   // Engine bay center
-      ctx.lineTo(80, 20);    // Rear center left
-      ctx.lineTo(60, 48);
-      ctx.lineTo(35, 30);
-      ctx.lineTo(5, 45);
-      ctx.lineTo(15, 100);   // Outer Left Wing Tip
-      ctx.lineTo(65, 125);
-      ctx.closePath();
+      ctx.ellipse(6, 12, 5, 10, 0, 0, Math.PI * 2);
       ctx.fill();
-
-      // Armored Plating Trim
-      ctx.strokeStyle = '#ff0055';
-      ctx.lineWidth = 3.5;
-      ctx.stroke();
-
-      // Inner Deck Hull Structure
-      ctx.fillStyle = '#1d0b2e';
-      ctx.beginPath();
-      ctx.moveTo(100, 130);
-      ctx.lineTo(140, 95);
-      ctx.lineTo(140, 55);
-      ctx.lineTo(100, 45);
-      ctx.lineTo(60, 55);
-      ctx.lineTo(60, 95);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.strokeStyle = '#9333ea';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Glowing Hyperdrive Reactor Core
-      const coreGrad = ctx.createRadialGradient(100, 85, 4, 100, 85, 24);
-      coreGrad.addColorStop(0, '#ffffff');
-      coreGrad.addColorStop(0.3, '#f43f5e');
-      coreGrad.addColorStop(0.7, '#8b5cf6');
-      coreGrad.addColorStop(1, 'rgba(139, 92, 246, 0.1)');
-      ctx.fillStyle = coreGrad;
-      ctx.beginPath();
-      ctx.arc(100, 85, 24, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Turret Emplacements
-      ctx.fillStyle = '#fbbf24';
-      ctx.fillRect(45, 95, 8, 16);
-      ctx.fillRect(147, 95, 8, 16);
-      ctx.fillRect(96, 142, 8, 16);
-
-      scene.textures.addCanvas('boss_mothership', canvas);
+      scene.textures.addCanvas('laser_enemy', canvas);
     }
 
-    // 11. Boss Energy Sphere (24 x 24)
     if (!scene.textures.exists('boss_bullet')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 28;
-      canvas.height = 28;
+      canvas.width = 30;
+      canvas.height = 30;
       const ctx = canvas.getContext('2d')!;
       ctx.shadowColor = '#d946ef';
-      ctx.shadowBlur = 12;
-      const grad = ctx.createRadialGradient(14, 14, 2, 14, 14, 12);
+      ctx.shadowBlur = 14;
+      const grad = ctx.createRadialGradient(15, 15, 3, 15, 15, 14);
       grad.addColorStop(0, '#ffffff');
       grad.addColorStop(0.4, '#d946ef');
       grad.addColorStop(0.8, '#8b5cf6');
       grad.addColorStop(1, 'rgba(139, 92, 246, 0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.arc(14, 14, 12, 0, Math.PI * 2);
+      ctx.arc(15, 15, 14, 0, Math.PI * 2);
       ctx.fill();
       scene.textures.addCanvas('boss_bullet', canvas);
     }
 
-    // 12. Asteroids (Large: 64x64, Medium: 40x40, Small: 24x24)
+    // 5. Boss Textures (4 Unique Bosses)
+    // 5.1 Boss 1: VOID DESTROYER (210 x 170)
+    if (!scene.textures.exists('boss_void_destroyer')) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 220;
+      canvas.height = 180;
+      const ctx = canvas.getContext('2d')!;
+      ctx.shadowColor = '#9333ea';
+      ctx.shadowBlur = 18;
+      ctx.fillStyle = '#0f041c';
+      ctx.beginPath();
+      ctx.moveTo(110, 172);
+      ctx.lineTo(150, 140);
+      ctx.lineTo(205, 110);
+      ctx.lineTo(215, 45);
+      ctx.lineTo(180, 30);
+      ctx.lineTo(150, 50);
+      ctx.lineTo(130, 20);
+      ctx.lineTo(110, 32);
+      ctx.lineTo(90, 20);
+      ctx.lineTo(70, 50);
+      ctx.lineTo(40, 30);
+      ctx.lineTo(5, 45);
+      ctx.lineTo(15, 110);
+      ctx.lineTo(70, 140);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#c084fc';
+      ctx.lineWidth = 3.5;
+      ctx.stroke();
+      const core = ctx.createRadialGradient(110, 95, 4, 110, 95, 28);
+      core.addColorStop(0, '#ffffff');
+      core.addColorStop(0.3, '#c084fc');
+      core.addColorStop(0.7, '#7e22ce');
+      core.addColorStop(1, 'rgba(126, 34, 206, 0.1)');
+      ctx.fillStyle = core;
+      ctx.beginPath();
+      ctx.arc(110, 95, 28, 0, Math.PI * 2);
+      ctx.fill();
+      scene.textures.addCanvas('boss_void_destroyer', canvas);
+      scene.textures.addCanvas('boss_mothership', canvas);
+    }
+
+    // 5.2 Boss 2: NEBULA QUEEN (230 x 180)
+    if (!scene.textures.exists('boss_nebula_queen')) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 240;
+      canvas.height = 190;
+      const ctx = canvas.getContext('2d')!;
+      ctx.shadowColor = '#06b6d4';
+      ctx.shadowBlur = 18;
+      ctx.fillStyle = '#031b26';
+      ctx.beginPath();
+      ctx.moveTo(120, 180);
+      ctx.lineTo(170, 130);
+      ctx.lineTo(230, 90);
+      ctx.lineTo(220, 35);
+      ctx.lineTo(180, 20);
+      ctx.lineTo(155, 45);
+      ctx.lineTo(120, 15);
+      ctx.lineTo(85, 45);
+      ctx.lineTo(60, 20);
+      ctx.lineTo(20, 35);
+      ctx.lineTo(10, 90);
+      ctx.lineTo(70, 130);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#22d3ee';
+      ctx.lineWidth = 3.5;
+      ctx.stroke();
+      const qCore = ctx.createRadialGradient(120, 90, 4, 120, 90, 30);
+      qCore.addColorStop(0, '#ffffff');
+      qCore.addColorStop(0.3, '#22d3ee');
+      qCore.addColorStop(0.8, '#0891b2');
+      qCore.addColorStop(1, 'rgba(8, 145, 178, 0)');
+      ctx.fillStyle = qCore;
+      ctx.beginPath();
+      ctx.arc(120, 90, 30, 0, Math.PI * 2);
+      ctx.fill();
+      scene.textures.addCanvas('boss_nebula_queen', canvas);
+    }
+
+    // 5.3 Boss 3: STAR EATER (240 x 180)
+    if (!scene.textures.exists('boss_star_eater')) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 250;
+      canvas.height = 190;
+      const ctx = canvas.getContext('2d')!;
+      ctx.shadowColor = '#f97316';
+      ctx.shadowBlur = 20;
+      ctx.fillStyle = '#260a02';
+      ctx.beginPath();
+      ctx.moveTo(125, 184);
+      ctx.lineTo(180, 135);
+      ctx.lineTo(240, 100);
+      ctx.lineTo(235, 40);
+      ctx.lineTo(190, 25);
+      ctx.lineTo(160, 50);
+      ctx.lineTo(125, 18);
+      ctx.lineTo(90, 50);
+      ctx.lineTo(60, 25);
+      ctx.lineTo(15, 40);
+      ctx.lineTo(10, 100);
+      ctx.lineTo(70, 135);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#fb923c';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+      const sCore = ctx.createRadialGradient(125, 95, 5, 125, 95, 32);
+      sCore.addColorStop(0, '#ffffff');
+      sCore.addColorStop(0.4, '#f97316');
+      sCore.addColorStop(0.8, '#b45309');
+      sCore.addColorStop(1, 'rgba(180, 83, 9, 0)');
+      ctx.fillStyle = sCore;
+      ctx.beginPath();
+      ctx.arc(125, 95, 32, 0, Math.PI * 2);
+      ctx.fill();
+      scene.textures.addCanvas('boss_star_eater', canvas);
+    }
+
+    // 5.4 Boss 4: GALACTIC CORE (250 x 190)
+    if (!scene.textures.exists('boss_galactic_core')) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 260;
+      canvas.height = 200;
+      const ctx = canvas.getContext('2d')!;
+      ctx.shadowColor = '#ec4899';
+      ctx.shadowBlur = 22;
+      ctx.fillStyle = '#1c0316';
+      ctx.beginPath();
+      ctx.moveTo(130, 192);
+      ctx.lineTo(190, 140);
+      ctx.lineTo(250, 105);
+      ctx.lineTo(245, 45);
+      ctx.lineTo(195, 25);
+      ctx.lineTo(165, 52);
+      ctx.lineTo(130, 20);
+      ctx.lineTo(95, 52);
+      ctx.lineTo(65, 25);
+      ctx.lineTo(15, 45);
+      ctx.lineTo(10, 105);
+      ctx.lineTo(70, 140);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#f472b6';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+      const gCore = ctx.createRadialGradient(130, 100, 6, 130, 100, 36);
+      gCore.addColorStop(0, '#ffffff');
+      gCore.addColorStop(0.3, '#ec4899');
+      gCore.addColorStop(0.7, '#be185d');
+      gCore.addColorStop(1, 'rgba(190, 24, 93, 0)');
+      ctx.fillStyle = gCore;
+      ctx.beginPath();
+      ctx.arc(130, 100, 36, 0, Math.PI * 2);
+      ctx.fill();
+      scene.textures.addCanvas('boss_galactic_core', canvas);
+    }
+
+    // 6. Asteroids (3 Sizes)
     const generateAsteroidCanvas = (size: number, key: string) => {
       if (scene.textures.exists(key)) return;
       const canvas = document.createElement('canvas');
-      canvas.width = size + 12;
-      canvas.height = size + 12;
+      canvas.width = size + 14;
+      canvas.height = size + 14;
       const ctx = canvas.getContext('2d')!;
       const center = canvas.width / 2;
       const radius = size / 2;
-      const numPoints = 10;
+      const numPoints = 12;
 
       ctx.fillStyle = '#27272a';
       ctx.beginPath();
       for (let i = 0; i < numPoints; i++) {
         const angle = (i / numPoints) * Math.PI * 2;
-        // Deterministic pseudo-random variation
         const offset = Math.sin(i * 2.8) * (radius * 0.25);
         const r = radius + offset;
         const x = center + Math.cos(angle) * r;
@@ -457,8 +711,7 @@ export class TextureGenerator {
       ctx.closePath();
       ctx.fill();
 
-      // Shading & Craters
-      ctx.strokeStyle = '#52525b';
+      ctx.strokeStyle = '#71717a';
       ctx.lineWidth = 2;
       ctx.stroke();
 
@@ -471,7 +724,7 @@ export class TextureGenerator {
       ctx.fill();
 
       // Glowing crystal ore vein
-      ctx.strokeStyle = '#06b6d4';
+      ctx.strokeStyle = '#00f0ff';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(center - radius * 0.4, center + radius * 0.3);
@@ -482,42 +735,46 @@ export class TextureGenerator {
       scene.textures.addCanvas(key, canvas);
     };
 
-    generateAsteroidCanvas(60, 'asteroid_large');
-    generateAsteroidCanvas(36, 'asteroid_medium');
-    generateAsteroidCanvas(20, 'asteroid_small');
+    generateAsteroidCanvas(64, 'asteroid_large');
+    generateAsteroidCanvas(40, 'asteroid_medium');
+    generateAsteroidCanvas(24, 'asteroid_small');
 
-    // 13. Power-Ups (36 x 36)
+    // 7. Power-Ups (10 Types with Rarity Glow)
     const powerUps = [
       { key: 'powerup_shield', color: '#00f0ff', symbol: 'S' },
-      { key: 'powerup_rapid', color: '#facc15', symbol: 'R' },
-      { key: 'powerup_damage', color: '#ec4899', symbol: 'D' },
-      { key: 'powerup_triple', color: '#fb923c', symbol: 'T' },
       { key: 'powerup_health', color: '#22c55e', symbol: '+' },
+      { key: 'powerup_rapid', color: '#facc15', symbol: 'R' },
+      { key: 'powerup_double', color: '#38bdf8', symbol: '2' },
+      { key: 'powerup_triple', color: '#fb923c', symbol: '3' },
+      { key: 'powerup_spread', color: '#10b981', symbol: '5' },
+      { key: 'powerup_hyperbeam', color: '#ec4899', symbol: 'B' },
+      { key: 'powerup_plasma', color: '#818cf8', symbol: 'P' },
       { key: 'powerup_score', color: '#a855f7', symbol: '2X' },
+      { key: 'powerup_slow', color: '#06b6d4', symbol: '⏱' },
+      // Aliases
+      { key: 'powerup_damage', color: '#ec4899', symbol: 'D' },
     ];
 
     powerUps.forEach(({ key, color, symbol }) => {
       if (scene.textures.exists(key)) return;
       const canvas = document.createElement('canvas');
-      canvas.width = 40;
-      canvas.height = 40;
+      canvas.width = 44;
+      canvas.height = 44;
       const ctx = canvas.getContext('2d')!;
 
-      // Outer Glow
       ctx.shadowColor = color;
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur = 12;
 
-      // Hexagonal / Octagonal Badge
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
       ctx.strokeStyle = color;
       ctx.lineWidth = 2.5;
 
       ctx.beginPath();
-      const r = 16;
+      const r = 18;
       for (let i = 0; i < 6; i++) {
         const angle = (i / 6) * Math.PI * 2;
-        const x = 20 + Math.cos(angle) * r;
-        const y = 20 + Math.sin(angle) * r;
+        const x = 22 + Math.cos(angle) * r;
+        const y = 22 + Math.sin(angle) * r;
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       }
@@ -525,83 +782,76 @@ export class TextureGenerator {
       ctx.fill();
       ctx.stroke();
 
-      // Symbol Text
       ctx.shadowBlur = 0;
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 15px Rajdhani, sans-serif';
+      ctx.font = 'bold 16px Rajdhani, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(symbol, 20, 20);
+      ctx.fillText(symbol, 22, 22);
 
       scene.textures.addCanvas(key, canvas);
     });
 
-    // 14. Shield Forcefield Dome (80 x 80)
+    // 8. Shield Forcefield Dome (96 x 96)
     if (!scene.textures.exists('shield_bubble')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 88;
-      canvas.height = 88;
+      canvas.width = 96;
+      canvas.height = 96;
       const ctx = canvas.getContext('2d')!;
       ctx.shadowColor = '#00f0ff';
-      ctx.shadowBlur = 14;
-
-      const grad = ctx.createRadialGradient(44, 44, 24, 44, 44, 40);
+      ctx.shadowBlur = 16;
+      const grad = ctx.createRadialGradient(48, 48, 28, 48, 48, 46);
       grad.addColorStop(0, 'rgba(0, 240, 255, 0.05)');
       grad.addColorStop(0.8, 'rgba(0, 240, 255, 0.25)');
-      grad.addColorStop(1, 'rgba(0, 240, 255, 0.85)');
+      grad.addColorStop(1, 'rgba(0, 240, 255, 0.9)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.arc(44, 44, 40, 0, Math.PI * 2);
+      ctx.arc(48, 48, 44, 0, Math.PI * 2);
       ctx.fill();
-
-      // Hex pattern accents
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
       ctx.lineWidth = 2;
       ctx.stroke();
-
       scene.textures.addCanvas('shield_bubble', canvas);
     }
 
-    // 15. Spark / Particle (8 x 8)
+    // 9. Particle & FX Textures
     if (!scene.textures.exists('spark')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 8;
-      canvas.height = 8;
+      canvas.width = 10;
+      canvas.height = 10;
       const ctx = canvas.getContext('2d')!;
-      const grad = ctx.createRadialGradient(4, 4, 1, 4, 4, 4);
+      const grad = ctx.createRadialGradient(5, 5, 1, 5, 5, 5);
       grad.addColorStop(0, '#ffffff');
       grad.addColorStop(0.5, '#00f0ff');
       grad.addColorStop(1, 'rgba(0, 240, 255, 0)');
       ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 8, 8);
+      ctx.fillRect(0, 0, 10, 10);
       scene.textures.addCanvas('spark', canvas);
     }
 
-    // 16. Smoke Particle (16 x 16)
     if (!scene.textures.exists('smoke')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 16;
-      canvas.height = 16;
+      canvas.width = 18;
+      canvas.height = 18;
       const ctx = canvas.getContext('2d')!;
-      const grad = ctx.createRadialGradient(8, 8, 2, 8, 8, 8);
-      grad.addColorStop(0, 'rgba(200, 200, 220, 0.6)');
-      grad.addColorStop(0.6, 'rgba(100, 100, 120, 0.3)');
+      const grad = ctx.createRadialGradient(9, 9, 2, 9, 9, 9);
+      grad.addColorStop(0, 'rgba(220, 220, 240, 0.6)');
+      grad.addColorStop(0.6, 'rgba(120, 120, 150, 0.3)');
       grad.addColorStop(1, 'rgba(50, 50, 60, 0)');
       ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 16, 16);
+      ctx.fillRect(0, 0, 18, 18);
       scene.textures.addCanvas('smoke', canvas);
     }
 
-    // 17. Shockwave Ring (64 x 64)
     if (!scene.textures.exists('shockwave')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 64;
-      canvas.height = 64;
+      canvas.width = 80;
+      canvas.height = 80;
       const ctx = canvas.getContext('2d')!;
       ctx.strokeStyle = '#00f0ff';
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.arc(32, 32, 28, 0, Math.PI * 2);
+      ctx.arc(40, 40, 36, 0, Math.PI * 2);
       ctx.stroke();
       scene.textures.addCanvas('shockwave', canvas);
     }

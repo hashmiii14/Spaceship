@@ -1,0 +1,146 @@
+import React, { useEffect } from 'react';
+import { Zap, Shield, Heart, Crosshair, Sparkles, Wind, Magnet } from 'lucide-react';
+import { LevelUpOption } from '../types/game';
+import { SoundEffects } from '../audio/SoundEffects';
+
+interface LevelUpModalProps {
+  options: LevelUpOption[];
+  onSelect: (option: LevelUpOption) => void;
+}
+
+const RARITY_STYLES: Record<string, { border: string; glow: string; badge: string; text: string }> = {
+  common: {
+    border: 'border-cyan-500/40',
+    glow: 'hover:shadow-[0_0_25px_rgba(0,240,255,0.4)]',
+    badge: 'bg-cyan-950/60 text-cyan-300 border-cyan-500/40',
+    text: 'text-cyan-400',
+  },
+  rare: {
+    border: 'border-yellow-500/50',
+    glow: 'hover:shadow-[0_0_30px_rgba(250,204,21,0.5)]',
+    badge: 'bg-yellow-950/60 text-yellow-300 border-yellow-500/50',
+    text: 'text-yellow-400',
+  },
+  epic: {
+    border: 'border-purple-500/50',
+    glow: 'hover:shadow-[0_0_35px_rgba(168,85,247,0.6)]',
+    badge: 'bg-purple-950/60 text-purple-300 border-purple-500/50',
+    text: 'text-purple-400',
+  },
+  legendary: {
+    border: 'border-orange-500/60',
+    glow: 'hover:shadow-[0_0_40px_rgba(249,115,22,0.7)]',
+    badge: 'bg-orange-950/60 text-orange-300 border-orange-500/60',
+    text: 'text-orange-400',
+  },
+};
+
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  weapon: <Crosshair className="w-5 h-5" />,
+  hull: <Heart className="w-5 h-5" />,
+  shield: <Shield className="w-5 h-5" />,
+  speed: <Wind className="w-5 h-5" />,
+  damage: <Zap className="w-5 h-5" />,
+  utility: <Magnet className="w-5 h-5" />,
+};
+
+export const LevelUpModal: React.FC<LevelUpModalProps> = ({ options, onSelect }) => {
+  // Allow selecting with keys '1', '2', '3'
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === '1' && options[0]) {
+        handleCardClick(options[0]);
+      } else if (e.key === '2' && options[1]) {
+        handleCardClick(options[1]);
+      } else if (e.key === '3' && options[2]) {
+        handleCardClick(options[2]);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [options]);
+
+  const handleCardClick = (option: LevelUpOption) => {
+    SoundEffects.playPowerUp();
+    onSelect(option);
+  };
+
+  return (
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 select-none pointer-events-auto">
+      <div className="w-full max-w-4xl flex flex-col items-center">
+        {/* Header Title */}
+        <div className="flex items-center gap-2 mb-1">
+          <Sparkles className="w-6 h-6 text-purple-400 animate-spin" />
+          <h2 className="text-3xl sm:text-5xl font-black font-['Orbitron'] tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-purple-300 to-pink-400 neon-glow-cyan">
+            LEVEL UPGRADE
+          </h2>
+          <Sparkles className="w-6 h-6 text-purple-400 animate-spin" />
+        </div>
+        <p className="text-xs sm:text-sm font-mono tracking-[0.25em] text-gray-400 uppercase mb-8">
+          SELECT 1 SYSTEM MATRIX ENHANCEMENT (PRESS 1, 2, OR 3)
+        </p>
+
+        {/* 3 Upgrade Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 w-full">
+          {options.map((option, index) => {
+            const rarity = option.rarity || 'common';
+            const style = RARITY_STYLES[rarity] || RARITY_STYLES.common;
+            const icon = CATEGORY_ICONS[option.category] || <Zap className="w-5 h-5" />;
+
+            return (
+              <button
+                key={option.id}
+                onClick={() => handleCardClick(option)}
+                className={`cyber-panel group relative p-6 flex flex-col items-center text-center rounded-xl border-2 transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-black/70 backdrop-blur-lg ${style.border} ${style.glow}`}
+              >
+                {/* Hotkey Badge */}
+                <div className="absolute top-3 left-3 w-6 h-6 rounded-md bg-gray-900 border border-gray-700 flex items-center justify-center text-xs font-mono font-bold text-cyan-400">
+                  {index + 1}
+                </div>
+
+                {/* Rarity Badge */}
+                <div className="absolute top-3 right-3">
+                  <span
+                    className={`text-[10px] font-mono font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border ${style.badge}`}
+                  >
+                    {rarity}
+                  </span>
+                </div>
+
+                {/* Icon Orb */}
+                <div
+                  className={`w-16 h-16 rounded-2xl flex items-center justify-center mt-4 mb-4 border transition-transform group-hover:scale-110 ${style.badge}`}
+                >
+                  <div className={style.text}>{icon}</div>
+                </div>
+
+                {/* Title */}
+                <h3 className="text-lg sm:text-xl font-black font-['Orbitron'] tracking-wider text-white mb-2 group-hover:text-cyan-300 transition-colors">
+                  {option.title}
+                </h3>
+
+                {/* Category Pill */}
+                <span className="text-[10px] font-mono tracking-widest text-gray-400 uppercase mb-3">
+                  CATEGORY: {option.category}
+                </span>
+
+                {/* Description */}
+                <p className="text-xs sm:text-sm font-sans text-gray-300 leading-relaxed">
+                  {option.description}
+                </p>
+
+                {/* Select Prompt */}
+                <div className="mt-6 pt-3 border-t border-gray-800 w-full flex items-center justify-center">
+                  <span className="text-xs font-mono font-bold tracking-widest text-cyan-400 group-hover:text-cyan-200 uppercase">
+                    INITIALIZE UPGRADE ➔
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};

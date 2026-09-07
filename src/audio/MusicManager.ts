@@ -35,7 +35,7 @@ class MusicManagerClass {
 
   constructor() {
     this.isMuted = !Storage.getMusicEnabled();
-    this.volume = Storage.getVolume();
+    this.volume = Storage.getMusicVolume();
   }
 
   public getCurrentTrack(): AudioTrack {
@@ -55,6 +55,10 @@ class MusicManagerClass {
   }
 
   public getVolume(): number {
+    return this.volume;
+  }
+
+  public getMusicVolume(): number {
     return this.volume;
   }
 
@@ -164,11 +168,15 @@ class MusicManagerClass {
 
   public setVolume(val: number): void {
     this.volume = Math.max(0, Math.min(1, val));
-    Storage.setVolume(this.volume);
+    Storage.setMusicVolume(this.volume);
     if (this.audio) {
       this.audio.volume = this.volume;
     }
     EventBus.emit('music:volumeChanged', this.volume);
+  }
+
+  public setMusicVolume(val: number): void {
+    this.setVolume(val);
   }
 
   public fadeOut(durationMs: number = 800): void {

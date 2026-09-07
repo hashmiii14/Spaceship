@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Phaser from 'phaser';
 import { createGameConfig } from './game/config';
-import { GameState, PlayerStats, BossInfo, AudioTrack } from './types/game';
+import { GameState, PlayerStats, BossInfo, AudioTrack, LevelUpOption } from './types/game';
 import { Storage } from './utils/storage';
 import { EventBus } from './utils/EventBus';
 import { MusicManager } from './audio/MusicManager';
@@ -12,6 +12,7 @@ import { PauseModal } from './ui/PauseModal';
 import { GameOverModal } from './ui/GameOverModal';
 import { HowToPlayModal } from './ui/HowToPlayModal';
 import { MobileControls } from './ui/MobileControls';
+import { LevelUpModal } from './ui/LevelUpModal';
 
 export const App: React.FC = () => {
   const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -25,6 +26,7 @@ export const App: React.FC = () => {
   const [currentTrack, setCurrentTrack] = useState<AudioTrack | null>(() => MusicManager.getCurrentTrack());
   const [bossWarning, setBossWarning] = useState<boolean>(false);
   const [isNewHighScore, setIsNewHighScore] = useState<boolean>(false);
+  const [levelUpOptions, setLevelUpOptions] = useState<LevelUpOption[] | null>(null);
 
   const [stats, setStats] = useState<PlayerStats>({
     score: 0,
@@ -34,6 +36,14 @@ export const App: React.FC = () => {
     shield: 100,
     maxShield: 100,
     wave: 1,
+    level: 1,
+    xp: 0,
+    nextLevelXp: 100,
+    combo: 0,
+    comboMultiplier: 1,
+    comboTimer: 0,
+    survivalTime: 0,
+    activeWeapon: 'BLASTER',
     lives: 3,
     activePowerUps: [],
   });
@@ -64,7 +74,6 @@ export const App: React.FC = () => {
     EventBus.on('stats:update', (newStats: Partial<PlayerStats>) => {
       setStats((prev) => {
         const updated = { ...prev, ...newStats };
-        // Check live record breaker
         if (updated.score > updated.highScore) {
           updated.highScore = updated.score;
           Storage.setHighScore(updated.score);
@@ -84,8 +93,13 @@ export const App: React.FC = () => {
       setBossInfo(info);
     });
 
+    // Listen for Level Up options
+    EventBus.on('game:levelUp', (options: LevelUpOption[]) => {
+      setLevelUpOptions(options);
+    });
+
     // Listen for Game Over
-    EventBus.on('game:over', ({ score, wave }: { score: number; wave: number }) => {
+    EventBus.on('game:over', ({ score, wave, bestCombo, survivalTime }: { score: number; wave: number; bestCombo: number; survivalTime: number }) => {
       const savedHigh = Storage.getHighScore();
       const isNew = score > savedHigh;
       if (isNew) {
@@ -94,6 +108,7 @@ export const App: React.FC = () => {
       }
       setIsNewHighScore(isNew);
       setGameState('GAME_OVER');
+      setLevelUpOptions(null);
       MusicManager.fadeOut(600);
     });
 
@@ -132,9 +147,9 @@ export const App: React.FC = () => {
     }
     setGameState('PLAYING');
     setIsNewHighScore(false);
+    setLevelUpOptions(null);
     setBossInfo({ active: false, name: '', currentHp: 0, maxHp: 0, phase: 1 });
 
-    // Respect browser autoplay policy - start music on user interaction
     if (musicEnabled) {
       MusicManager.play();
     }
@@ -168,6 +183,7 @@ export const App: React.FC = () => {
     }
     setGameState('PLAYING');
     setIsNewHighScore(false);
+    setLevelUpOptions(null);
     setBossInfo({ active: false, name: '', currentHp: 0, maxHp: 0, phase: 1 });
     if (musicEnabled) {
       MusicManager.play();
@@ -180,6 +196,7 @@ export const App: React.FC = () => {
       game.scene.sleep('GameScene');
     }
     setGameState('MAIN_MENU');
+    setLevelUpOptions(null);
     setBossInfo({ active: false, name: '', currentHp: 0, maxHp: 0, phase: 1 });
     MusicManager.fadeOut(400);
   };
@@ -194,6 +211,11 @@ export const App: React.FC = () => {
     const nextVal = !soundEnabled;
     setSoundEnabled(nextVal);
     SoundEffects.setEnabled(nextVal);
+  };
+
+  const handleSelectUpgrade = (option: LevelUpOption) => {
+    setLevelUpOptions(null);
+    EventBus.emit('upgrade:selected', option);
   };
 
   return (
@@ -230,6 +252,14 @@ export const App: React.FC = () => {
             bossWarning={bossWarning}
           />
           <MobileControls />
+
+          {/* Level Up Selection Modal */}
+          {levelUpOptions && (
+            <LevelUpModal
+              options={levelUpOptions}
+              onSelect={handleSelectUpgrade}
+            />
+          )}
         </>
       )}
 
@@ -251,6 +281,8 @@ export const App: React.FC = () => {
           score={stats.score}
           highScore={highScore}
           wave={stats.wave}
+          bestCombo={stats.combo}
+          survivalTime={stats.survivalTime}
           isNewHighScore={isNewHighScore}
           onRestart={handleRestart}
           onMainMenu={handleMainMenu}
