@@ -131,6 +131,7 @@ export class GameScene extends Phaser.Scene {
   private keySpace!: Phaser.Input.Keyboard.Key;
   private keyEsc!: Phaser.Input.Keyboard.Key;
   private mobileInput = { x: 0, y: 0, shoot: false };
+  private playerNameContainer?: Phaser.GameObjects.Container;
 
   // Weapons & Bullets (RED WEAPON POOLS)
   private lastFiredTime = 0;
@@ -320,6 +321,25 @@ export class GameScene extends Phaser.Scene {
       followOffset: { x: 0, y: 32 },
     });
     this.playerEngineParticles.setDepth(9);
+
+    // 3b. Player Callsign Identity Tag ("MUHAMMAD HASHMI")
+    const pilotNameText = this.add.text(0, 0, 'MUHAMMAD HASHMI', {
+      fontFamily: 'Rajdhani, sans-serif',
+      fontSize: '10px',
+      fontStyle: 'bold',
+      color: '#f1f5f9',
+      stroke: '#030306',
+      strokeThickness: 2.5,
+    }).setOrigin(0.5, 0.5);
+
+    const pilotAccentBar = this.add.rectangle(0, 7, 24, 1.5, 0xff0033, 0.85);
+
+    this.playerNameContainer = this.add.container(width / 2, spawnY + 36, [
+      pilotNameText,
+      pilotAccentBar,
+    ]);
+    this.playerNameContainer.setDepth(11);
+    this.playerNameContainer.setAlpha(0.85);
 
     // 4. Keyboard Controls & Browser Scroll Prevention
     if (this.input.keyboard) {
@@ -557,6 +577,19 @@ export class GameScene extends Phaser.Scene {
 
     // Parallax background drift
     this.game.events.emit('background:setDrift', vx);
+
+    // Update Pilot Identity Callsign Tag ("MUHAMMAD HASHMI")
+    if (this.playerNameContainer) {
+      if (this.player && this.player.active && this.isAlive) {
+        this.playerNameContainer.setVisible(true);
+        const isNearBottom = this.player.y > this.scale.height - 55;
+        const tagY = isNearBottom ? this.player.y - 36 : this.player.y + 36;
+        this.playerNameContainer.setPosition(this.player.x, tagY);
+        this.playerNameContainer.setRotation(this.player.rotation * 0.4);
+      } else {
+        this.playerNameContainer.setVisible(false);
+      }
+    }
 
 
     // 4. Shooting (Immediate response, holding Spacebar continuous fire)
@@ -813,11 +846,11 @@ export class GameScene extends Phaser.Scene {
     this.game.events.emit('background:setSpeedMultiplier', sector.starSpeedMult);
     this.game.events.emit('background:event', sector.signatureEvent);
     EventBus.emit('wave:start', sector.id);
-    EventBus.emit('alert:sector', { sectorId: sector.id, codename: sector.codename });
+    EventBus.emit('alert:sector', { sectorId: sector.id, codename: sector.codename, threat: 'THREAT INCREASED' });
 
     if (showNotification) {
       SoundEffects.playLevelUp();
-      this.showLevelBanner(`SECTOR 0${sector.id} // ${sector.codename}`);
+      this.showLevelBanner(`LEVEL 0${sector.id} // THREAT INCREASED`);
     }
 
     if (sector.bossType) {
@@ -874,6 +907,8 @@ export class GameScene extends Phaser.Scene {
   // SMART ENEMY AI (6 ARCHETYPES)
   // ==========================================
   private spawnLevelEnemy(): void {
+    if (this.enemies.countActive(true) >= Math.min(18, 8 + this.currentLevel * 2)) return;
+
     const width = this.scale.width;
     const x = Phaser.Math.Between(40, width - 40);
     const y = -40;
@@ -900,56 +935,57 @@ export class GameScene extends Phaser.Scene {
     enemy.setData('type', type);
     enemy.setDepth(8);
 
-    const diff = 1 + (this.currentLevel - 1) * 0.16;
+    const diff = 1 + (this.currentLevel - 1) * 0.14;
+    const speedMult = 1 + Math.min(0.35, (this.currentLevel - 1) * 0.05);
 
     switch (type) {
       case 'scout':
-        enemy.setData('hp', Math.floor(1 * diff));
+        enemy.setData('hp', Math.max(1, Math.floor(1 * (this.currentLevel >= 3 ? diff : 1))));
         enemy.setData('score', 120);
         enemy.setData('xp', 15);
-        enemy.setVelocity(0, 180 * diff);
+        enemy.setVelocity(0, 160 * speedMult);
         enemy.setData('sineOffset', Math.random() * 10);
         break;
 
       case 'interceptor':
-        enemy.setData('hp', Math.floor(2 * diff));
+        enemy.setData('hp', Math.max(2, Math.floor(2 * (this.currentLevel >= 4 ? diff : 1))));
         enemy.setData('score', 190);
         enemy.setData('xp', 25);
-        enemy.setVelocity(0, 250 * diff);
+        enemy.setVelocity(0, 230 * speedMult);
         enemy.setData('diveTimer', 0);
         break;
 
       case 'tank':
-        enemy.setData('hp', Math.floor(9 * diff));
+        enemy.setData('hp', Math.max(8, Math.floor(9 * diff)));
         enemy.setData('score', 480);
         enemy.setData('xp', 65);
-        enemy.setVelocity(0, 75 * diff);
+        enemy.setVelocity(0, 75 * speedMult);
         enemy.setData('shootTimer', 0);
         break;
 
       case 'shooter':
-        enemy.setData('hp', Math.floor(4 * diff));
+        enemy.setData('hp', Math.max(3, Math.floor(3.8 * diff)));
         enemy.setData('score', 320);
         enemy.setData('xp', 40);
-        enemy.setVelocity(0, 115 * diff);
-        enemy.setData('targetY', Phaser.Math.Between(90, 240));
+        enemy.setVelocity(0, 110 * speedMult);
+        enemy.setData('targetY', Phaser.Math.Between(90, 230));
         enemy.setData('shootTimer', 0);
         break;
 
       case 'bomber':
-        enemy.setData('hp', Math.floor(5 * diff));
+        enemy.setData('hp', Math.max(4, Math.floor(5 * diff)));
         enemy.setData('score', 400);
         enemy.setData('xp', 55);
-        enemy.setVelocity(Phaser.Math.Between(-50, 50), 95 * diff);
+        enemy.setVelocity(Phaser.Math.Between(-50, 50), 90 * speedMult);
         enemy.setData('mineTimer', 0);
         break;
 
       case 'elite':
-        enemy.setData('hp', Math.floor(13 * diff));
-        enemy.setData('shield', Math.floor(6 * diff));
+        enemy.setData('hp', Math.max(12, Math.floor(13 * diff)));
+        enemy.setData('shield', Math.max(5, Math.floor(6 * diff)));
         enemy.setData('score', 850);
         enemy.setData('xp', 110);
-        enemy.setVelocity(110 * (Math.random() < 0.5 ? 1 : -1), 85 * diff);
+        enemy.setVelocity(110 * (Math.random() < 0.5 ? 1 : -1), 85 * speedMult);
         enemy.setData('shootTimer', 0);
         break;
     }
@@ -1034,9 +1070,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   private fireEnemyBullet(x: number, y: number, vx: number, vy: number): void {
+    if (this.enemyBullets.countActive(true) >= 36) return; // Controlled max bullets
     const b = this.spawnEnemyBullet(x, y, 'laser_enemy');
     if (b) {
-      b.setVelocity(vx, vy);
+      const projSpeedFactor = 1 + Math.min(0.35, (this.currentLevel - 1) * 0.05);
+      b.setVelocity(vx * projSpeedFactor, vy * projSpeedFactor);
       SoundEffects.playEnemyLaser();
     }
   }
@@ -2125,6 +2163,7 @@ export class GameScene extends Phaser.Scene {
   private killPlayer(): void {
     this.isAlive = false;
     this.player.setVisible(false);
+    this.playerNameContainer?.setVisible(false);
     this.playerEngineParticles.stop();
 
     SoundEffects.playExplosion('large');

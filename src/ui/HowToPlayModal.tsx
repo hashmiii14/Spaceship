@@ -19,7 +19,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ onClose }) => {
         <div className="flex items-center justify-between pb-4 border-b border-red-500/30">
           <div>
             <h2 className="text-2xl sm:text-3xl font-black font-['Orbitron'] tracking-widest text-white neon-glow-red">
-              PILOT MANUAL 2026
+              PILOT MANUAL
             </h2>
             <p className="text-xs font-mono text-red-400/80 tracking-wider">
               STARFALL COMBAT PROTOCOLS & SECTOR BRIEFING

@@ -219,7 +219,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
           {/* Ship Skins */}
           <div className="flex flex-col gap-3">
             <h3 className="text-xs font-mono font-bold tracking-[0.25em] text-red-400 uppercase flex items-center gap-2">
-              <Palette className="w-4 h-4" /> VESSEL HULL SKINS
+              <Palette className="w-4 h-4" /> SHIP HULL SKINS
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">

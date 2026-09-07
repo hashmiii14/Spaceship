@@ -107,7 +107,7 @@ export const HUD: React.FC<HUDProps> = React.memo(({
         priority: 100,
         type: 'BOSS',
         title: 'CRITICAL EMERGENCY',
-        subtitle: 'BOSS VESSEL INCOMING',
+        subtitle: 'BOSS INCOMING',
       });
     };
 
@@ -120,12 +120,12 @@ export const HUD: React.FC<HUDProps> = React.memo(({
       });
     };
 
-    const handleSectorAlert = (data: { sectorId: number; codename: string }) => {
+    const handleSectorAlert = (data: { sectorId: number; codename: string; threat?: string }) => {
       postAlert({
         priority: 50,
         type: 'SECTOR',
-        title: `SECTOR 0${data.sectorId} REACHED`,
-        subtitle: data.codename.toUpperCase(),
+        title: `LEVEL 0${data.sectorId} // ${data.codename.toUpperCase()}`,
+        subtitle: data.threat || 'THREAT INCREASED',
       });
     };
 
@@ -154,7 +154,7 @@ export const HUD: React.FC<HUDProps> = React.memo(({
         priority: 100,
         type: 'BOSS',
         title: 'CRITICAL EMERGENCY',
-        subtitle: 'BOSS VESSEL INCOMING',
+        subtitle: 'BOSS INCOMING',
       });
     }
   }, [bossWarning]);
@@ -278,6 +278,13 @@ export const HUD: React.FC<HUDProps> = React.memo(({
               <span className="text-[8px] sm:text-[10px] font-mono font-bold text-red-300 w-6 sm:w-8 text-right">
                 {Math.round(xpPercent)}%
               </span>
+            </div>
+
+            {/* Pilot Identity Callsign Tag */}
+            <div className="flex items-center gap-1.5 pt-1 border-t border-red-900/40 text-[8px] sm:text-[10px] font-mono tracking-wider">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shrink-0" />
+              <span className="text-red-400 font-bold uppercase">PILOT:</span>
+              <span className="text-gray-200 font-bold tracking-widest truncate">MUHAMMAD HASHMI</span>
             </div>
           </div>
 
@@ -405,14 +412,14 @@ export const HUD: React.FC<HUDProps> = React.memo(({
         {/* Top Right: High Score, Pause & Telemetry */}
         <div className="flex flex-col items-end gap-1.5 sm:gap-2 pointer-events-auto">
           <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* Top record: desktop only */}
-            <div className="hidden sm:flex cyber-panel-military px-3 py-1.5 items-center gap-2 border-yellow-500/40">
-              <Trophy className="w-4 h-4 text-yellow-400" />
+            {/* Best Score: desktop only */}
+            <div className="hidden sm:flex cyber-panel-military px-3 py-1.5 items-center gap-2 border-red-500/40">
+              <Trophy className="w-4 h-4 text-red-400" />
               <div className="flex flex-col text-right">
                 <span className="text-[9px] sm:text-[10px] font-mono tracking-widest text-gray-400 font-bold uppercase">
-                  TOP RECORD
+                  BEST SCORE
                 </span>
-                <span className="text-sm sm:text-base font-bold font-mono text-yellow-400 tracking-wider">
+                <span className="text-sm sm:text-base font-bold font-mono text-white tracking-wider neon-glow-red">
                   {stats.highScore.toString().padStart(6, '0')}
                 </span>
               </div>

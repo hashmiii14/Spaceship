@@ -70,7 +70,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
           MISSION FAILED
         </h2>
         <span className="text-xs font-mono tracking-[0.3em] text-red-300/80 uppercase mb-5">
-          VESSEL DESTROYED IN LEVEL {wave}
+          SHIP DESTROYED IN LEVEL {wave}
         </span>
 
         {/* New Record Celebration Badge */}
@@ -142,7 +142,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
             className="cyber-btn-red flex-1 py-3.5 flex items-center justify-center gap-2 text-base font-bold shadow-[0_0_25px_rgba(255,0,51,0.6)]"
           >
             <RotateCcw className="w-5 h-5" />
-            REDEPLOY VESSEL
+            PLAY AGAIN
           </button>
 
           <button
