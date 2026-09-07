@@ -8,6 +8,7 @@ import {
   WeaponType,
   LevelUpOption,
   PlayerStats,
+  Mission,
 } from '../../types/game';
 
 interface ActivePowerUp {
@@ -27,8 +28,8 @@ export class GameScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
   private playerEngineParticles!: Phaser.GameObjects.Particles.ParticleEmitter;
   private shieldSprite!: Phaser.GameObjects.Sprite;
-  private basePlayerSpeed = 340;
-  private playerSpeed = 340;
+  private basePlayerSpeed = 360;
+  private playerSpeed = 360;
   private playerHealth = 100;
   private maxHealth = 100;
   private playerShield = 100;
@@ -47,12 +48,12 @@ export class GameScene extends Phaser.Scene {
   private maxLevelReached = 1;
   private levelNames = [
     'AWAKENING',
-    'INTERCEPTOR PROTOCOL',
-    'HEAVY ARTILLERY',
-    'VOID DESTROYER',
-    'NEBULA SWARM',
-    'NEBULA QUEEN',
-    'GALACTIC SINGULARITY',
+    'DEEP SPACE',
+    'METEOR STORM',
+    'ALIEN FRONT',
+    'VOID ZONE',
+    'NEBULA CORE',
+    'FINAL SECTOR',
   ];
 
   // Upgrades
@@ -68,6 +69,56 @@ export class GameScene extends Phaser.Scene {
   private maxComboTimer = 2.5; // seconds
   private bestCombo = 0;
 
+  // Missions System
+  private missions: Mission[] = [
+    {
+      id: 'm1',
+      title: 'ELIMINATE 25 HOSTILES',
+      description: 'Destroy alien scout & interceptor craft',
+      progress: 0,
+      target: 25,
+      completed: false,
+      rewardText: '+1,500 SCORE • +60 XP',
+    },
+    {
+      id: 'm2',
+      title: 'CHAIN x5 KILL COMBO',
+      description: 'Eliminate hostiles within 2.5 seconds',
+      progress: 0,
+      target: 5,
+      completed: false,
+      rewardText: '+2,500 SCORE • +90 XP',
+    },
+    {
+      id: 'm3',
+      title: 'SURVIVE 90 SECONDS',
+      description: 'Withstand persistent galactic waves',
+      progress: 0,
+      target: 90,
+      completed: false,
+      rewardText: '+3,500 SCORE • +120 XP',
+    },
+    {
+      id: 'm4',
+      title: 'COLLECT 4 POWER-UPS',
+      description: 'Salvage combat weapon & shield orbs',
+      progress: 0,
+      target: 4,
+      completed: false,
+      rewardText: '+3,000 SCORE • +100 XP',
+    },
+    {
+      id: 'm5',
+      title: 'DEFEAT SECTOR BOSS',
+      description: 'Destroy capital flagship in Sector 4 or 6',
+      progress: 0,
+      target: 1,
+      completed: false,
+      rewardText: '+8,000 SCORE • +300 XP',
+    },
+  ];
+  private currentMissionIndex = 0;
+
   // Controls
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private keyW!: Phaser.Input.Keyboard.Key;
@@ -78,9 +129,9 @@ export class GameScene extends Phaser.Scene {
   private keyEsc!: Phaser.Input.Keyboard.Key;
   private mobileInput = { x: 0, y: 0, shoot: false };
 
-  // Weapons & Bullets
+  // Weapons & Bullets (RED WEAPON POOLS)
   private lastFiredTime = 0;
-  private baseFireRate = 220; // ms
+  private baseFireRate = 200; // ms
   private playerBullets!: Phaser.Physics.Arcade.Group;
   private enemyBullets!: Phaser.Physics.Arcade.Group;
   private bossBullets!: Phaser.Physics.Arcade.Group;
@@ -95,7 +146,7 @@ export class GameScene extends Phaser.Scene {
   // Boss
   private boss: Phaser.Physics.Arcade.Sprite | null = null;
   private bossHp = 0;
-  private bossMaxHp = 3000;
+  private bossMaxHp = 3200;
   private bossPhase = 1;
   private bossAttackTimer = 0;
   private bossMovementDirection = 1;
@@ -117,12 +168,15 @@ export class GameScene extends Phaser.Scene {
   // Power-Ups
   private activePowerUps: Map<PowerUpType, ActivePowerUp> = new Map();
 
-  // FX
+  // FX (Red Muzzle Flash & Red Sparks)
+  private redMuzzleEmitter!: Phaser.GameObjects.Particles.ParticleEmitter;
+  private redSparkEmitter!: Phaser.GameObjects.Particles.ParticleEmitter;
+  private cyanSparkEmitter!: Phaser.GameObjects.Particles.ParticleEmitter;
   private explosionEmitter!: Phaser.GameObjects.Particles.ParticleEmitter;
-  private sparkEmitter!: Phaser.GameObjects.Particles.ParticleEmitter;
 
   // Throttling
   private lastStatsEmitTime = 0;
+  private nextEventTime = 75; // next special event time in seconds
 
   constructor() {
     super({ key: 'GameScene' });
@@ -147,8 +201,8 @@ export class GameScene extends Phaser.Scene {
     this.maxHealth = 100;
     this.playerShield = 100;
     this.maxShield = 100;
-    this.basePlayerSpeed = 340;
-    this.playerSpeed = 340;
+    this.basePlayerSpeed = 360;
+    this.playerSpeed = 360;
     this.weaponType = 'BLASTER';
     this.damageMultiplier = 1.0;
     this.fireRateBonus = 0;
@@ -156,21 +210,42 @@ export class GameScene extends Phaser.Scene {
     this.activePowerUps.clear();
     this.enemyMines = [];
     this.isSlowMo = false;
+    this.currentMissionIndex = 0;
+    this.nextEventTime = 75;
 
-    // 1. Particle Systems
-    this.sparkEmitter = this.add.particles(0, 0, 'spark', {
-      speed: { min: 60, max: 240 },
-      scale: { start: 1.2, end: 0 },
+    // 1. Particle Systems (Red Weapon Identity)
+    this.redMuzzleEmitter = this.add.particles(0, 0, 'muzzle_flash_red', {
+      scale: { start: 1.2, end: 0.2 },
       alpha: { start: 1, end: 0 },
-      lifespan: 350,
+      lifespan: 120,
       blendMode: Phaser.BlendModes.ADD,
       emitting: false,
     });
-    this.sparkEmitter.setDepth(15);
+    this.redMuzzleEmitter.setDepth(14);
+
+    this.redSparkEmitter = this.add.particles(0, 0, 'spark_red', {
+      speed: { min: 80, max: 260 },
+      scale: { start: 1.4, end: 0 },
+      alpha: { start: 1, end: 0 },
+      lifespan: 320,
+      blendMode: Phaser.BlendModes.ADD,
+      emitting: false,
+    });
+    this.redSparkEmitter.setDepth(15);
+
+    this.cyanSparkEmitter = this.add.particles(0, 0, 'spark', {
+      speed: { min: 60, max: 220 },
+      scale: { start: 1.2, end: 0 },
+      alpha: { start: 1, end: 0 },
+      lifespan: 300,
+      blendMode: Phaser.BlendModes.ADD,
+      emitting: false,
+    });
+    this.cyanSparkEmitter.setDepth(15);
 
     this.explosionEmitter = this.add.particles(0, 0, 'smoke', {
       speed: { min: 40, max: 220 },
-      scale: { start: 0.8, end: 2.4 },
+      scale: { start: 0.8, end: 2.5 },
       alpha: { start: 0.8, end: 0 },
       lifespan: 650,
       blendMode: Phaser.BlendModes.SCREEN,
@@ -178,10 +253,10 @@ export class GameScene extends Phaser.Scene {
     });
     this.explosionEmitter.setDepth(15);
 
-    // 2. Physics Groups (Pre-allocated Object Pools)
+    // 2. Physics Groups (Reusable Pools)
     this.playerBullets = this.physics.add.group({
       classType: Phaser.Physics.Arcade.Image,
-      maxSize: 100,
+      maxSize: 120,
       runChildUpdate: false,
     });
 
@@ -202,26 +277,26 @@ export class GameScene extends Phaser.Scene {
     this.powerUps = this.physics.add.group();
     this.xpGems = this.physics.add.group();
 
-    // 3. Player Setup
+    // 3. Player Setup (Combat Starfighter)
     const skin = Storage.getSkin();
-    const skinKey = `player_ship_${skin.id}`;
+    const skinKey = `player_ship_${skin.id.toLowerCase()}`;
     const initialSkin = this.textures.exists(skinKey) ? skinKey : 'player_ship';
 
     this.player = this.physics.add.sprite(width / 2, height - 100, initialSkin);
     this.player.setCollideWorldBounds(true);
-    this.player.setDrag(850, 850);
+    this.player.setDrag(900, 900);
     this.player.setMaxVelocity(this.playerSpeed, this.playerSpeed);
     this.player.setSize(44, 48);
     this.player.setOffset(10, 12);
     this.player.setDepth(10);
 
-    // Player Engine Thruster Trail
+    // Player Engine Thruster
     this.playerEngineParticles = this.add.particles(0, 0, 'engine_glow', {
-      speedY: { min: 140, max: 280 },
+      speedY: { min: 160, max: 320 },
       speedX: { min: -25, max: 25 },
-      scale: { start: 1.2, end: 0.1 },
-      alpha: { start: 0.9, end: 0 },
-      lifespan: 220,
+      scale: { start: 1.3, end: 0.1 },
+      alpha: { start: 0.95, end: 0 },
+      lifespan: 240,
       blendMode: Phaser.BlendModes.ADD,
       follow: this.player,
       followOffset: { x: 0, y: 32 },
@@ -260,17 +335,17 @@ export class GameScene extends Phaser.Scene {
     }
 
     // 5. Collisions & Overlaps
-    // Bullets -> Enemies
+    // Player Bullets -> Enemies
     this.physics.add.overlap(this.playerBullets, this.enemies, (bullet, enemy) => {
       this.handleBulletEnemyCollision(bullet as Phaser.Physics.Arcade.Image, enemy as Phaser.Physics.Arcade.Sprite);
     });
 
-    // Bullets -> Asteroids
+    // Player Bullets -> Asteroids
     this.physics.add.overlap(this.playerBullets, this.asteroids, (bullet, asteroid) => {
       this.handleBulletAsteroidCollision(bullet as Phaser.Physics.Arcade.Image, asteroid as Phaser.Physics.Arcade.Sprite);
     });
 
-    // Bullets -> Boss
+    // Player Bullets -> Boss
     this.physics.add.overlap(this.playerBullets, this.boss ? [this.boss] : [], (bullet, boss) => {
       this.handleBulletBossCollision(bullet as Phaser.Physics.Arcade.Image, boss as Phaser.Physics.Arcade.Sprite);
     });
@@ -305,7 +380,7 @@ export class GameScene extends Phaser.Scene {
       this.collectXpGem(gem as Phaser.Physics.Arcade.Sprite);
     });
 
-    // 6. External Events & Bus Listeners
+    // 6. External Event Listeners
     EventBus.on('input:mobileMove', (dir: { x: number; y: number }) => {
       this.mobileInput.x = dir.x;
       this.mobileInput.y = dir.y;
@@ -322,7 +397,7 @@ export class GameScene extends Phaser.Scene {
     });
 
     EventBus.on('player:skinChanged', (newSkinId: string) => {
-      const key = `player_ship_${newSkinId}`;
+      const key = `player_ship_${newSkinId.toLowerCase()}`;
       if (this.textures.exists(key) && this.player && this.player.active) {
         this.player.setTexture(key);
       }
@@ -331,8 +406,8 @@ export class GameScene extends Phaser.Scene {
     // 7. Responsive Window Resize Handler
     this.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
       if (this.player && this.player.active) {
-        this.player.x = Phaser.Math.Clamp(this.player.x, 30, gameSize.width - 30);
-        this.player.y = Phaser.Math.Clamp(this.player.y, 40, gameSize.height - 40);
+        this.player.x = Phaser.Math.Clamp(this.player.x, 35, gameSize.width - 35);
+        this.player.y = Phaser.Math.Clamp(this.player.y, 45, gameSize.height - 45);
       }
     });
 
@@ -349,6 +424,15 @@ export class GameScene extends Phaser.Scene {
     this.survivalTime += dt;
     this.updateProgressiveSpeed();
 
+    // Check time-based missions
+    this.checkTimeMissions();
+
+    // Check cinematic events (Warp Drive every ~90s)
+    if (this.survivalTime >= this.nextEventTime) {
+      this.nextEventTime += 95;
+      this.triggerCinematicWarp();
+    }
+
     // 2. Kill Combo Decay
     if (this.combo > 0) {
       this.comboTimer -= dt;
@@ -357,7 +441,7 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    // 3. Player Movement
+    // 3. Player Movement (Smooth Acceleration & Deceleration)
     let vx = 0;
     let vy = 0;
 
@@ -379,7 +463,7 @@ export class GameScene extends Phaser.Scene {
 
     // Banking tilt animation
     const targetRotation = Phaser.Math.Clamp(vx, -1, 1) * 0.18;
-    this.player.rotation = Phaser.Math.Linear(this.player.rotation, targetRotation, 0.12);
+    this.player.rotation = Phaser.Math.Linear(this.player.rotation, targetRotation, 0.14);
 
     // Parallax background drift
     this.game.events.emit('background:setDrift', vx);
@@ -390,10 +474,10 @@ export class GameScene extends Phaser.Scene {
       this.shieldSprite.rotation += dt * 1.5;
     }
 
-    // 4. Shooting
+    // 4. Shooting (Signature Bright Neon Red Lasers)
     const isShooting = (this.keySpace && this.keySpace.isDown) || this.mobileInput.shoot;
     const hasRapid = this.activePowerUps.has('RAPID_FIRE');
-    const calculatedFireRate = Math.max(50, (hasRapid ? 70 : this.baseFireRate) - this.fireRateBonus);
+    const calculatedFireRate = Math.max(45, (hasRapid ? 65 : this.baseFireRate) - this.fireRateBonus);
 
     if (isShooting && time > this.lastFiredTime + calculatedFireRate) {
       this.firePlayerWeapon();
@@ -403,7 +487,7 @@ export class GameScene extends Phaser.Scene {
     // 5. Magnet Sensor - Pull XP and PowerUps
     this.updateMagnetPull(dt);
 
-    // 6. Slow Motion Power-Up Check
+    // 6. Slow Motion Check
     if (this.isSlowMo && time > this.slowMoEndTime) {
       this.isSlowMo = false;
     }
@@ -424,27 +508,30 @@ export class GameScene extends Phaser.Scene {
     this.updatePowerUps(time);
 
     // 10. Throttled Stats Emission (~10Hz)
-    if (time - this.lastStatsEmitTime > 90) {
+    if (time - this.lastStatsEmitTime > 85) {
       this.lastStatsEmitTime = time;
       this.emitStats();
     }
   }
 
   // ==========================================
-  // PROGRESSIVE SPEED & FLIGHT FEEL
+  // PROGRESSIVE SPEED MODEL
   // ==========================================
   private updateProgressiveSpeed(): void {
-    // 0-30s: 1.0x (340)
-    // 30-90s: up to 1.15x (390)
-    // 90-180s: up to 1.3x (440)
-    // 180s+: Overdrive 1.45x (490)
+    // 0-30s: 360 px/s (1.0x)
+    // 30-60s: up to 410 px/s (1.14x)
+    // 60-120s: up to 470 px/s (1.30x)
+    // 120-180s: up to 530 px/s (1.47x)
+    // 180s+: 580 px/s (1.61x OVERDRIVE)
     let speedMult = 1.0;
     if (this.survivalTime > 180) {
-      speedMult = 1.45;
-    } else if (this.survivalTime > 90) {
-      speedMult = 1.15 + ((this.survivalTime - 90) / 90) * 0.15;
+      speedMult = 1.61;
+    } else if (this.survivalTime > 120) {
+      speedMult = 1.47 + ((this.survivalTime - 120) / 60) * 0.14;
+    } else if (this.survivalTime > 60) {
+      speedMult = 1.30 + ((this.survivalTime - 60) / 60) * 0.17;
     } else if (this.survivalTime > 30) {
-      speedMult = 1.0 + ((this.survivalTime - 30) / 60) * 0.15;
+      speedMult = 1.0 + ((this.survivalTime - 30) / 30) * 0.14;
     }
 
     this.playerSpeed = this.basePlayerSpeed * speedMult;
@@ -452,22 +539,32 @@ export class GameScene extends Phaser.Scene {
     this.game.events.emit('background:setSpeedMultiplier', speedMult);
   }
 
+  private triggerCinematicWarp(): void {
+    this.game.events.emit('background:triggerWarp', 4000);
+    this.showFloatingText('WARP DRIVE ENGAGED', this.scale.width / 2, this.scale.height / 3, '#00f0ff', '26px');
+    this.cameras.main.shake(300, 0.008);
+  }
+
   // ==========================================
-  // WEAPONS & FIRING (FIXED BULLET POOLING)
+  // SIGNATURE BRIGHT NEON RED WEAPONS
   // ==========================================
   private firePlayerWeapon(): void {
     const x = this.player.x;
-    const y = this.player.y - 22;
+    const y = this.player.y - 24;
 
     const hasDoubleDamage = this.activePowerUps.has('DOUBLE_DAMAGE');
-    const hasSpread = this.activePowerUps.has('SPREAD_SHOT') || this.weaponType === 'SPREAD';
+    const hasSpread = this.activePowerUps.has('SPREAD_SHOT') || this.weaponType === 'SPREAD_SHOT';
     const hasHyperbeam = this.activePowerUps.has('HYPERBEAM') || this.weaponType === 'HYPERBEAM';
-    const hasPlasma = this.activePowerUps.has('PLASMA_CANNON') || this.weaponType === 'PLASMA';
+    const hasPlasma = this.activePowerUps.has('PLASMA_CANNON') || this.weaponType === 'PLASMA_CANNON';
 
     const dmg = (hasDoubleDamage ? 2.5 : 1.0) * this.damageMultiplier;
 
+    // Trigger red muzzle flash at wingtips
+    this.redMuzzleEmitter.explode(1, x - 14, y);
+    this.redMuzzleEmitter.explode(1, x + 14, y);
+
     if (hasHyperbeam) {
-      // Continuous piercing beam
+      // Continuous Blinding Crimson Hyperbeam
       const beam = this.playerBullets.get(x, y, 'laser_hyperbeam') as Phaser.Physics.Arcade.Image;
       if (beam) {
         beam.body.reset(x, y);
@@ -475,26 +572,26 @@ export class GameScene extends Phaser.Scene {
         beam.setActive(true).setVisible(true);
         beam.setData('damage', 5.0 * dmg);
         beam.setData('pierce', 99);
-        beam.setVelocity(0, -950);
+        beam.setVelocity(0, -980);
       }
       SoundEffects.playHyperbeam();
       this.cameras.main.shake(40, 0.003);
     } else if (hasPlasma) {
-      // High-damage explosive plasma orb
+      // Thermonuclear Red Plasma Orb
       const orb = this.playerBullets.get(x, y, 'laser_plasma') as Phaser.Physics.Arcade.Image;
       if (orb) {
         orb.body.reset(x, y);
         orb.body.enable = true;
         orb.setActive(true).setVisible(true);
-        orb.setData('damage', 4.0 * dmg);
+        orb.setData('damage', 4.5 * dmg);
         orb.setData('pierce', 1);
         orb.setData('splash', true);
-        orb.setVelocity(0, -700);
+        orb.setVelocity(0, -720);
       }
       SoundEffects.playPlasma();
       this.cameras.main.shake(45, 0.003);
     } else if (hasSpread) {
-      // 5-way spread fan
+      // 5-way Blazing Crimson Spread
       const angles = [-24, -12, 0, 12, 24];
       angles.forEach((deg) => {
         const rad = Phaser.Math.DegToRad(deg - 90);
@@ -503,15 +600,15 @@ export class GameScene extends Phaser.Scene {
           b.body.reset(x, y);
           b.body.enable = true;
           b.setActive(true).setVisible(true);
-          b.setData('damage', 1.2 * dmg);
+          b.setData('damage', 1.25 * dmg);
           b.setRotation(Phaser.Math.DegToRad(deg));
-          b.setVelocity(Math.cos(rad) * 680, Math.sin(rad) * 680);
+          b.setVelocity(Math.cos(rad) * 700, Math.sin(rad) * 700);
         }
       });
       SoundEffects.playLaser('spread');
       this.cameras.main.shake(35, 0.002);
-    } else if (this.weaponType === 'TRIPLE' || this.activePowerUps.has('TRIPLE_SHOT')) {
-      // 3-way spread
+    } else if (this.weaponType === 'TRIPLE_SHOT' || this.activePowerUps.has('TRIPLE_SHOT')) {
+      // 3-way Branching Crimson Lasers
       const angles = [-15, 0, 15];
       angles.forEach((deg) => {
         const rad = Phaser.Math.DegToRad(deg - 90);
@@ -520,37 +617,37 @@ export class GameScene extends Phaser.Scene {
           b.body.reset(x, y);
           b.body.enable = true;
           b.setActive(true).setVisible(true);
-          b.setData('damage', 1.3 * dmg);
+          b.setData('damage', 1.35 * dmg);
           b.setRotation(Phaser.Math.DegToRad(deg));
-          b.setVelocity(Math.cos(rad) * 650, Math.sin(rad) * 650);
+          b.setVelocity(Math.cos(rad) * 670, Math.sin(rad) * 670);
         }
       });
       SoundEffects.playLaser('triple');
       this.cameras.main.shake(30, 0.002);
-    } else if (this.weaponType === 'DOUBLE') {
-      // Dual heavy laser bolts
+    } else if (this.weaponType === 'DOUBLE_SHOT') {
+      // Dual Heavy Crimson Rods
       [-14, 14].forEach((offset) => {
-        const b = this.playerBullets.get(x + offset, y, 'laser_heavy') as Phaser.Physics.Arcade.Image;
+        const b = this.playerBullets.get(x + offset, y, 'laser_double') as Phaser.Physics.Arcade.Image;
         if (b) {
           b.body.reset(x + offset, y);
           b.body.enable = true;
           b.setActive(true).setVisible(true);
           b.setData('damage', 1.5 * dmg);
-          b.setVelocity(0, -700);
+          b.setVelocity(0, -720);
         }
       });
       SoundEffects.playLaser('heavy');
       this.cameras.main.shake(30, 0.001);
     } else {
-      // Standard Twin Blaster
+      // Standard Bright Neon Red Energy Blaster
       [-10, 10].forEach((offset) => {
-        const b = this.playerBullets.get(x + offset, y, 'laser_player') as Phaser.Physics.Arcade.Image;
+        const b = this.playerBullets.get(x + offset, y, 'laser_blaster') as Phaser.Physics.Arcade.Image;
         if (b) {
           b.body.reset(x + offset, y);
           b.body.enable = true;
           b.setActive(true).setVisible(true);
           b.setData('damage', 1.0 * dmg);
-          b.setVelocity(0, -680);
+          b.setVelocity(0, -700);
         }
       });
       SoundEffects.playLaser('normal');
@@ -592,7 +689,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ==========================================
-  // LEVEL PROGRESSION (7 LEVELS)
+  // LEVEL & WAVE PROGRESSION (7 LEVELS)
   // ==========================================
   private startLevel(levelNum: number): void {
     this.currentLevel = levelNum;
@@ -602,34 +699,29 @@ export class GameScene extends Phaser.Scene {
     }
     this.waveInProgress = true;
 
-    // Inform BackgroundScene to transition nebula colors & speed
     this.game.events.emit('background:setLevel', levelNum);
     EventBus.emit('wave:start', levelNum);
 
     const levelTitle = this.levelNames[levelNum - 1] || `SECTOR ${levelNum}`;
-    this.showLevelBanner(`LEVEL ${levelNum}: ${levelTitle}`);
+    this.showLevelBanner(`LEVEL ${levelNum} — ${levelTitle}`);
 
     if (levelNum === 4) {
-      // Level 4 Boss: Void Destroyer
-      this.triggerBossEncounter('boss_void_destroyer', 3200);
+      this.triggerBossEncounter('boss_void_destroyer', 3500);
       return;
     } else if (levelNum === 6) {
-      // Level 6 Boss: Nebula Queen
-      this.triggerBossEncounter('boss_nebula_queen', 4800);
+      this.triggerBossEncounter('boss_nebula_queen', 5200);
       return;
     } else if (levelNum === 7) {
-      // Level 7: Endgame Singularities -> Boss 3 or Boss 4
       this.startEndgameWave();
       return;
     }
 
-    // Standard wave count
-    const enemyCount = 14 + levelNum * 6;
+    const enemyCount = 15 + levelNum * 6;
     this.waveEnemiesRemaining = enemyCount;
 
     if (this.waveSpawnTimer) this.waveSpawnTimer.destroy();
 
-    const spawnInterval = Math.max(550, 1400 - levelNum * 110);
+    const spawnInterval = Math.max(500, 1350 - levelNum * 110);
 
     this.waveSpawnTimer = this.time.addEvent({
       delay: spawnInterval,
@@ -645,21 +737,20 @@ export class GameScene extends Phaser.Scene {
   }
 
   private startEndgameWave(): void {
-    this.waveEnemiesRemaining = 40;
+    this.waveEnemiesRemaining = 45;
     if (this.waveSpawnTimer) this.waveSpawnTimer.destroy();
 
     let spawned = 0;
     this.waveSpawnTimer = this.time.addEvent({
-      delay: 600,
+      delay: 580,
       callback: () => {
         if (!this.waveInProgress || this.boss) return;
         this.spawnLevelEnemy();
         if (Math.random() < 0.5) this.spawnAsteroid();
         spawned++;
         if (spawned >= 25 && !this.boss) {
-          // Trigger final boss encounter
           const finalBoss = Math.random() < 0.5 ? 'boss_star_eater' : 'boss_galactic_core';
-          this.triggerBossEncounter(finalBoss, 6500);
+          this.triggerBossEncounter(finalBoss, 7000);
         }
       },
       loop: true,
@@ -672,7 +763,7 @@ export class GameScene extends Phaser.Scene {
       fontFamily: 'Orbitron, sans-serif',
       fontSize: '28px',
       fontStyle: 'bold',
-      color: '#00f0ff',
+      color: '#ff0055',
       stroke: '#000000',
       strokeThickness: 5,
       align: 'center',
@@ -692,7 +783,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ==========================================
-  // ENEMY AI ARCHETYPES (6 TYPES)
+  // SMART ENEMY AI (6 ARCHETYPES)
   // ==========================================
   private spawnLevelEnemy(): void {
     const width = this.scale.width;
@@ -718,7 +809,7 @@ export class GameScene extends Phaser.Scene {
       else if (roll < 0.75) type = 'scout';
       else type = 'shooter';
     } else {
-      type = roll < 0.8 ? 'scout' : 'interceptor';
+      type = roll < 0.75 ? 'scout' : 'interceptor';
     }
 
     this.createEnemy(type, x, y);
@@ -737,49 +828,49 @@ export class GameScene extends Phaser.Scene {
         enemy.setData('hp', Math.floor(1 * diff));
         enemy.setData('score', 120);
         enemy.setData('xp', 15);
-        enemy.setVelocity(0, 170 * diff);
+        enemy.setVelocity(0, 180 * diff);
         enemy.setData('sineOffset', Math.random() * 10);
         break;
 
       case 'interceptor':
         enemy.setData('hp', Math.floor(2 * diff));
-        enemy.setData('score', 180);
+        enemy.setData('score', 190);
         enemy.setData('xp', 25);
-        enemy.setVelocity(0, 240 * diff);
+        enemy.setVelocity(0, 250 * diff);
         enemy.setData('diveTimer', 0);
         break;
 
       case 'tank':
-        enemy.setData('hp', Math.floor(8 * diff));
-        enemy.setData('score', 450);
-        enemy.setData('xp', 60);
+        enemy.setData('hp', Math.floor(9 * diff));
+        enemy.setData('score', 480);
+        enemy.setData('xp', 65);
         enemy.setVelocity(0, 75 * diff);
         enemy.setData('shootTimer', 0);
         break;
 
       case 'shooter':
         enemy.setData('hp', Math.floor(4 * diff));
-        enemy.setData('score', 300);
+        enemy.setData('score', 320);
         enemy.setData('xp', 40);
-        enemy.setVelocity(0, 110 * diff);
+        enemy.setVelocity(0, 115 * diff);
         enemy.setData('targetY', Phaser.Math.Between(90, 240));
         enemy.setData('shootTimer', 0);
         break;
 
       case 'bomber':
         enemy.setData('hp', Math.floor(5 * diff));
-        enemy.setData('score', 380);
-        enemy.setData('xp', 50);
+        enemy.setData('score', 400);
+        enemy.setData('xp', 55);
         enemy.setVelocity(Phaser.Math.Between(-50, 50), 95 * diff);
         enemy.setData('mineTimer', 0);
         break;
 
       case 'elite':
-        enemy.setData('hp', Math.floor(12 * diff));
+        enemy.setData('hp', Math.floor(13 * diff));
         enemy.setData('shield', Math.floor(6 * diff));
-        enemy.setData('score', 800);
-        enemy.setData('xp', 100);
-        enemy.setVelocity(100 * (Math.random() < 0.5 ? 1 : -1), 80 * diff);
+        enemy.setData('score', 850);
+        enemy.setData('xp', 110);
+        enemy.setVelocity(110 * (Math.random() < 0.5 ? 1 : -1), 85 * diff);
         enemy.setData('shootTimer', 0);
         break;
     }
@@ -801,11 +892,10 @@ export class GameScene extends Phaser.Scene {
         const offset = e.getData('sineOffset') || 0;
         e.x += Math.sin(time * 0.004 + offset) * 2.2 * slowFactor;
       } else if (type === 'interceptor') {
-        // Homing dive towards player
         let diveTimer = (e.getData('diveTimer') || 0) + dt;
         if (diveTimer < 1.4 && this.player && this.player.active) {
           const dx = this.player.x - e.x;
-          e.setVelocityX(Phaser.Math.Clamp(dx * 1.5, -160, 160) * slowFactor);
+          e.setVelocityX(Phaser.Math.Clamp(dx * 1.6, -170, 170) * slowFactor);
         }
         e.setData('diveTimer', diveTimer);
       } else if (type === 'shooter') {
@@ -816,38 +906,38 @@ export class GameScene extends Phaser.Scene {
         }
 
         let shootTimer = (e.getData('shootTimer') || 0) + dt * slowFactor;
-        if (shootTimer > 1.7) {
+        if (shootTimer > 1.6) {
           shootTimer = 0;
           const angle = Phaser.Math.Angle.Between(e.x, e.y, this.player.x, this.player.y);
-          this.fireEnemyBullet(e.x, e.y + 18, Math.cos(angle) * 310 * slowFactor, Math.sin(angle) * 310 * slowFactor);
+          this.fireEnemyBullet(e.x, e.y + 18, Math.cos(angle) * 320 * slowFactor, Math.sin(angle) * 320 * slowFactor);
         }
         e.setData('shootTimer', shootTimer);
       } else if (type === 'tank') {
         let shootTimer = (e.getData('shootTimer') || 0) + dt * slowFactor;
-        if (shootTimer > 2.2) {
+        if (shootTimer > 2.0) {
           shootTimer = 0;
-          this.fireEnemyBullet(e.x - 20, e.y + 25, -35 * slowFactor, 260 * slowFactor);
-          this.fireEnemyBullet(e.x + 20, e.y + 25, 35 * slowFactor, 260 * slowFactor);
+          this.fireEnemyBullet(e.x - 20, e.y + 25, -35 * slowFactor, 270 * slowFactor);
+          this.fireEnemyBullet(e.x + 20, e.y + 25, 35 * slowFactor, 270 * slowFactor);
         }
         e.setData('shootTimer', shootTimer);
       } else if (type === 'bomber') {
         let mineTimer = (e.getData('mineTimer') || 0) + dt * slowFactor;
-        if (mineTimer > 2.6) {
+        if (mineTimer > 2.4) {
           mineTimer = 0;
           this.dropEnemyMine(e.x, e.y + 20);
         }
         e.setData('mineTimer', mineTimer);
       } else if (type === 'elite') {
-        if (e.x < 60) e.setVelocityX(110 * slowFactor);
-        if (e.x > width - 60) e.setVelocityX(-110 * slowFactor);
+        if (e.x < 60) e.setVelocityX(120 * slowFactor);
+        if (e.x > width - 60) e.setVelocityX(-120 * slowFactor);
 
         let shootTimer = (e.getData('shootTimer') || 0) + dt * slowFactor;
-        if (shootTimer > 1.9) {
+        if (shootTimer > 1.8) {
           shootTimer = 0;
           const angleToPlayer = Phaser.Math.Angle.Between(e.x, e.y, this.player.x, this.player.y);
           [-0.22, 0, 0.22].forEach((offset) => {
             const rad = angleToPlayer + offset;
-            this.fireEnemyBullet(e.x, e.y + 25, Math.cos(rad) * 300 * slowFactor, Math.sin(rad) * 300 * slowFactor);
+            this.fireEnemyBullet(e.x, e.y + 25, Math.cos(rad) * 310 * slowFactor, Math.sin(rad) * 310 * slowFactor);
           });
         }
         e.setData('shootTimer', shootTimer);
@@ -896,11 +986,8 @@ export class GameScene extends Phaser.Scene {
 
       m.timer += dt;
       m.sprite.rotation += dt * 3.5;
-
-      // Pulse alpha warning
       m.sprite.setAlpha(0.6 + Math.sin(m.timer * 8) * 0.4);
 
-      // Check proximity to player
       if (this.player && this.player.active) {
         const dist = Phaser.Math.Distance.Between(m.sprite.x, m.sprite.y, this.player.x, this.player.y);
         if (dist < 55) {
@@ -910,7 +997,6 @@ export class GameScene extends Phaser.Scene {
         }
       }
 
-      // Check lifetime or out of bounds
       if (m.timer > 6.0 || m.sprite.y > height + 40) {
         this.detonateMine(m, false);
         this.enemyMines.splice(i, 1);
@@ -925,7 +1011,7 @@ export class GameScene extends Phaser.Scene {
     const my = mine.sprite.y;
 
     this.explosionEmitter.explode(16, mx, my);
-    this.sparkEmitter.explode(18, mx, my);
+    this.redSparkEmitter.explode(18, mx, my);
     SoundEffects.playExplosion('small');
 
     if (hitPlayer) {
@@ -936,7 +1022,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ==========================================
-  // ASTEROIDS WITH SPLITTING MECHANIC
+  // ASTEROIDS WITH SPLITTING
   // ==========================================
   private spawnAsteroid(size: 'large' | 'medium' | 'small' = 'large', spawnX?: number, spawnY?: number): void {
     const width = this.scale.width;
@@ -973,7 +1059,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ==========================================
-  // 4 UNIQUE BOSS BATTLES
+  // 4 UNIQUE BOSS ENCOUNTERS
   // ==========================================
   private triggerBossEncounter(bossType: typeof this.bossType, maxHp: number): void {
     if (this.waveSpawnTimer) this.waveSpawnTimer.destroy();
@@ -1003,7 +1089,6 @@ export class GameScene extends Phaser.Scene {
     this.bossAttackTimer = 0;
     this.bossMovementDirection = 1;
 
-    // Dramatic Entrance Tween
     this.tweens.add({
       targets: this.boss,
       y: 140,
@@ -1025,7 +1110,6 @@ export class GameScene extends Phaser.Scene {
     const width = this.scale.width;
     const slowFactor = this.isSlowMo ? 0.6 : 1.0;
 
-    // Movement: Strafe left/right
     const moveSpeed = (this.bossPhase === 2 ? 110 : 80) * slowFactor;
     this.boss.x += this.bossMovementDirection * moveSpeed * dt;
 
@@ -1037,9 +1121,8 @@ export class GameScene extends Phaser.Scene {
       this.bossMovementDirection = -1;
     }
 
-    // Attacks
     this.bossAttackTimer += dt * slowFactor;
-    const attackInterval = this.bossPhase === 2 ? 1.2 : 1.8;
+    const attackInterval = this.bossPhase === 2 ? 1.1 : 1.7;
 
     if (this.bossAttackTimer > attackInterval) {
       this.bossAttackTimer = 0;
@@ -1053,7 +1136,6 @@ export class GameScene extends Phaser.Scene {
     const by = this.boss.y;
 
     if (this.bossType === 'boss_void_destroyer') {
-      // 5-way spread + railgun shot
       for (let i = -2; i <= 2; i++) {
         const rad = Phaser.Math.DegToRad(90 + i * 20);
         const b = this.bossBullets.get(bx, by + 40, 'boss_bullet') as Phaser.Physics.Arcade.Image;
@@ -1071,7 +1153,6 @@ export class GameScene extends Phaser.Scene {
       }
       SoundEffects.playEnemyLaser();
     } else if (this.bossType === 'boss_nebula_queen') {
-      // Spiral bullet storm
       const bulletCount = this.bossPhase === 2 ? 10 : 7;
       for (let i = 0; i < bulletCount; i++) {
         const angle = (time * 0.005) + (i * ((Math.PI * 2) / bulletCount));
@@ -1085,7 +1166,6 @@ export class GameScene extends Phaser.Scene {
       }
       SoundEffects.playEnemyLaser();
     } else if (this.bossType === 'boss_star_eater' || this.bossType === 'boss_galactic_core') {
-      // Sweeping hyper cluster
       for (let i = -3; i <= 3; i++) {
         const rad = Phaser.Math.DegToRad(90 + i * 16);
         const b = this.bossBullets.get(bx, by + 45, 'boss_bullet_heavy') as Phaser.Physics.Arcade.Image;
@@ -1118,7 +1198,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ==========================================
-  // COLLISIONS & DAMAGE
+  // COLLISIONS & DAMAGE (RED SPARK EFFECTS)
   // ==========================================
   private handleBulletEnemyCollision(bullet: Phaser.Physics.Arcade.Image, enemy: Phaser.Physics.Arcade.Sprite): void {
     if (!bullet.active || !enemy.active) return;
@@ -1144,16 +1224,17 @@ export class GameScene extends Phaser.Scene {
     if (shield > 0) {
       shield = Math.max(0, shield - damage);
       enemy.setData('shield', shield);
+      this.cyanSparkEmitter.explode(8, enemy.x, enemy.y);
       SoundEffects.playShieldAbsorb();
     } else {
       const currentHp = (enemy.getData('hp') || 1) - damage;
-      this.sparkEmitter.explode(6, enemy.x, enemy.y);
+      this.redSparkEmitter.explode(8, enemy.x, enemy.y);
 
       if (currentHp <= 0) {
         this.destroyEnemy(enemy);
       } else {
         enemy.setData('hp', currentHp);
-        enemy.setTintFill(0xffffff);
+        enemy.setTintFill(0xff3366);
         this.time.delayedCall(60, () => {
           if (enemy.active) enemy.clearTint();
         });
@@ -1171,13 +1252,13 @@ export class GameScene extends Phaser.Scene {
     bullet.body.enable = false;
 
     const hp = (asteroid.getData('hp') || 1) - damage;
-    this.sparkEmitter.explode(8, asteroid.x, asteroid.y);
+    this.redSparkEmitter.explode(8, asteroid.x, asteroid.y);
 
     if (hp <= 0) {
       this.destroyAsteroid(asteroid);
     } else {
       asteroid.setData('hp', hp);
-      asteroid.setTintFill(0x00f0ff);
+      asteroid.setTintFill(0xff0055);
       this.time.delayedCall(60, () => {
         if (asteroid.active) asteroid.clearTint();
       });
@@ -1194,9 +1275,8 @@ export class GameScene extends Phaser.Scene {
     bullet.body.enable = false;
 
     this.bossHp -= damage * 20;
-    this.sparkEmitter.explode(10, bullet.x, bullet.y);
+    this.redSparkEmitter.explode(12, bullet.x, bullet.y);
 
-    // Phase transition at 50% HP
     if (this.bossHp < this.bossMaxHp * 0.5 && this.bossPhase === 1) {
       this.bossPhase = 2;
       this.cameras.main.flash(300, 255, 0, 85);
@@ -1230,7 +1310,7 @@ export class GameScene extends Phaser.Scene {
     if (!this.isAlive || this.isInvulnerable) return;
 
     this.damagePlayer(dmg);
-    this.sparkEmitter.explode(16, this.player.x, this.player.y);
+    this.redSparkEmitter.explode(16, this.player.x, this.player.y);
   }
 
   private damagePlayer(amount: number): void {
@@ -1257,7 +1337,6 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    // Invulnerability flashing
     this.isInvulnerable = true;
     this.tweens.add({
       targets: this.player,
@@ -1281,7 +1360,6 @@ export class GameScene extends Phaser.Scene {
     this.combo++;
     this.comboTimer = this.maxComboTimer;
 
-    // Multiplier brackets: 1x -> 2x -> 3x -> 5x -> 8x -> 10x -> 15x -> 20x
     if (this.combo >= 20) this.comboMultiplier = 20;
     else if (this.combo >= 15) this.comboMultiplier = 15;
     else if (this.combo >= 10) this.comboMultiplier = 10;
@@ -1296,10 +1374,11 @@ export class GameScene extends Phaser.Scene {
       Storage.setBestCombo(this.bestCombo);
     }
 
-    // Milestone celebrations
+    this.updateMissionProgress('combo', this.combo);
+
     if ([3, 5, 8, 10, 15, 20].includes(this.combo)) {
       SoundEffects.playCombo(this.combo);
-      this.showFloatingText(`COMBO x${this.comboMultiplier}!`, x, y - 20, '#facc15', '22px');
+      this.showFloatingText(`COMBO x${this.comboMultiplier}!`, x, y - 20, '#ff0055', '22px');
       this.cameras.main.shake(60, 0.002);
     }
   }
@@ -1308,6 +1387,67 @@ export class GameScene extends Phaser.Scene {
     this.combo = 0;
     this.comboMultiplier = 1;
     this.comboTimer = 0;
+  }
+
+  // ==========================================
+  // MISSIONS SYSTEM
+  // ==========================================
+  private updateMissionProgress(type: 'kill' | 'combo' | 'time' | 'powerup' | 'boss', value: number): void {
+    if (this.currentMissionIndex >= this.missions.length) return;
+    const mission = this.missions[this.currentMissionIndex];
+    if (mission.completed) return;
+
+    if (mission.id === 'm1' && type === 'kill') {
+      mission.progress += value;
+    } else if (mission.id === 'm2' && type === 'combo') {
+      mission.progress = Math.max(mission.progress, value);
+    } else if (mission.id === 'm3' && type === 'time') {
+      mission.progress = Math.floor(value);
+    } else if (mission.id === 'm4' && type === 'powerup') {
+      mission.progress += value;
+    } else if (mission.id === 'm5' && type === 'boss') {
+      mission.progress += value;
+    }
+
+    if (mission.progress >= mission.target) {
+      this.completeMission(mission);
+    }
+  }
+
+  private completeMission(mission: Mission): void {
+    mission.completed = true;
+    mission.progress = mission.target;
+
+    SoundEffects.playHighScore();
+    this.showFloatingText(`MISSION COMPLETED: ${mission.title}!`, this.scale.width / 2, this.scale.height / 2.5, '#22c55e', '22px');
+
+    if (mission.id === 'm1') {
+      this.addScore(1500, this.player.x, this.player.y);
+      this.playerXp += 60;
+    } else if (mission.id === 'm2') {
+      this.addScore(2500, this.player.x, this.player.y);
+      this.playerXp += 90;
+    } else if (mission.id === 'm3') {
+      this.addScore(3500, this.player.x, this.player.y);
+      this.playerXp += 120;
+    } else if (mission.id === 'm4') {
+      this.addScore(3000, this.player.x, this.player.y);
+      this.playerXp += 100;
+    } else if (mission.id === 'm5') {
+      this.addScore(8000, this.player.x, this.player.y);
+      this.playerXp += 300;
+    }
+
+    if (this.playerXp >= this.nextLevelXp) {
+      this.triggerLevelUp();
+    }
+
+    this.currentMissionIndex++;
+    this.emitStats(true);
+  }
+
+  private checkTimeMissions(): void {
+    this.updateMissionProgress('time', this.survivalTime);
   }
 
   // ==========================================
@@ -1321,15 +1461,14 @@ export class GameScene extends Phaser.Scene {
 
     this.incrementCombo(ex, ey);
     this.addScore(baseScore * this.comboMultiplier, ex, ey);
+    this.updateMissionProgress('kill', 1);
 
     this.explosionEmitter.explode(14, ex, ey);
-    this.sparkEmitter.explode(18, ex, ey);
+    this.redSparkEmitter.explode(18, ex, ey);
     SoundEffects.playExplosion('small');
 
-    // Spawn XP Gem
     this.spawnXpGem(ex, ey, xpVal);
 
-    // Chance to drop power-up (15% standard, 40% elite/reaper)
     const isElite = ['elite', 'bomber', 'reaper'].includes(enemy.getData('type'));
     if (Math.random() < (isElite ? 0.4 : 0.15)) {
       this.spawnPowerUp(ex, ey);
@@ -1352,7 +1491,6 @@ export class GameScene extends Phaser.Scene {
     this.explosionEmitter.explode(size === 'large' ? 18 : 10, ax, ay);
     SoundEffects.playAsteroidBreak();
 
-    // Splitting Mechanic
     if (size === 'large') {
       this.spawnAsteroid('medium', ax - 20, ay);
       this.spawnAsteroid('medium', ax + 20, ay);
@@ -1375,19 +1513,19 @@ export class GameScene extends Phaser.Scene {
     const by = this.boss.y;
 
     this.addScore(8000 * this.comboMultiplier, bx, by);
+    this.updateMissionProgress('boss', 1);
+
     SoundEffects.playBossExplosion();
     this.cameras.main.shake(800, 0.025);
-    this.cameras.main.flash(600, 255, 255, 255);
+    this.cameras.main.flash(600, 255, 0, 85);
 
-    // Cascading explosions across hull
     for (let i = 0; i < 8; i++) {
       this.time.delayedCall(i * 120, () => {
         this.explosionEmitter.explode(24, bx + Phaser.Math.Between(-80, 80), by + Phaser.Math.Between(-50, 50));
-        this.sparkEmitter.explode(28, bx + Phaser.Math.Between(-80, 80), by + Phaser.Math.Between(-50, 50));
+        this.redSparkEmitter.explode(28, bx + Phaser.Math.Between(-80, 80), by + Phaser.Math.Between(-50, 50));
       });
     }
 
-    // Guaranteed big rewards
     this.spawnPowerUp(bx - 40, by);
     this.spawnPowerUp(bx + 40, by);
     this.spawnXpGem(bx, by, 300);
@@ -1396,7 +1534,6 @@ export class GameScene extends Phaser.Scene {
     this.boss = null;
     this.emitBossInfo();
 
-    // Advance level after victory fanfare
     this.time.delayedCall(2800, () => {
       this.startLevel(this.currentLevel + 1);
     });
@@ -1443,9 +1580,8 @@ export class GameScene extends Phaser.Scene {
     this.nextLevelXp = Math.floor(this.nextLevelXp * 1.45);
 
     SoundEffects.playLevelUp();
-    this.cameras.main.flash(300, 168, 85, 247);
+    this.cameras.main.flash(300, 255, 0, 85);
 
-    // Prepare 3 upgrade cards
     const options = this.generateUpgradeOptions();
     this.isLevelUpPaused = true;
     this.physics.pause();
@@ -1459,23 +1595,23 @@ export class GameScene extends Phaser.Scene {
       {
         id: 'weapon_spread',
         title: 'Spread Cannon',
-        description: 'Fires wide 5-way energy projectiles across the screen.',
+        description: 'Fires wide 5-way neon red plasma bolts across the screen.',
         category: 'weapon',
         rarity: 'rare',
-        weaponType: 'SPREAD',
+        weaponType: 'SPREAD_SHOT',
       },
       {
         id: 'weapon_plasma',
         title: 'Plasma Mortar',
-        description: 'Heavy piercing plasma orbs with explosive splash impact.',
+        description: 'Thermonuclear crimson plasma orbs with explosive splash impact.',
         category: 'weapon',
         rarity: 'epic',
-        weaponType: 'PLASMA',
+        weaponType: 'PLASMA_CANNON',
       },
       {
         id: 'weapon_hyperbeam',
         title: 'Hyperbeam Core',
-        description: 'Discharges hyper-dense laser slicing through all targets.',
+        description: 'Blinding continuous ruby laser slicing through all targets.',
         category: 'weapon',
         rarity: 'legendary',
         weaponType: 'HYPERBEAM',
@@ -1490,7 +1626,7 @@ export class GameScene extends Phaser.Scene {
       {
         id: 'shield_boost',
         title: 'Forcefield Generator',
-        description: 'Increases Maximum Shield by +25 and restores shield to 100%.',
+        description: 'Increases Maximum Shield by +25 and restores barrier to 100%.',
         category: 'shield',
         rarity: 'common',
       },
@@ -1539,7 +1675,7 @@ export class GameScene extends Phaser.Scene {
       this.magnetRadius += 80;
     }
 
-    this.showFloatingText(`UPGRADE: ${option.title}`, this.player.x, this.player.y - 25, '#22c55e', '18px');
+    this.showFloatingText(`UPGRADE: ${option.title}`, this.player.x, this.player.y - 25, '#ff0055', '18px');
     this.emitStats(true);
   }
 
@@ -1551,7 +1687,6 @@ export class GameScene extends Phaser.Scene {
     const px = this.player.x;
     const py = this.player.y;
 
-    // Pull XP gems
     this.xpGems.children.each((child) => {
       const g = child as Phaser.Physics.Arcade.Sprite;
       if (!g.active) return null;
@@ -1565,7 +1700,6 @@ export class GameScene extends Phaser.Scene {
       return null;
     });
 
-    // Pull Power-Ups
     this.powerUps.children.each((child) => {
       const p = child as Phaser.Physics.Arcade.Sprite;
       if (!p.active) return null;
@@ -1602,7 +1736,7 @@ export class GameScene extends Phaser.Scene {
       SPREAD_SHOT: 'powerup_spread',
       PLASMA_CANNON: 'powerup_plasma',
       HYPERBEAM: 'powerup_hyperbeam',
-      SLOW_MO: 'powerup_slowmo',
+      SLOW_MO: 'powerup_slow',
       NUKE: 'powerup_nuke',
       HEALTH: 'powerup_health',
     };
@@ -1628,7 +1762,8 @@ export class GameScene extends Phaser.Scene {
     powerUp.destroy();
 
     SoundEffects.playPowerUp();
-    this.sparkEmitter.explode(14, this.player.x, this.player.y);
+    this.redSparkEmitter.explode(14, this.player.x, this.player.y);
+    this.updateMissionProgress('powerup', 1);
 
     const now = this.time.now;
 
@@ -1651,22 +1786,22 @@ export class GameScene extends Phaser.Scene {
         break;
 
       case 'DOUBLE_DAMAGE':
-        this.showFloatingText('DAMAGE OVERDRIVE', this.player.x, this.player.y, '#ec4899');
+        this.showFloatingText('DAMAGE OVERDRIVE', this.player.x, this.player.y, '#ff0055');
         this.activePowerUps.set('DOUBLE_DAMAGE', { type, endTime: now + 12000, duration: 12000 });
         break;
 
       case 'SPREAD_SHOT':
-        this.showFloatingText('SPREAD CANNON', this.player.x, this.player.y, '#fb923c');
+        this.showFloatingText('SPREAD CANNON', this.player.x, this.player.y, '#ff0055');
         this.activePowerUps.set('SPREAD_SHOT', { type, endTime: now + 14000, duration: 14000 });
         break;
 
       case 'PLASMA_CANNON':
-        this.showFloatingText('PLASMA CANNON', this.player.x, this.player.y, '#00f0ff');
+        this.showFloatingText('PLASMA CANNON', this.player.x, this.player.y, '#ff0055');
         this.activePowerUps.set('PLASMA_CANNON', { type, endTime: now + 12000, duration: 12000 });
         break;
 
       case 'HYPERBEAM':
-        this.showFloatingText('HYPERBEAM ACTIVATED', this.player.x, this.player.y, '#38bdf8');
+        this.showFloatingText('HYPERBEAM CORE', this.player.x, this.player.y, '#ff0033');
         this.activePowerUps.set('HYPERBEAM', { type, endTime: now + 10000, duration: 10000 });
         break;
 
@@ -1687,13 +1822,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   private triggerNuke(): void {
-    this.cameras.main.flash(600, 255, 255, 255);
+    this.cameras.main.flash(600, 255, 0, 85);
     this.cameras.main.shake(600, 0.03);
     SoundEffects.playBossExplosion();
 
-    this.showFloatingText('ELECTROMAGNETIC NUKE!', this.scale.width / 2, this.scale.height / 2, '#f43f5e', '28px');
+    this.showFloatingText('ELECTROMAGNETIC NUKE!', this.scale.width / 2, this.scale.height / 2, '#ff0055', '28px');
 
-    // Destroy all regular enemies on screen
     this.enemies.children.each((child) => {
       const e = child as Phaser.Physics.Arcade.Sprite;
       if (e.active) {
@@ -1703,7 +1837,6 @@ export class GameScene extends Phaser.Scene {
       return null;
     });
 
-    // Destroy all asteroids on screen
     this.asteroids.children.each((child) => {
       const a = child as Phaser.Physics.Arcade.Sprite;
       if (a.active) {
@@ -1728,11 +1861,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ==========================================
-  // SCORE & FLOATING UI TEXT
+  // SCORE & FLOATING TEXT
   // ==========================================
   private addScore(amount: number, x: number, y: number): void {
     this.score += amount;
-    this.showFloatingText(`+${amount}`, x, y, '#00f0ff');
+    this.showFloatingText(`+${amount}`, x, y, '#ff0055');
   }
 
   private showFloatingText(
@@ -1743,7 +1876,7 @@ export class GameScene extends Phaser.Scene {
     size: string = '18px'
   ): void {
     const txt = this.add.text(x, y, text, {
-      fontFamily: 'Rajdhani, sans-serif',
+      fontFamily: 'Orbitron, sans-serif',
       fontSize: size,
       fontStyle: 'bold',
       color: color,
@@ -1773,7 +1906,7 @@ export class GameScene extends Phaser.Scene {
     SoundEffects.playGameOver();
 
     this.explosionEmitter.explode(35, this.player.x, this.player.y);
-    this.sparkEmitter.explode(45, this.player.x, this.player.y);
+    this.redSparkEmitter.explode(45, this.player.x, this.player.y);
     this.cameras.main.shake(500, 0.02);
 
     Storage.setBestSurvivalTime(this.survivalTime);
@@ -1796,6 +1929,10 @@ export class GameScene extends Phaser.Scene {
       maxDuration: p.duration / 1000,
     }));
 
+    const activeMission = this.currentMissionIndex < this.missions.length
+      ? this.missions[this.currentMissionIndex]
+      : undefined;
+
     const stats: Partial<PlayerStats> = {
       score: this.score,
       health: this.playerHealth,
@@ -1811,6 +1948,7 @@ export class GameScene extends Phaser.Scene {
       comboTimer: this.comboTimer,
       survivalTime: this.survivalTime,
       activeWeapon: this.weaponType,
+      activeMission,
       activePowerUps: powerUpsList,
     };
 

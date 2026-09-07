@@ -67,6 +67,7 @@ export interface PlayerStats {
   survivalTime: number; // in seconds
   activeWeapon: WeaponType;
   lives: number;
+  activeMission?: Mission;
   activePowerUps: {
     type: PowerUpType;
     duration: number;

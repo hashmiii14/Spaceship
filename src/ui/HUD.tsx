@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Heart, Trophy, Pause, Music, Zap, Flame, Crosshair, Award, Clock, AlertTriangle } from 'lucide-react';
+import { Shield, Heart, Trophy, Pause, Music, Zap, Flame, Crosshair, Award, Clock, AlertTriangle, Target, Radio } from 'lucide-react';
 import { PlayerStats, BossInfo, AudioTrack, PowerUpType } from '../types/game';
 import { SoundEffects } from '../audio/SoundEffects';
 
@@ -13,17 +13,17 @@ interface HUDProps {
 
 const POWERUP_ICONS: Record<PowerUpType, { label: string; color: string; icon: React.ReactNode }> = {
   SHIELD: { label: 'SHIELD', color: '#00f0ff', icon: <Shield className="w-3.5 h-3.5" /> },
-  RAPID_FIRE: { label: 'RAPID', color: '#facc15', icon: <Zap className="w-3.5 h-3.5" /> },
-  DOUBLE_DAMAGE: { label: 'OVERCHARGE', color: '#ec4899', icon: <Flame className="w-3.5 h-3.5" /> },
-  SPREAD_SHOT: { label: 'SPREAD', color: '#fb923c', icon: <Crosshair className="w-3.5 h-3.5" /> },
-  PLASMA_CANNON: { label: 'PLASMA', color: '#00f0ff', icon: <Zap className="w-3.5 h-3.5" /> },
-  HYPERBEAM: { label: 'HYPERBEAM', color: '#38bdf8', icon: <Flame className="w-3.5 h-3.5" /> },
+  RAPID_FIRE: { label: 'RAPID', color: '#ff0055', icon: <Zap className="w-3.5 h-3.5" /> },
+  DOUBLE_DAMAGE: { label: 'OVERCHARGE', color: '#ff0033', icon: <Flame className="w-3.5 h-3.5" /> },
+  SPREAD_SHOT: { label: 'SPREAD', color: '#f43f5e', icon: <Crosshair className="w-3.5 h-3.5" /> },
+  PLASMA_CANNON: { label: 'PLASMA', color: '#ff2a5f', icon: <Zap className="w-3.5 h-3.5" /> },
+  HYPERBEAM: { label: 'HYPERBEAM', color: '#ff0044', icon: <Flame className="w-3.5 h-3.5" /> },
   SLOW_MO: { label: 'CHRONO', color: '#818cf8', icon: <Clock className="w-3.5 h-3.5" /> },
-  NUKE: { label: 'NUKE', color: '#f43f5e', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
+  NUKE: { label: 'NUKE', color: '#ef4444', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
   HEALTH: { label: 'REPAIR', color: '#22c55e', icon: <Heart className="w-3.5 h-3.5" /> },
   SCORE_BOOST: { label: '2X SCORE', color: '#a855f7', icon: <Award className="w-3.5 h-3.5" /> },
-  TRIPLE_SHOT: { label: 'TRIPLE', color: '#fb923c', icon: <Crosshair className="w-3.5 h-3.5" /> },
-  DOUBLE_SHOT: { label: 'DOUBLE', color: '#ec4899', icon: <Flame className="w-3.5 h-3.5" /> },
+  TRIPLE_SHOT: { label: 'TRIPLE', color: '#ff5500', icon: <Crosshair className="w-3.5 h-3.5" /> },
+  DOUBLE_SHOT: { label: 'DOUBLE', color: '#ff0055', icon: <Flame className="w-3.5 h-3.5" /> },
   SLOW_MOTION: { label: 'CHRONO', color: '#818cf8', icon: <Clock className="w-3.5 h-3.5" /> },
 };
 
@@ -62,27 +62,26 @@ export const HUD: React.FC<HUDProps> = ({
 
       {/* Top Header Grid */}
       <div className="flex items-start justify-between w-full">
-        {/* Top Left: Score & Vitals */}
+        {/* Top Left: Score, Weapon Telemetry, Vitals & Tactical Mission */}
         <div className="flex flex-col gap-2 pointer-events-auto">
-          {/* Score Box */}
-          <div className="cyber-panel px-4 py-2 flex flex-col">
+          {/* Score & Red Weapon Status Box */}
+          <div className="cyber-panel-military px-4 py-2 flex flex-col w-52 sm:w-64 border-red-500/40">
             <div className="flex justify-between items-center">
-              <span className="text-[10px] sm:text-xs font-mono tracking-widest text-cyan-400 font-bold uppercase">
-                SCORE
+              <span className="text-[10px] sm:text-xs font-mono tracking-widest text-red-400 font-bold uppercase flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                COMBAT SCORE
               </span>
-              {stats.activeWeapon && (
-                <span className="text-[9px] font-mono tracking-wider text-purple-300 font-bold px-1.5 py-0.5 rounded bg-purple-950/60 border border-purple-500/40 uppercase">
-                  {stats.activeWeapon}
-                </span>
-              )}
+              <span className="text-[9px] font-mono tracking-wider text-rose-300 font-bold px-1.5 py-0.5 rounded bg-red-950/80 border border-red-500/50 uppercase">
+                {stats.activeWeapon || 'RED CANNON'}
+              </span>
             </div>
-            <span className="text-xl sm:text-2xl md:text-3xl font-black font-mono tracking-wider text-white neon-glow-cyan">
+            <span className="text-xl sm:text-2xl md:text-3xl font-black font-mono tracking-wider text-white neon-glow-red mt-0.5">
               {stats.score.toString().padStart(6, '0')}
             </span>
           </div>
 
-          {/* Vitals: HP, Shield, and XP Bars */}
-          <div className="cyber-panel px-3 py-2.5 flex flex-col gap-2 w-48 sm:w-60">
+          {/* Vitals: Hull HP, Shield, and XP Bars */}
+          <div className="cyber-panel-military px-3 py-2.5 flex flex-col gap-2 w-52 sm:w-64 border-cyan-500/30">
             {/* Hull HP */}
             <div className="flex items-center gap-2">
               <Heart className="w-3.5 h-3.5 text-red-400 shrink-0" />
@@ -112,7 +111,7 @@ export const HUD: React.FC<HUDProps> = ({
             </div>
 
             {/* Level & XP Bar */}
-            <div className="flex items-center gap-2 pt-1 border-t border-gray-800">
+            <div className="flex items-center gap-2 pt-1 border-t border-gray-800/80">
               <span className="text-[10px] font-mono font-black text-purple-400 shrink-0 uppercase">
                 LVL {stats.level}
               </span>
@@ -127,6 +126,53 @@ export const HUD: React.FC<HUDProps> = ({
               </span>
             </div>
           </div>
+
+          {/* Active Tactical Mission Panel */}
+          {stats.activeMission && (
+            <div className="cyber-panel-military px-3.5 py-2 flex flex-col gap-1.5 w-52 sm:w-64 border-red-500/30 bg-black/75">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-red-400">
+                  <Crosshair className="w-3.5 h-3.5 animate-pulse" />
+                  <span className="text-[10px] font-mono tracking-wider font-black uppercase text-red-300">
+                    MISSION OBJECTIVE
+                  </span>
+                </div>
+                {stats.activeMission.completed ? (
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-950/80 border border-emerald-500 text-emerald-300 font-bold">
+                    COMPLETED
+                  </span>
+                ) : (
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-red-950/60 border border-red-500/40 text-red-300 font-bold">
+                    IN PROGRESS
+                  </span>
+                )}
+              </div>
+
+              <div className="text-xs font-mono font-bold text-white tracking-wide truncate">
+                {stats.activeMission.title}
+              </div>
+
+              {/* Tactical Mission Progress Bar */}
+              <div className="flex items-center gap-2">
+                <div className="bar-track flex-1 h-2 bg-gray-950/90 border border-red-900/40">
+                  <div
+                    className="h-full bg-gradient-to-r from-red-600 via-rose-500 to-amber-400 rounded-full transition-all duration-200 shadow-[0_0_8px_rgba(255,0,51,0.7)]"
+                    style={{
+                      width: `${Math.min(100, Math.max(0, (stats.activeMission.progress / stats.activeMission.target) * 100))}%`,
+                    }}
+                  />
+                </div>
+                <span className="text-[10px] font-mono font-bold text-red-200 shrink-0">
+                  {stats.activeMission.progress}/{stats.activeMission.target}
+                </span>
+              </div>
+
+              <div className="text-[9px] font-mono text-gray-400 flex items-center justify-between">
+                <span className="truncate mr-1">{stats.activeMission.description}</span>
+                <span className="text-yellow-400 font-bold shrink-0">{stats.activeMission.rewardText}</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Top Center: Sector / Boss Warning / Boss HP Bar / Kill Combo Meter */}
@@ -141,12 +187,13 @@ export const HUD: React.FC<HUDProps> = ({
               </span>
             </div>
           ) : (
-            <div className="cyber-panel px-6 py-2 flex flex-col items-center">
-              <span className="text-[10px] sm:text-xs font-mono tracking-[0.2em] text-cyan-400 font-bold uppercase">
-                SECTOR
+            <div className="cyber-panel-military px-6 py-2 flex flex-col items-center border-red-500/30">
+              <span className="text-[10px] sm:text-xs font-mono tracking-[0.2em] text-red-400 font-bold uppercase flex items-center gap-1.5">
+                <Target className="w-3 h-3 text-red-400" />
+                COMBAT SECTOR
               </span>
-              <span className="text-lg sm:text-2xl font-black font-['Orbitron'] tracking-widest text-cyan-200">
-                LEVEL {stats.wave}
+              <span className="text-lg sm:text-2xl font-black font-['Orbitron'] tracking-widest text-white neon-glow-red">
+                SECTOR {stats.wave}
               </span>
             </div>
           )}
@@ -175,7 +222,7 @@ export const HUD: React.FC<HUDProps> = ({
 
           {/* Kill Combo Multiplier Meter */}
           {stats.combo > 1 && (
-            <div className="mt-2.5 px-4 py-1.5 rounded-full bg-black/80 border border-yellow-500/60 flex items-center gap-2 shadow-[0_0_20px_rgba(250,204,21,0.4)] animate-bounce">
+            <div className="mt-2.5 px-4 py-1.5 rounded-full bg-black/90 border border-yellow-500/70 flex items-center gap-2 shadow-[0_0_20px_rgba(250,204,21,0.5)] animate-bounce">
               <Zap className="w-4 h-4 text-yellow-400 animate-pulse" />
               <span className="text-xs sm:text-sm font-black font-['Orbitron'] text-yellow-300 tracking-wider">
                 COMBO x{stats.comboMultiplier} ({stats.combo} KILLS)
@@ -190,14 +237,14 @@ export const HUD: React.FC<HUDProps> = ({
           )}
         </div>
 
-        {/* Top Right: High Score & Pause */}
+        {/* Top Right: High Score, Pause & Telemetry */}
         <div className="flex flex-col items-end gap-2 pointer-events-auto">
           <div className="flex items-center gap-2">
-            <div className="cyber-panel px-3 py-1.5 flex items-center gap-2">
+            <div className="cyber-panel-military px-3 py-1.5 flex items-center gap-2 border-yellow-500/40">
               <Trophy className="w-4 h-4 text-yellow-400" />
               <div className="flex flex-col text-right">
                 <span className="text-[9px] sm:text-[10px] font-mono tracking-widest text-gray-400 font-bold uppercase">
-                  HIGH
+                  TOP RECORD
                 </span>
                 <span className="text-sm sm:text-base font-bold font-mono text-yellow-400 tracking-wider">
                   {stats.highScore.toString().padStart(6, '0')}
@@ -208,7 +255,7 @@ export const HUD: React.FC<HUDProps> = ({
             {/* Quick Pause Button */}
             <button
               onClick={handlePauseClick}
-              className="cyber-btn p-2.5 rounded-lg border border-cyan-500/40 bg-black/60 hover:bg-cyan-500/20 text-cyan-400"
+              className="cyber-panel-military p-2.5 rounded-lg border border-red-500/40 bg-black/70 hover:bg-red-500/20 text-red-400 transition-all"
               title="Pause Game (ESC)"
             >
               <Pause className="w-5 h-5" />
@@ -216,7 +263,7 @@ export const HUD: React.FC<HUDProps> = ({
           </div>
 
           {/* Survival Time Display */}
-          <div className="cyber-panel px-3 py-1 flex items-center gap-2 text-xs font-mono text-gray-300">
+          <div className="cyber-panel-military px-3 py-1 flex items-center gap-2 text-xs font-mono text-gray-300 border-gray-700">
             <Clock className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
             <span className="text-gray-400 font-bold">TIME:</span>
             <span className="font-bold text-white tracking-wider">{timeFormatted}</span>
@@ -224,7 +271,7 @@ export const HUD: React.FC<HUDProps> = ({
 
           {/* Now Playing Music Indicator */}
           {currentTrack && (
-            <div className="cyber-panel px-3 py-1 flex items-center gap-2 text-[10px] sm:text-xs font-mono text-cyan-300 max-w-[200px] sm:max-w-xs truncate">
+            <div className="cyber-panel-military px-3 py-1 flex items-center gap-2 text-[10px] sm:text-xs font-mono text-cyan-300 max-w-[200px] sm:max-w-xs truncate border-cyan-500/30">
               <Music className="w-3 h-3 text-cyan-400 animate-spin shrink-0" />
               <div className="truncate">
                 <span className="text-gray-400 mr-1 font-bold">♫</span>
@@ -232,6 +279,12 @@ export const HUD: React.FC<HUDProps> = ({
               </div>
             </div>
           )}
+
+          {/* Red Weapon Telemetry Indicator */}
+          <div className="cyber-panel-military px-2.5 py-1 flex items-center gap-1.5 text-[9px] font-mono text-rose-300 border-red-500/30">
+            <Radio className="w-3 h-3 text-red-400 animate-pulse" />
+            <span>RED EMITTER: ONLINE</span>
+          </div>
         </div>
       </div>
 
@@ -241,7 +294,7 @@ export const HUD: React.FC<HUDProps> = ({
           {stats.activePowerUps.map((p) => {
             const conf = POWERUP_ICONS[p.type] || {
               label: p.type,
-              color: '#00f0ff',
+              color: '#ff0055',
               icon: <Zap className="w-3.5 h-3.5" />,
             };
             const pct = Math.max(0, (p.duration / p.maxDuration) * 100);
@@ -249,7 +302,7 @@ export const HUD: React.FC<HUDProps> = ({
             return (
               <div
                 key={p.type}
-                className="cyber-panel px-3 py-1.5 flex items-center gap-2 bg-black/80 border"
+                className="cyber-panel-military px-3 py-1.5 flex items-center gap-2 bg-black/85 border"
                 style={{ borderColor: conf.color }}
               >
                 <div style={{ color: conf.color }}>{conf.icon}</div>

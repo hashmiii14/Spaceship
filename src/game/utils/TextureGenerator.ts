@@ -161,140 +161,173 @@ export class TextureGenerator {
       }
     }
 
-    // 2. Player Weapon Projectiles (7 Weapons)
-    // 2.1 Blaster (Standard Neon Cyan) (12 x 30)
+    // 2. Player Weapon Projectiles (SIGNATURE BRIGHT NEON RED WEAPON SYSTEM)
+    // 2.1 Blaster (Signature Neon Red Energy Bolt) (14 x 36)
     if (!scene.textures.exists('laser_blaster')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 14;
-      canvas.height = 32;
+      canvas.width = 16;
+      canvas.height = 36;
       const ctx = canvas.getContext('2d')!;
-      ctx.shadowColor = '#00f0ff';
-      ctx.shadowBlur = 10;
-      const grad = ctx.createLinearGradient(7, 0, 7, 32);
+      ctx.shadowColor = '#ff0033';
+      ctx.shadowBlur = 14;
+      const grad = ctx.createLinearGradient(8, 0, 8, 36);
       grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.4, '#00f0ff');
-      grad.addColorStop(1, 'rgba(0, 240, 255, 0)');
+      grad.addColorStop(0.35, '#ff0033');
+      grad.addColorStop(0.75, '#ff0055');
+      grad.addColorStop(1, 'rgba(255, 0, 85, 0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.ellipse(7, 16, 5, 14, 0, 0, Math.PI * 2);
+      ctx.ellipse(8, 18, 6, 16, 0, 0, Math.PI * 2);
       ctx.fill();
+
+      // Sharp Energy Spine
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(8, 6);
+      ctx.lineTo(8, 26);
+      ctx.stroke();
+
       scene.textures.addCanvas('laser_blaster', canvas);
       scene.textures.addCanvas('laser_player', canvas);
     }
 
-    // 2.2 Rapid Fire Needle (Yellow/Gold) (8 x 26)
+    // 2.2 Rapid Fire Needle (High-Frequency Red Stinger) (10 x 28)
     if (!scene.textures.exists('laser_rapid')) {
       const canvas = document.createElement('canvas');
       canvas.width = 10;
-      canvas.height = 26;
+      canvas.height = 28;
       const ctx = canvas.getContext('2d')!;
-      ctx.shadowColor = '#facc15';
-      ctx.shadowBlur = 8;
-      const grad = ctx.createLinearGradient(5, 0, 5, 26);
+      ctx.shadowColor = '#ff0055';
+      ctx.shadowBlur = 12;
+      const grad = ctx.createLinearGradient(5, 0, 5, 28);
       grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.5, '#facc15');
-      grad.addColorStop(1, 'rgba(250, 204, 21, 0)');
+      grad.addColorStop(0.4, '#ff2255');
+      grad.addColorStop(0.8, '#dc2626');
+      grad.addColorStop(1, 'rgba(220, 38, 38, 0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.ellipse(5, 13, 3.5, 11, 0, 0, Math.PI * 2);
+      ctx.ellipse(5, 14, 3.5, 12, 0, 0, Math.PI * 2);
       ctx.fill();
       scene.textures.addCanvas('laser_rapid', canvas);
     }
 
-    // 2.3 Double Shot Heavy (Cyan/White) (16 x 34)
+    // 2.3 Double Shot Heavy (Dual Heavy Crimson Rods) (18 x 38)
     if (!scene.textures.exists('laser_double')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 18;
-      canvas.height = 36;
+      canvas.width = 20;
+      canvas.height = 38;
       const ctx = canvas.getContext('2d')!;
-      ctx.shadowColor = '#38bdf8';
-      ctx.shadowBlur = 12;
-      const grad = ctx.createLinearGradient(9, 0, 9, 36);
+      ctx.shadowColor = '#ff0033';
+      ctx.shadowBlur = 16;
+      const grad = ctx.createLinearGradient(10, 0, 10, 38);
       grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.5, '#0284c7');
-      grad.addColorStop(1, 'rgba(2, 132, 199, 0)');
+      grad.addColorStop(0.4, '#ff0033');
+      grad.addColorStop(0.8, '#b91c1c');
+      grad.addColorStop(1, 'rgba(185, 28, 28, 0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.ellipse(9, 18, 6, 16, 0, 0, Math.PI * 2);
+      ctx.ellipse(10, 19, 7, 17, 0, 0, Math.PI * 2);
       ctx.fill();
       scene.textures.addCanvas('laser_double', canvas);
     }
 
-    // 2.4 Triple Shot (Orange Gold) (12 x 28)
+    // 2.4 Triple Shot (Branching Crimson Plasma) (16 x 32)
     if (!scene.textures.exists('laser_triple')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 14;
-      canvas.height = 28;
+      canvas.width = 16;
+      canvas.height = 32;
       const ctx = canvas.getContext('2d')!;
-      ctx.shadowColor = '#fb923c';
-      ctx.shadowBlur = 10;
-      const grad = ctx.createLinearGradient(7, 0, 7, 28);
+      ctx.shadowColor = '#ff0055';
+      ctx.shadowBlur = 14;
+      const grad = ctx.createLinearGradient(8, 0, 8, 32);
       grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.5, '#ea580c');
-      grad.addColorStop(1, 'rgba(234, 88, 12, 0)');
+      grad.addColorStop(0.45, '#ff0055');
+      grad.addColorStop(0.8, '#990022');
+      grad.addColorStop(1, 'rgba(153, 0, 34, 0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.ellipse(7, 14, 5, 12, 0, 0, Math.PI * 2);
+      ctx.ellipse(8, 16, 6, 14, 0, 0, Math.PI * 2);
       ctx.fill();
       scene.textures.addCanvas('laser_triple', canvas);
     }
 
-    // 2.5 Spread Shot (Emerald Green) (12 x 24)
+    // 2.5 Spread Shot (Neon Red Plasma Darts) (16 x 28)
     if (!scene.textures.exists('laser_spread')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 14;
-      canvas.height = 26;
+      canvas.width = 16;
+      canvas.height = 28;
       const ctx = canvas.getContext('2d')!;
-      ctx.shadowColor = '#10b981';
-      ctx.shadowBlur = 9;
-      const grad = ctx.createLinearGradient(7, 0, 7, 26);
+      ctx.shadowColor = '#ef4444';
+      ctx.shadowBlur = 12;
+      const grad = ctx.createLinearGradient(8, 0, 8, 28);
       grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.5, '#059669');
-      grad.addColorStop(1, 'rgba(5, 150, 105, 0)');
+      grad.addColorStop(0.45, '#ef4444');
+      grad.addColorStop(0.8, '#7f1d1d');
+      grad.addColorStop(1, 'rgba(127, 29, 29, 0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.ellipse(7, 13, 4.5, 11, 0, 0, Math.PI * 2);
+      ctx.ellipse(8, 14, 5, 12, 0, 0, Math.PI * 2);
       ctx.fill();
       scene.textures.addCanvas('laser_spread', canvas);
     }
 
-    // 2.6 Hyperbeam (Magenta Piercing Beam) (20 x 48)
+    // 2.6 Hyperbeam (Continuous Crimson Laser with Lightning Core) (24 x 56)
     if (!scene.textures.exists('laser_hyperbeam')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 22;
-      canvas.height = 52;
+      canvas.width = 24;
+      canvas.height = 56;
       const ctx = canvas.getContext('2d')!;
-      ctx.shadowColor = '#ff0055';
-      ctx.shadowBlur = 16;
-      const grad = ctx.createLinearGradient(11, 0, 11, 52);
+      ctx.shadowColor = '#ff0033';
+      ctx.shadowBlur = 20;
+      const grad = ctx.createLinearGradient(12, 0, 12, 56);
       grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.4, '#ff0055');
-      grad.addColorStop(1, 'rgba(255, 0, 85, 0.1)');
+      grad.addColorStop(0.25, '#ff0055');
+      grad.addColorStop(0.7, '#ff0033');
+      grad.addColorStop(1, 'rgba(255, 0, 51, 0.1)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.ellipse(11, 26, 7, 24, 0, 0, Math.PI * 2);
+      ctx.ellipse(12, 28, 8, 26, 0, 0, Math.PI * 2);
       ctx.fill();
+
+      // Internal Blinding Core Rod
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(12, 4);
+      ctx.lineTo(12, 48);
+      ctx.stroke();
+
       scene.textures.addCanvas('laser_hyperbeam', canvas);
       scene.textures.addCanvas('laser_heavy', canvas);
     }
 
-    // 2.7 Plasma Shot (Massive Swirling Orb) (32 x 32)
+    // 2.7 Plasma Shot (Thermonuclear Crimson Plasma Sphere) (40 x 40)
     if (!scene.textures.exists('laser_plasma')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 36;
-      canvas.height = 36;
+      canvas.width = 40;
+      canvas.height = 40;
       const ctx = canvas.getContext('2d')!;
-      ctx.shadowColor = '#818cf8';
-      ctx.shadowBlur = 16;
-      const grad = ctx.createRadialGradient(18, 18, 2, 18, 18, 16);
+      ctx.shadowColor = '#ff0033';
+      ctx.shadowBlur = 20;
+      const grad = ctx.createRadialGradient(20, 20, 3, 20, 20, 18);
       grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.4, '#6366f1');
-      grad.addColorStop(0.8, '#4338ca');
-      grad.addColorStop(1, 'rgba(67, 56, 202, 0)');
+      grad.addColorStop(0.35, '#ff0055');
+      grad.addColorStop(0.7, '#ff0033');
+      grad.addColorStop(0.9, '#990022');
+      grad.addColorStop(1, 'rgba(153, 0, 34, 0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.arc(18, 18, 16, 0, Math.PI * 2);
+      ctx.arc(20, 20, 18, 0, Math.PI * 2);
       ctx.fill();
+
+      // Radiating Solar Flares
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(20, 20, 10, 0, Math.PI * 2);
+      ctx.stroke();
+
       scene.textures.addCanvas('laser_plasma', canvas);
     }
 
@@ -488,18 +521,19 @@ export class TextureGenerator {
       scene.textures.addCanvas('enemy_reaper', canvas);
     }
 
-    // 4. Enemy Weapons
+    // 4. Enemy Weapons (Electric Blue / Cyan to contrast with Player Neon Red)
     if (!scene.textures.exists('laser_enemy')) {
       const canvas = document.createElement('canvas');
       canvas.width = 12;
       canvas.height = 24;
       const ctx = canvas.getContext('2d')!;
-      ctx.shadowColor = '#ff0055';
-      ctx.shadowBlur = 8;
+      ctx.shadowColor = '#00f0ff';
+      ctx.shadowBlur = 10;
       const grad = ctx.createRadialGradient(6, 12, 2, 6, 12, 8);
       grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.5, '#ff0055');
-      grad.addColorStop(1, 'rgba(255, 0, 85, 0)');
+      grad.addColorStop(0.4, '#00f0ff');
+      grad.addColorStop(0.8, '#0284c7');
+      grad.addColorStop(1, 'rgba(2, 132, 199, 0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.ellipse(6, 12, 5, 10, 0, 0, Math.PI * 2);
@@ -843,17 +877,86 @@ export class TextureGenerator {
       scene.textures.addCanvas('smoke', canvas);
     }
 
-    if (!scene.textures.exists('shockwave')) {
+    if (!scene.textures.exists('spark_red')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 80;
-      canvas.height = 80;
+      canvas.width = 12;
+      canvas.height = 12;
       const ctx = canvas.getContext('2d')!;
-      ctx.strokeStyle = '#00f0ff';
-      ctx.lineWidth = 4;
+      ctx.shadowColor = '#ff0033';
+      ctx.shadowBlur = 8;
+      const grad = ctx.createRadialGradient(6, 6, 1, 6, 6, 6);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.4, '#ff0055');
+      grad.addColorStop(0.8, '#dc2626');
+      grad.addColorStop(1, 'rgba(220, 38, 38, 0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 12, 12);
+      scene.textures.addCanvas('spark_red', canvas);
+    }
+
+    if (!scene.textures.exists('muzzle_flash_red')) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 24;
+      canvas.height = 24;
+      const ctx = canvas.getContext('2d')!;
+      ctx.shadowColor = '#ff0033';
+      ctx.shadowBlur = 14;
+      const grad = ctx.createRadialGradient(12, 12, 2, 12, 12, 12);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.3, '#ff0055');
+      grad.addColorStop(0.7, '#ff0033');
+      grad.addColorStop(1, 'rgba(255, 0, 51, 0)');
+      ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.arc(40, 40, 36, 0, Math.PI * 2);
+      ctx.arc(12, 12, 10, 0, Math.PI * 2);
+      ctx.fill();
+      scene.textures.addCanvas('muzzle_flash_red', canvas);
+    }
+
+    // 10. Deep Space Celestial Bodies (7-Layer Parallax)
+    if (!scene.textures.exists('planet_dark')) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 160;
+      canvas.height = 160;
+      const ctx = canvas.getContext('2d')!;
+      ctx.shadowColor = '#6366f1';
+      ctx.shadowBlur = 25;
+
+      // Dark volcanic planetoid
+      const grad = ctx.createRadialGradient(65, 65, 10, 80, 80, 70);
+      grad.addColorStop(0, '#1e1b4b');
+      grad.addColorStop(0.5, '#0f172a');
+      grad.addColorStop(0.85, '#020617');
+      grad.addColorStop(1, 'rgba(2, 6, 23, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(80, 80, 70, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Atmospheric glowing rim
+      ctx.strokeStyle = 'rgba(99, 102, 241, 0.4)';
+      ctx.lineWidth = 3;
       ctx.stroke();
-      scene.textures.addCanvas('shockwave', canvas);
+      scene.textures.addCanvas('planet_dark', canvas);
+    }
+
+    if (!scene.textures.exists('space_debris')) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 24;
+      canvas.height = 24;
+      const ctx = canvas.getContext('2d')!;
+      ctx.fillStyle = '#475569';
+      ctx.beginPath();
+      ctx.moveTo(12, 2);
+      ctx.lineTo(22, 10);
+      ctx.lineTo(16, 22);
+      ctx.lineTo(4, 18);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      scene.textures.addCanvas('space_debris', canvas);
     }
   }
 }
