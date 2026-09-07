@@ -144,6 +144,7 @@ export class GameScene extends Phaser.Scene {
   private enemyMines: EnemyMine[] = [];
 
   // Boss
+  private bossGroup!: Phaser.Physics.Arcade.Group;
   private boss: Phaser.Physics.Arcade.Sprite | null = null;
   private bossHp = 0;
   private bossMaxHp = 3200;
@@ -201,8 +202,8 @@ export class GameScene extends Phaser.Scene {
     this.maxHealth = 100;
     this.playerShield = 100;
     this.maxShield = 100;
-    this.basePlayerSpeed = 360;
-    this.playerSpeed = 360;
+    this.basePlayerSpeed = 480;
+    this.playerSpeed = 480;
     this.weaponType = 'BLASTER';
     this.damageMultiplier = 1.0;
     this.fireRateBonus = 0;
@@ -213,41 +214,41 @@ export class GameScene extends Phaser.Scene {
     this.currentMissionIndex = 0;
     this.nextEventTime = 75;
 
-    // 1. Particle Systems (Red Weapon Identity)
+    // 1. Lightweight Particle Systems (Optimized for 60 FPS)
     this.redMuzzleEmitter = this.add.particles(0, 0, 'muzzle_flash_red', {
-      scale: { start: 1.2, end: 0.2 },
+      scale: { start: 1.0, end: 0.1 },
       alpha: { start: 1, end: 0 },
-      lifespan: 120,
+      lifespan: 100,
       blendMode: Phaser.BlendModes.ADD,
       emitting: false,
     });
     this.redMuzzleEmitter.setDepth(14);
 
     this.redSparkEmitter = this.add.particles(0, 0, 'spark_red', {
-      speed: { min: 80, max: 260 },
-      scale: { start: 1.4, end: 0 },
+      speed: { min: 80, max: 220 },
+      scale: { start: 1.1, end: 0 },
       alpha: { start: 1, end: 0 },
-      lifespan: 320,
+      lifespan: 200,
       blendMode: Phaser.BlendModes.ADD,
       emitting: false,
     });
     this.redSparkEmitter.setDepth(15);
 
     this.cyanSparkEmitter = this.add.particles(0, 0, 'spark', {
-      speed: { min: 60, max: 220 },
-      scale: { start: 1.2, end: 0 },
+      speed: { min: 60, max: 180 },
+      scale: { start: 1.0, end: 0 },
       alpha: { start: 1, end: 0 },
-      lifespan: 300,
+      lifespan: 200,
       blendMode: Phaser.BlendModes.ADD,
       emitting: false,
     });
     this.cyanSparkEmitter.setDepth(15);
 
     this.explosionEmitter = this.add.particles(0, 0, 'smoke', {
-      speed: { min: 40, max: 220 },
-      scale: { start: 0.8, end: 2.5 },
-      alpha: { start: 0.8, end: 0 },
-      lifespan: 650,
+      speed: { min: 30, max: 180 },
+      scale: { start: 0.6, end: 1.8 },
+      alpha: { start: 0.7, end: 0 },
+      lifespan: 420,
       blendMode: Phaser.BlendModes.SCREEN,
       emitting: false,
     });
@@ -262,41 +263,42 @@ export class GameScene extends Phaser.Scene {
 
     this.enemyBullets = this.physics.add.group({
       classType: Phaser.Physics.Arcade.Image,
-      maxSize: 100,
+      maxSize: 80,
       runChildUpdate: false,
     });
 
     this.bossBullets = this.physics.add.group({
       classType: Phaser.Physics.Arcade.Image,
-      maxSize: 80,
+      maxSize: 60,
       runChildUpdate: false,
     });
 
+    this.bossGroup = this.physics.add.group();
     this.enemies = this.physics.add.group();
     this.asteroids = this.physics.add.group();
     this.powerUps = this.physics.add.group();
     this.xpGems = this.physics.add.group();
 
-    // 3. Player Setup (Combat Starfighter)
+    // 3. Player Setup (Agile Combat Starfighter)
     const skin = Storage.getSkin();
     const skinKey = `player_ship_${skin.id.toLowerCase()}`;
     const initialSkin = this.textures.exists(skinKey) ? skinKey : 'player_ship';
 
     this.player = this.physics.add.sprite(width / 2, height - 100, initialSkin);
     this.player.setCollideWorldBounds(true);
-    this.player.setDrag(900, 900);
-    this.player.setMaxVelocity(this.playerSpeed, this.playerSpeed);
+    this.player.setDrag(1800, 1800);
+    this.player.setMaxVelocity(620, 620);
     this.player.setSize(44, 48);
     this.player.setOffset(10, 12);
     this.player.setDepth(10);
 
     // Player Engine Thruster
     this.playerEngineParticles = this.add.particles(0, 0, 'engine_glow', {
-      speedY: { min: 160, max: 320 },
-      speedX: { min: -25, max: 25 },
-      scale: { start: 1.3, end: 0.1 },
-      alpha: { start: 0.95, end: 0 },
-      lifespan: 240,
+      speedY: { min: 140, max: 280 },
+      speedX: { min: -20, max: 20 },
+      scale: { start: 1.1, end: 0.1 },
+      alpha: { start: 0.9, end: 0 },
+      lifespan: 200,
       blendMode: Phaser.BlendModes.ADD,
       follow: this.player,
       followOffset: { x: 0, y: 32 },
@@ -345,8 +347,8 @@ export class GameScene extends Phaser.Scene {
       this.handleBulletAsteroidCollision(bullet as Phaser.Physics.Arcade.Image, asteroid as Phaser.Physics.Arcade.Sprite);
     });
 
-    // Player Bullets -> Boss
-    this.physics.add.overlap(this.playerBullets, this.boss ? [this.boss] : [], (bullet, boss) => {
+    // Player Bullets -> Boss (Reliable Boss Collisions)
+    this.physics.add.overlap(this.playerBullets, this.bossGroup, (bullet, boss) => {
       this.handleBulletBossCollision(bullet as Phaser.Physics.Arcade.Image, boss as Phaser.Physics.Arcade.Sprite);
     });
 
@@ -370,6 +372,11 @@ export class GameScene extends Phaser.Scene {
       this.handlePlayerEntityCollision(asteroid as Phaser.Physics.Arcade.Sprite, 25);
     });
 
+    // Player -> Boss (Ramming)
+    this.physics.add.overlap(this.player, this.bossGroup, (_p, boss) => {
+      this.handlePlayerEntityCollision(boss as Phaser.Physics.Arcade.Sprite, 40);
+    });
+
     // Player -> PowerUps
     this.physics.add.overlap(this.player, this.powerUps, (_p, powerUp) => {
       this.collectPowerUp(powerUp as Phaser.Physics.Arcade.Sprite);
@@ -380,26 +387,39 @@ export class GameScene extends Phaser.Scene {
       this.collectXpGem(gem as Phaser.Physics.Arcade.Sprite);
     });
 
-    // 6. External Event Listeners
-    EventBus.on('input:mobileMove', (dir: { x: number; y: number }) => {
+    // 6. External Event Listeners with Safe Shutdown Cleanup
+    const onMobileMove = (dir: { x: number; y: number }) => {
       this.mobileInput.x = dir.x;
       this.mobileInput.y = dir.y;
-    });
-
-    EventBus.on('input:mobileShoot', (shooting: boolean) => {
+    };
+    const onMobileShoot = (shooting: boolean) => {
       this.mobileInput.shoot = shooting;
-    });
-
-    EventBus.on('upgrade:selected', (option: LevelUpOption) => {
+    };
+    const onUpgrade = (option: LevelUpOption) => {
       this.applyUpgrade(option);
       this.isLevelUpPaused = false;
       this.physics.resume();
-    });
-
-    EventBus.on('player:skinChanged', (newSkinId: string) => {
+    };
+    const onSkinChanged = (newSkinId: string) => {
       const key = `player_ship_${newSkinId.toLowerCase()}`;
       if (this.textures.exists(key) && this.player && this.player.active) {
         this.player.setTexture(key);
+      }
+    };
+
+    EventBus.on('input:mobileMove', onMobileMove);
+    EventBus.on('input:mobileShoot', onMobileShoot);
+    EventBus.on('upgrade:selected', onUpgrade);
+    EventBus.on('player:skinChanged', onSkinChanged);
+
+    this.events.once('shutdown', () => {
+      EventBus.off('input:mobileMove', onMobileMove);
+      EventBus.off('input:mobileShoot', onMobileShoot);
+      EventBus.off('upgrade:selected', onUpgrade);
+      EventBus.off('player:skinChanged', onSkinChanged);
+      if (this.waveSpawnTimer) {
+        this.waveSpawnTimer.destroy();
+        this.waveSpawnTimer = null;
       }
     });
 
@@ -410,6 +430,10 @@ export class GameScene extends Phaser.Scene {
         this.player.y = Phaser.Math.Clamp(this.player.y, 45, gameSize.height - 45);
       }
     });
+
+    if (this.game.canvas) {
+      this.game.canvas.focus();
+    }
 
     // Start Level 1
     this.startLevel(1);
@@ -441,7 +465,7 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    // 3. Player Movement (Smooth Acceleration & Deceleration)
+    // 3. Player Movement (Fast, Responsive, Agile)
     let vx = 0;
     let vy = 0;
 
@@ -458,7 +482,8 @@ export class GameScene extends Phaser.Scene {
       const norm = len > 1 ? len : 1;
       this.player.setVelocity((vx / norm) * this.playerSpeed, (vy / norm) * this.playerSpeed);
     } else {
-      this.player.setAcceleration(0, 0);
+      // Instant responsive deceleration
+      this.player.setVelocity(this.player.body.velocity.x * 0.82, this.player.body.velocity.y * 0.82);
     }
 
     // Banking tilt animation
@@ -474,10 +499,12 @@ export class GameScene extends Phaser.Scene {
       this.shieldSprite.rotation += dt * 1.5;
     }
 
-    // 4. Shooting (Signature Bright Neon Red Lasers)
-    const isShooting = (this.keySpace && this.keySpace.isDown) || this.mobileInput.shoot;
+    // 4. Shooting (Immediate response, holding Spacebar continuous fire)
+    const isSpaceDown = (this.keySpace && this.keySpace.isDown) ||
+      (this.input.keyboard && this.input.keyboard.checkDown(this.keySpace));
+    const isShooting = isSpaceDown || this.mobileInput.shoot;
     const hasRapid = this.activePowerUps.has('RAPID_FIRE');
-    const calculatedFireRate = Math.max(45, (hasRapid ? 65 : this.baseFireRate) - this.fireRateBonus);
+    const calculatedFireRate = Math.max(50, (hasRapid ? 75 : this.baseFireRate) - this.fireRateBonus);
 
     if (isShooting && time > this.lastFiredTime + calculatedFireRate) {
       this.firePlayerWeapon();
@@ -546,6 +573,55 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ==========================================
+  // BULLET POOLING HELPERS (UNBREAKABLE RECYCLING)
+  // ==========================================
+  private spawnPlayerBullet(x: number, y: number, key: string): Phaser.Physics.Arcade.Image {
+    let b = this.playerBullets.get(x, y, key) as Phaser.Physics.Arcade.Image;
+    if (!b) {
+      const oldest = this.playerBullets.getFirstAlive() as Phaser.Physics.Arcade.Image;
+      if (oldest) b = oldest;
+    }
+    if (b) {
+      b.setTexture(key);
+      b.body.reset(x, y);
+      b.body.enable = true;
+      b.setActive(true).setVisible(true);
+      b.setAlpha(1);
+    }
+    return b;
+  }
+
+  private spawnEnemyBullet(x: number, y: number, key: string = 'laser_enemy'): Phaser.Physics.Arcade.Image {
+    let b = this.enemyBullets.get(x, y, key) as Phaser.Physics.Arcade.Image;
+    if (!b) {
+      const oldest = this.enemyBullets.getFirstAlive() as Phaser.Physics.Arcade.Image;
+      if (oldest) b = oldest;
+    }
+    if (b) {
+      b.setTexture(key);
+      b.body.reset(x, y);
+      b.body.enable = true;
+      b.setActive(true).setVisible(true);
+    }
+    return b;
+  }
+
+  private spawnBossBullet(x: number, y: number, key: string = 'boss_bullet'): Phaser.Physics.Arcade.Image {
+    let b = this.bossBullets.get(x, y, key) as Phaser.Physics.Arcade.Image;
+    if (!b) {
+      const oldest = this.bossBullets.getFirstAlive() as Phaser.Physics.Arcade.Image;
+      if (oldest) b = oldest;
+    }
+    if (b) {
+      b.setTexture(key);
+      b.body.reset(x, y);
+      b.body.enable = true;
+      b.setActive(true).setVisible(true);
+    }
+    return b;
+  }
+
+  // ==========================================
   // SIGNATURE BRIGHT NEON RED WEAPONS
   // ==========================================
   private firePlayerWeapon(): void {
@@ -559,99 +635,75 @@ export class GameScene extends Phaser.Scene {
 
     const dmg = (hasDoubleDamage ? 2.5 : 1.0) * this.damageMultiplier;
 
-    // Trigger red muzzle flash at wingtips
+    // Trigger crisp red muzzle flash at wingtips
     this.redMuzzleEmitter.explode(1, x - 14, y);
     this.redMuzzleEmitter.explode(1, x + 14, y);
 
     if (hasHyperbeam) {
       // Continuous Blinding Crimson Hyperbeam
-      const beam = this.playerBullets.get(x, y, 'laser_hyperbeam') as Phaser.Physics.Arcade.Image;
+      const beam = this.spawnPlayerBullet(x, y, 'laser_hyperbeam');
       if (beam) {
-        beam.body.reset(x, y);
-        beam.body.enable = true;
-        beam.setActive(true).setVisible(true);
         beam.setData('damage', 5.0 * dmg);
         beam.setData('pierce', 99);
         beam.setVelocity(0, -980);
       }
       SoundEffects.playHyperbeam();
-      this.cameras.main.shake(40, 0.003);
     } else if (hasPlasma) {
       // Thermonuclear Red Plasma Orb
-      const orb = this.playerBullets.get(x, y, 'laser_plasma') as Phaser.Physics.Arcade.Image;
+      const orb = this.spawnPlayerBullet(x, y, 'laser_plasma');
       if (orb) {
-        orb.body.reset(x, y);
-        orb.body.enable = true;
-        orb.setActive(true).setVisible(true);
         orb.setData('damage', 4.5 * dmg);
         orb.setData('pierce', 1);
         orb.setData('splash', true);
         orb.setVelocity(0, -720);
       }
       SoundEffects.playPlasma();
-      this.cameras.main.shake(45, 0.003);
     } else if (hasSpread) {
       // 5-way Blazing Crimson Spread
       const angles = [-24, -12, 0, 12, 24];
       angles.forEach((deg) => {
         const rad = Phaser.Math.DegToRad(deg - 90);
-        const b = this.playerBullets.get(x, y, 'laser_spread') as Phaser.Physics.Arcade.Image;
+        const b = this.spawnPlayerBullet(x, y, 'laser_spread');
         if (b) {
-          b.body.reset(x, y);
-          b.body.enable = true;
-          b.setActive(true).setVisible(true);
           b.setData('damage', 1.25 * dmg);
           b.setRotation(Phaser.Math.DegToRad(deg));
-          b.setVelocity(Math.cos(rad) * 700, Math.sin(rad) * 700);
+          b.setVelocity(Math.cos(rad) * 720, Math.sin(rad) * 720);
         }
       });
       SoundEffects.playLaser('spread');
-      this.cameras.main.shake(35, 0.002);
     } else if (this.weaponType === 'TRIPLE_SHOT' || this.activePowerUps.has('TRIPLE_SHOT')) {
       // 3-way Branching Crimson Lasers
       const angles = [-15, 0, 15];
       angles.forEach((deg) => {
         const rad = Phaser.Math.DegToRad(deg - 90);
-        const b = this.playerBullets.get(x, y, 'laser_triple') as Phaser.Physics.Arcade.Image;
+        const b = this.spawnPlayerBullet(x, y, 'laser_triple');
         if (b) {
-          b.body.reset(x, y);
-          b.body.enable = true;
-          b.setActive(true).setVisible(true);
           b.setData('damage', 1.35 * dmg);
           b.setRotation(Phaser.Math.DegToRad(deg));
-          b.setVelocity(Math.cos(rad) * 670, Math.sin(rad) * 670);
+          b.setVelocity(Math.cos(rad) * 700, Math.sin(rad) * 700);
         }
       });
       SoundEffects.playLaser('triple');
-      this.cameras.main.shake(30, 0.002);
     } else if (this.weaponType === 'DOUBLE_SHOT') {
       // Dual Heavy Crimson Rods
       [-14, 14].forEach((offset) => {
-        const b = this.playerBullets.get(x + offset, y, 'laser_double') as Phaser.Physics.Arcade.Image;
+        const b = this.spawnPlayerBullet(x + offset, y, 'laser_double');
         if (b) {
-          b.body.reset(x + offset, y);
-          b.body.enable = true;
-          b.setActive(true).setVisible(true);
           b.setData('damage', 1.5 * dmg);
-          b.setVelocity(0, -720);
+          b.setVelocity(0, -740);
         }
       });
       SoundEffects.playLaser('heavy');
-      this.cameras.main.shake(30, 0.001);
     } else {
       // Standard Bright Neon Red Energy Blaster
       [-10, 10].forEach((offset) => {
-        const b = this.playerBullets.get(x + offset, y, 'laser_blaster') as Phaser.Physics.Arcade.Image;
+        const b = this.spawnPlayerBullet(x + offset, y, 'laser_blaster');
         if (b) {
-          b.body.reset(x + offset, y);
-          b.body.enable = true;
-          b.setActive(true).setVisible(true);
           b.setData('damage', 1.0 * dmg);
-          b.setVelocity(0, -700);
+          b.setVelocity(0, -720);
         }
       });
       SoundEffects.playLaser('normal');
-      this.cameras.main.shake(25, 0.001);
     }
   }
 
@@ -817,7 +869,17 @@ export class GameScene extends Phaser.Scene {
 
   private createEnemy(type: string, x: number, y: number): Phaser.Physics.Arcade.Sprite {
     const key = `enemy_${type}`;
-    const enemy = this.enemies.create(x, y, key) as Phaser.Physics.Arcade.Sprite;
+    let enemy = this.enemies.getFirstDead(false) as Phaser.Physics.Arcade.Sprite | null;
+    if (enemy) {
+      enemy.setTexture(key);
+      enemy.body.reset(x, y);
+      enemy.body.enable = true;
+      enemy.setActive(true).setVisible(true);
+      enemy.setAlpha(1);
+      enemy.clearTint();
+    } else {
+      enemy = this.enemies.create(x, y, key) as Phaser.Physics.Arcade.Sprite;
+    }
     enemy.setData('type', type);
     enemy.setDepth(8);
 
@@ -944,7 +1006,9 @@ export class GameScene extends Phaser.Scene {
       }
 
       if (e.y > height + 60) {
-        e.destroy();
+        e.setActive(false).setVisible(false);
+        e.body.stop();
+        e.body.enable = false;
         this.checkWaveProgress();
       }
 
@@ -953,11 +1017,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private fireEnemyBullet(x: number, y: number, vx: number, vy: number): void {
-    const b = this.enemyBullets.get(x, y, 'laser_enemy') as Phaser.Physics.Arcade.Image;
+    const b = this.spawnEnemyBullet(x, y, 'laser_enemy');
     if (b) {
-      b.body.reset(x, y);
-      b.body.enable = true;
-      b.setActive(true).setVisible(true);
       b.setVelocity(vx, vy);
       SoundEffects.playEnemyLaser();
     }
@@ -1030,7 +1091,18 @@ export class GameScene extends Phaser.Scene {
     const y = spawnY ?? -50;
     const key = `asteroid_${size}`;
 
-    const ast = this.asteroids.create(x, y, key) as Phaser.Physics.Arcade.Sprite;
+    if (!spawnX && this.asteroids.countActive(true) >= 16) return;
+
+    let ast = this.asteroids.getFirstDead(false) as Phaser.Physics.Arcade.Sprite | null;
+    if (ast) {
+      ast.setTexture(key);
+      ast.body.reset(x, y);
+      ast.body.enable = true;
+      ast.setActive(true).setVisible(true);
+      ast.setAlpha(1);
+    } else {
+      ast = this.asteroids.create(x, y, key) as Phaser.Physics.Arcade.Sprite;
+    }
     ast.setData('size', size);
     ast.setDepth(7);
 
@@ -1052,7 +1124,9 @@ export class GameScene extends Phaser.Scene {
     this.asteroids.children.each((child) => {
       const a = child as Phaser.Physics.Arcade.Sprite;
       if (a.active && a.y > height + 60) {
-        a.destroy();
+        a.setActive(false).setVisible(false);
+        a.body.stop();
+        a.body.enable = false;
       }
       return null;
     });
@@ -1081,6 +1155,7 @@ export class GameScene extends Phaser.Scene {
   private spawnBoss(): void {
     const width = this.scale.width;
     this.boss = this.physics.add.sprite(width / 2, -140, this.bossType);
+    this.bossGroup.add(this.boss);
     this.boss.setCollideWorldBounds(false);
     this.boss.setDepth(9);
 
@@ -1138,11 +1213,8 @@ export class GameScene extends Phaser.Scene {
     if (this.bossType === 'boss_void_destroyer') {
       for (let i = -2; i <= 2; i++) {
         const rad = Phaser.Math.DegToRad(90 + i * 20);
-        const b = this.bossBullets.get(bx, by + 40, 'boss_bullet') as Phaser.Physics.Arcade.Image;
+        const b = this.spawnBossBullet(bx, by + 40, 'boss_bullet');
         if (b) {
-          b.body.reset(bx, by + 40);
-          b.body.enable = true;
-          b.setActive(true).setVisible(true);
           b.setVelocity(Math.cos(rad) * 270, Math.sin(rad) * 270);
         }
       }
@@ -1156,11 +1228,8 @@ export class GameScene extends Phaser.Scene {
       const bulletCount = this.bossPhase === 2 ? 10 : 7;
       for (let i = 0; i < bulletCount; i++) {
         const angle = (time * 0.005) + (i * ((Math.PI * 2) / bulletCount));
-        const b = this.bossBullets.get(bx, by + 30, 'boss_bullet') as Phaser.Physics.Arcade.Image;
+        const b = this.spawnBossBullet(bx, by + 30, 'boss_bullet');
         if (b) {
-          b.body.reset(bx, by + 30);
-          b.body.enable = true;
-          b.setActive(true).setVisible(true);
           b.setVelocity(Math.cos(angle) * 240, Math.sin(angle) * 240);
         }
       }
@@ -1168,11 +1237,8 @@ export class GameScene extends Phaser.Scene {
     } else if (this.bossType === 'boss_star_eater' || this.bossType === 'boss_galactic_core') {
       for (let i = -3; i <= 3; i++) {
         const rad = Phaser.Math.DegToRad(90 + i * 16);
-        const b = this.bossBullets.get(bx, by + 45, 'boss_bullet_heavy') as Phaser.Physics.Arcade.Image;
+        const b = this.spawnBossBullet(bx, by + 45, 'boss_bullet_heavy');
         if (b) {
-          b.body.reset(bx, by + 45);
-          b.body.enable = true;
-          b.setActive(true).setVisible(true);
           b.setVelocity(Math.cos(rad) * 310, Math.sin(rad) * 310);
         }
       }
@@ -1474,7 +1540,9 @@ export class GameScene extends Phaser.Scene {
       this.spawnPowerUp(ex, ey);
     }
 
-    enemy.destroy();
+    enemy.setActive(false).setVisible(false);
+    enemy.body.stop();
+    enemy.body.enable = false;
     this.checkWaveProgress();
   }
 
@@ -1504,7 +1572,9 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    asteroid.destroy();
+    asteroid.setActive(false).setVisible(false);
+    asteroid.body.stop();
+    asteroid.body.enable = false;
   }
 
   private destroyBoss(): void {
@@ -1530,7 +1600,7 @@ export class GameScene extends Phaser.Scene {
     this.spawnPowerUp(bx + 40, by);
     this.spawnXpGem(bx, by, 300);
 
-    this.boss.destroy();
+    this.bossGroup.clear(true, true);
     this.boss = null;
     this.emitBossInfo();
 
@@ -1552,10 +1622,29 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ==========================================
-  // XP & LEVEL-UP PROGRESSION
+  // XP & LEVEL-UP PROGRESSION (POOLED GEMS)
   // ==========================================
   private spawnXpGem(x: number, y: number, value: number): void {
-    const gem = this.xpGems.create(x, y, 'xp_gem') as Phaser.Physics.Arcade.Sprite;
+    if (this.xpGems.countActive(true) >= 40) {
+      const oldest = this.xpGems.getFirstAlive() as Phaser.Physics.Arcade.Sprite;
+      if (oldest) {
+        oldest.setActive(false).setVisible(false);
+        oldest.body.stop();
+        oldest.body.enable = false;
+      }
+    }
+
+    let gem = this.xpGems.getFirstDead(false) as Phaser.Physics.Arcade.Sprite | null;
+    if (gem) {
+      gem.setTexture('xp_gem');
+      gem.body.reset(x, y);
+      gem.body.enable = true;
+      gem.setActive(true).setVisible(true);
+      gem.setAlpha(1);
+    } else {
+      gem = this.xpGems.create(x, y, 'xp_gem') as Phaser.Physics.Arcade.Sprite;
+    }
+
     gem.setData('value', value);
     gem.setVelocity(Phaser.Math.Between(-25, 25), Phaser.Math.Between(40, 90));
     gem.setDepth(6);
@@ -1563,7 +1652,9 @@ export class GameScene extends Phaser.Scene {
 
   private collectXpGem(gem: Phaser.Physics.Arcade.Sprite): void {
     const val = gem.getData('value') || 10;
-    gem.destroy();
+    gem.setActive(false).setVisible(false);
+    gem.body.stop();
+    gem.body.enable = false;
 
     this.playerXp += val;
     this.showFloatingText(`+${val} XP`, this.player.x, this.player.y - 10, '#a855f7', '14px');
@@ -1686,10 +1777,17 @@ export class GameScene extends Phaser.Scene {
     if (!this.player || !this.player.active) return;
     const px = this.player.x;
     const py = this.player.y;
+    const height = this.scale.height;
 
     this.xpGems.children.each((child) => {
       const g = child as Phaser.Physics.Arcade.Sprite;
       if (!g.active) return null;
+      if (g.y > height + 60) {
+        g.setActive(false).setVisible(false);
+        g.body.stop();
+        g.body.enable = false;
+        return null;
+      }
       const dist = Phaser.Math.Distance.Between(g.x, g.y, px, py);
       if (dist < this.magnetRadius) {
         const angle = Phaser.Math.Angle.Between(g.x, g.y, px, py);
@@ -1703,6 +1801,10 @@ export class GameScene extends Phaser.Scene {
     this.powerUps.children.each((child) => {
       const p = child as Phaser.Physics.Arcade.Sprite;
       if (!p.active) return null;
+      if (p.y > height + 60) {
+        p.destroy();
+        return null;
+      }
       const dist = Phaser.Math.Distance.Between(p.x, p.y, px, py);
       if (dist < this.magnetRadius * 0.8) {
         const angle = Phaser.Math.Angle.Between(p.x, p.y, px, py);

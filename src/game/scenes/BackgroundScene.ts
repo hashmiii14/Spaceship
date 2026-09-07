@@ -60,33 +60,35 @@ export class BackgroundScene extends Phaser.Scene {
     this.debrisGraphics = this.add.graphics();
 
     this.initStars(width, height);
-    this.initSpaceDust(width, height);
-    this.initDebris(width, height);
     this.resetPlanet();
 
     // Event Listeners
-    this.game.events.on('background:setDrift', (drift: number) => {
-      this.horizontalDrift = drift;
-    });
+    const onDrift = (drift: number) => { this.horizontalDrift = drift; };
+    const onSpeed = (multiplier: number) => { this.speedMultiplier = multiplier; };
+    const onLevel = (lvl: number) => { this.currentLevel = lvl; };
+    const onWarp = (durationMs: number = 4000) => { this.triggerWarpDrive(durationMs); };
 
-    this.game.events.on('background:setSpeedMultiplier', (multiplier: number) => {
-      this.speedMultiplier = multiplier;
-    });
+    this.game.events.on('background:setDrift', onDrift);
+    this.game.events.on('background:setSpeedMultiplier', onSpeed);
+    this.game.events.on('background:setLevel', onLevel);
+    this.game.events.on('background:triggerWarp', onWarp);
 
-    this.game.events.on('background:setLevel', (lvl: number) => {
-      this.currentLevel = lvl;
-    });
-
-    this.game.events.on('background:triggerWarp', (durationMs: number = 4000) => {
-      this.triggerWarpDrive(durationMs);
+    // Event Cleanup on Shutdown
+    this.events.once('shutdown', () => {
+      this.game.events.off('background:setDrift', onDrift);
+      this.game.events.off('background:setSpeedMultiplier', onSpeed);
+      this.game.events.off('background:setLevel', onLevel);
+      this.game.events.off('background:triggerWarp', onWarp);
     });
 
     // Window Resize Handler
     this.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
       const w = gameSize.width;
       const h = gameSize.height;
-      this.initStars(w, h);
-      this.initSpaceDust(w, h);
+      for (const s of this.stars) {
+        if (s.x > w) s.x = Phaser.Math.Between(0, w);
+        if (s.y > h) s.y = Phaser.Math.Between(0, h);
+      }
     });
   }
 
@@ -94,87 +96,55 @@ export class BackgroundScene extends Phaser.Scene {
     this.stars = [];
     const colors = [0xffffff, 0xdffff, 0xfff4cc, 0xe0e7ff, 0x67e8f9, 0xa78bfa, 0xff0055];
 
-    // Layer 1: Distant micro stars (dense, slow)
-    const countL1 = Math.floor((width * height) / 4000);
-    for (let i = 0; i < countL1; i++) {
+    // Layer 1: Distant micro stars (lightweight, stable count: 40)
+    for (let i = 0; i < 40; i++) {
       this.stars.push({
         x: Phaser.Math.Between(0, width),
         y: Phaser.Math.Between(0, height),
-        size: Phaser.Math.FloatBetween(0.8, 1.4),
+        size: Phaser.Math.FloatBetween(1.0, 1.6),
         speed: Phaser.Math.FloatBetween(30, 65),
-        alpha: Phaser.Math.FloatBetween(0.25, 0.75),
-        baseAlpha: Phaser.Math.FloatBetween(0.25, 0.75),
-        twinkleSpeed: Phaser.Math.FloatBetween(1.2, 3.5),
+        alpha: Phaser.Math.FloatBetween(0.3, 0.7),
+        baseAlpha: Phaser.Math.FloatBetween(0.3, 0.7),
+        twinkleSpeed: Phaser.Math.FloatBetween(1.2, 3.0),
         color: Phaser.Utils.Array.GetRandom(colors),
         layer: 1,
       });
     }
 
-    // Layer 2: Mid-field stars (medium speed)
-    const countL2 = Math.floor((width * height) / 8500);
-    for (let i = 0; i < countL2; i++) {
+    // Layer 2: Mid-field stars (medium speed, stable count: 20)
+    for (let i = 0; i < 20; i++) {
       this.stars.push({
         x: Phaser.Math.Between(0, width),
         y: Phaser.Math.Between(0, height),
-        size: Phaser.Math.FloatBetween(1.6, 2.4),
-        speed: Phaser.Math.FloatBetween(90, 180),
-        alpha: Phaser.Math.FloatBetween(0.5, 0.95),
-        baseAlpha: Phaser.Math.FloatBetween(0.5, 0.95),
-        twinkleSpeed: Phaser.Math.FloatBetween(1.8, 4.5),
+        size: Phaser.Math.FloatBetween(1.8, 2.5),
+        speed: Phaser.Math.FloatBetween(90, 160),
+        alpha: Phaser.Math.FloatBetween(0.6, 0.95),
+        baseAlpha: Phaser.Math.FloatBetween(0.6, 0.95),
+        twinkleSpeed: Phaser.Math.FloatBetween(2.0, 4.0),
         color: Phaser.Utils.Array.GetRandom(colors),
         layer: 2,
       });
     }
 
-    // Layer 3: Fast stars (hyper speed streaks)
-    const countL3 = Math.floor((width * height) / 20000);
-    for (let i = 0; i < countL3; i++) {
+    // Layer 3: Fast stars (hyper speed streaks, stable count: 10)
+    for (let i = 0; i < 10; i++) {
       this.stars.push({
         x: Phaser.Math.Between(0, width),
         y: Phaser.Math.Between(0, height),
-        size: Phaser.Math.FloatBetween(2.2, 3.2),
-        speed: Phaser.Math.FloatBetween(340, 600),
-        alpha: 0.95,
-        baseAlpha: 0.95,
+        size: Phaser.Math.FloatBetween(2.0, 3.0),
+        speed: Phaser.Math.FloatBetween(320, 520),
+        alpha: 0.9,
+        baseAlpha: 0.9,
         twinkleSpeed: 0,
-        color: 0xff0055, // Signature red accent high-speed streaks
+        color: 0xff0055, // Signature red high-speed streaks
         layer: 3,
-      });
-    }
-  }
-
-  private initSpaceDust(width: number, height: number): void {
-    this.spaceDust = [];
-    const count = Math.floor((width * height) / 12000);
-    for (let i = 0; i < count; i++) {
-      this.spaceDust.push({
-        x: Phaser.Math.Between(0, width),
-        y: Phaser.Math.Between(0, height),
-        size: Phaser.Math.FloatBetween(1.5, 3.0),
-        speed: Phaser.Math.FloatBetween(15, 45),
-        alpha: Phaser.Math.FloatBetween(0.1, 0.35),
-      });
-    }
-  }
-
-  private initDebris(width: number, height: number): void {
-    this.debrisList = [];
-    for (let i = 0; i < 8; i++) {
-      this.debrisList.push({
-        x: Phaser.Math.Between(0, width),
-        y: Phaser.Math.Between(-height, height),
-        vx: Phaser.Math.FloatBetween(-20, 20),
-        vy: Phaser.Math.FloatBetween(70, 140),
-        rotation: Phaser.Math.FloatBetween(0, Math.PI * 2),
-        vRot: Phaser.Math.FloatBetween(-1.5, 1.5),
-        scale: Phaser.Math.FloatBetween(0.8, 1.6),
       });
     }
   }
 
   private resetPlanet(): void {
     const width = this.scale.width;
-    this.planetX = Phaser.Math.Between(width * 0.15, width * 0.85);
+    this.planetX = Phaser.Math.Between(width * 0.2, width * 0.8);
     this.planetY = -350;
     this.planetType = Phaser.Math.Between(0, 3);
   }
@@ -208,114 +178,84 @@ export class BackgroundScene extends Phaser.Scene {
     const height = this.scale.height;
     const currentSpeed = this.speedMultiplier * this.warpFactor;
 
-    // Layer 4 & 5: Dynamic Dark Nebulae based on Level
-    this.nebulaOffset += dt * 18 * currentSpeed;
+    // Layer 4 & 5: Dynamic Dark Atmosphere based on Level
+    this.nebulaOffset += dt * 14 * currentSpeed;
     this.nebulaeGraphics.clear();
 
     const nebColors = this.getLevelNebulaColors();
-    const neb1Y = (this.nebulaOffset * 0.4) % (height + 600) - 300;
-    this.nebulaeGraphics.fillStyle(nebColors.primary, 0.04);
-    this.nebulaeGraphics.fillCircle(width * 0.25, neb1Y, Math.max(width * 0.35, 260));
+    const neb1Y = (this.nebulaOffset * 0.3) % (height + 500) - 250;
+    this.nebulaeGraphics.fillStyle(nebColors.primary, 0.035);
+    this.nebulaeGraphics.fillCircle(width * 0.3, neb1Y, Math.max(width * 0.35, 240));
 
-    const neb2Y = (this.nebulaOffset * 0.3) % (height + 700) - 350;
-    this.nebulaeGraphics.fillStyle(nebColors.secondary, 0.035);
-    this.nebulaeGraphics.fillCircle(width * 0.75, neb2Y, Math.max(width * 0.4, 320));
+    const neb2Y = (this.nebulaOffset * 0.25) % (height + 600) - 300;
+    this.nebulaeGraphics.fillStyle(nebColors.secondary, 0.03);
+    this.nebulaeGraphics.fillCircle(width * 0.7, neb2Y, Math.max(width * 0.4, 280));
 
-    this.nebulaeGraphics.fillStyle(nebColors.core, 0.03);
-    this.nebulaeGraphics.fillCircle(width * 0.5, (neb1Y + 350) % height, Math.max(width * 0.28, 220));
-
-    // Layer 6: Distant Celestial Planetoids & Moons
-    this.planetY += dt * 16 * currentSpeed;
+    // Layer 6: Distant Celestial Planetoid (Only rendered when on-screen)
+    this.planetY += dt * 14 * currentSpeed;
     this.planetGraphics.clear();
-    if (this.planetY < height + 250) {
+    if (this.planetY > -100 && this.planetY < height + 100) {
       if (this.planetType === 0) {
         // Gas Giant with Planetary Rings
-        this.planetGraphics.fillStyle(0x1e1b4b, 0.55);
-        this.planetGraphics.fillCircle(this.planetX, this.planetY, 65);
-        this.planetGraphics.lineStyle(2, 0x818cf8, 0.4);
-        this.planetGraphics.strokeCircle(this.planetX, this.planetY, 65);
-        this.planetGraphics.lineStyle(4, 0x06b6d4, 0.35);
-        this.planetGraphics.strokeEllipse(this.planetX, this.planetY, 150, 32);
+        this.planetGraphics.fillStyle(0x1e1b4b, 0.5);
+        this.planetGraphics.fillCircle(this.planetX, this.planetY, 55);
+        this.planetGraphics.lineStyle(1.5, 0x818cf8, 0.35);
+        this.planetGraphics.strokeCircle(this.planetX, this.planetY, 55);
+        this.planetGraphics.lineStyle(3, 0x06b6d4, 0.3);
+        this.planetGraphics.strokeEllipse(this.planetX, this.planetY, 130, 28);
       } else if (this.planetType === 1) {
         // Molten Volcanic Planetoid
-        this.planetGraphics.fillStyle(0x450a0a, 0.55);
-        this.planetGraphics.fillCircle(this.planetX, this.planetY, 50);
-        this.planetGraphics.lineStyle(2.5, 0xf87171, 0.4);
-        this.planetGraphics.strokeCircle(this.planetX, this.planetY, 50);
+        this.planetGraphics.fillStyle(0x450a0a, 0.5);
+        this.planetGraphics.fillCircle(this.planetX, this.planetY, 45);
+        this.planetGraphics.lineStyle(2, 0xf87171, 0.35);
+        this.planetGraphics.strokeCircle(this.planetX, this.planetY, 45);
       } else if (this.planetType === 2) {
         // Cyber Ice Moon
-        this.planetGraphics.fillStyle(0x083344, 0.5);
-        this.planetGraphics.fillCircle(this.planetX, this.planetY, 55);
-        this.planetGraphics.lineStyle(2, 0x22d3ee, 0.45);
-        this.planetGraphics.strokeCircle(this.planetX, this.planetY, 55);
+        this.planetGraphics.fillStyle(0x083344, 0.45);
+        this.planetGraphics.fillCircle(this.planetX, this.planetY, 48);
+        this.planetGraphics.lineStyle(2, 0x22d3ee, 0.4);
+        this.planetGraphics.strokeCircle(this.planetX, this.planetY, 48);
       } else {
-        // Dark Violet Void Planetoid
-        this.planetGraphics.fillStyle(0x2e1065, 0.5);
-        this.planetGraphics.fillCircle(this.planetX, this.planetY, 58);
-        this.planetGraphics.lineStyle(2, 0xc084fc, 0.4);
-        this.planetGraphics.strokeCircle(this.planetX, this.planetY, 58);
+        // Dark Void Planetoid
+        this.planetGraphics.fillStyle(0x2e1065, 0.45);
+        this.planetGraphics.fillCircle(this.planetX, this.planetY, 50);
+        this.planetGraphics.lineStyle(1.5, 0xc084fc, 0.35);
+        this.planetGraphics.strokeCircle(this.planetX, this.planetY, 50);
       }
-    } else {
-      if (Math.random() < 0.005) {
+    } else if (this.planetY >= height + 100) {
+      if (Math.random() < 0.008) {
         this.resetPlanet();
       }
     }
 
-    // Layer 4: Space Dust Particles
-    this.dustGraphics.clear();
-    for (let i = 0; i < this.spaceDust.length; i++) {
-      const d = this.spaceDust[i];
-      d.y += d.speed * dt * currentSpeed;
-      if (d.y > height + 10) d.y = -10;
-      this.dustGraphics.fillStyle(0x00f0ff, d.alpha);
-      this.dustGraphics.fillCircle(d.x, d.y, d.size);
-    }
-
-    // Layer 7: Cosmic Debris
-    this.debrisGraphics.clear();
-    for (let i = 0; i < this.debrisList.length; i++) {
-      const deb = this.debrisList[i];
-      deb.y += deb.vy * dt * currentSpeed;
-      deb.x += deb.vx * dt;
-      deb.rotation += deb.vRot * dt;
-
-      if (deb.y > height + 40) {
-        deb.y = -40;
-        deb.x = Phaser.Math.Between(0, width);
-      }
-
-      this.debrisGraphics.fillStyle(0x475569, 0.6);
-      this.debrisGraphics.fillCircle(deb.x, deb.y, 3 * deb.scale);
-    }
-
-    // Layer 1, 2, 3: Stars with Warp Stretching
+    // Layer 1, 2, 3: Batched Ultra-Smooth Starfield (Stable 60 FPS)
     this.starGraphics.clear();
     for (let i = 0; i < this.stars.length; i++) {
       const star = this.stars[i];
 
       star.y += star.speed * dt * currentSpeed;
-      star.x -= this.horizontalDrift * (star.layer * 22) * dt;
+      star.x -= this.horizontalDrift * (star.layer * 18) * dt;
 
       // Wrap-around
-      if (star.y > height + 30) {
-        star.y = -30;
+      if (star.y > height + 20) {
+        star.y = -20;
         star.x = Phaser.Math.Between(0, width);
       }
-      if (star.x < -30) star.x = width + 30;
-      if (star.x > width + 30) star.x = -30;
+      if (star.x < -20) star.x = width + 20;
+      if (star.x > width + 20) star.x = -20;
 
       if (star.twinkleSpeed > 0) {
-        star.alpha = star.baseAlpha + Math.sin(time * 0.003 * star.twinkleSpeed) * 0.25;
-        star.alpha = Phaser.Math.Clamp(star.alpha, 0.15, 1.0);
+        star.alpha = star.baseAlpha + Math.sin(time * 0.003 * star.twinkleSpeed) * 0.2;
+        star.alpha = Phaser.Math.Clamp(star.alpha, 0.2, 1.0);
       }
 
       if (this.isWarping || star.layer === 3) {
-        const streakLen = Math.min((this.isWarping ? 80 : 26) * currentSpeed, 120);
+        const streakLen = Math.min((this.isWarping ? 70 : 22) * currentSpeed, 100);
         this.starGraphics.lineStyle(star.size * (this.isWarping ? 1.5 : 1.0), star.color, star.alpha);
         this.starGraphics.lineBetween(star.x, star.y - streakLen, star.x, star.y);
       } else {
         this.starGraphics.fillStyle(star.color, star.alpha);
-        this.starGraphics.fillCircle(star.x, star.y, star.size);
+        this.starGraphics.fillRect(star.x, star.y, star.size, star.size);
       }
     }
   }

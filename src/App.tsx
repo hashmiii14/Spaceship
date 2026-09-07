@@ -138,6 +138,19 @@ export const App: React.FC = () => {
     };
   }, []);
 
+  // Prevent default browser scrolling when playing with Space or Arrow keys
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+        const target = e.target as HTMLElement;
+        if (target && ['INPUT', 'TEXTAREA'].includes(target.tagName)) return;
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, { passive: false });
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Handlers
   const handleStartGame = () => {
     const game = gameInstanceRef.current;
@@ -151,7 +164,7 @@ export const App: React.FC = () => {
     setBossInfo({ active: false, name: '', currentHp: 0, maxHp: 0, phase: 1 });
 
     if (musicEnabled) {
-      MusicManager.play();
+      MusicManager.ensurePlaying();
     }
   };
 
@@ -171,7 +184,7 @@ export const App: React.FC = () => {
     }
     setGameState('PLAYING');
     if (musicEnabled) {
-      MusicManager.resume();
+      MusicManager.ensurePlaying();
     }
   };
 
@@ -186,7 +199,7 @@ export const App: React.FC = () => {
     setLevelUpOptions(null);
     setBossInfo({ active: false, name: '', currentHp: 0, maxHp: 0, phase: 1 });
     if (musicEnabled) {
-      MusicManager.play();
+      MusicManager.ensurePlaying();
     }
   };
 
@@ -205,6 +218,9 @@ export const App: React.FC = () => {
     const nextVal = !musicEnabled;
     setMusicEnabled(nextVal);
     MusicManager.setMuted(!nextVal);
+    if (nextVal && gameState === 'PLAYING') {
+      MusicManager.ensurePlaying();
+    }
   };
 
   const handleToggleSound = () => {

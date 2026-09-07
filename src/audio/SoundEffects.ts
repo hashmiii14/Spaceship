@@ -4,6 +4,7 @@ class SoundEffectsManager {
   private ctx: AudioContext | null = null;
   private enabled: boolean = true;
   private volume: number = 0.8;
+  private lastLaserTime: number = 0;
 
   constructor() {
     this.enabled = Storage.getSoundEnabled();
@@ -66,6 +67,10 @@ class SoundEffectsManager {
 
   public playLaser(type: 'normal' | 'heavy' | 'triple' | 'rapid' | 'spread' = 'normal') {
     if (!this.enabled) return;
+    const nowMs = performance.now();
+    if (nowMs - this.lastLaserTime < 65) return;
+    this.lastLaserTime = nowMs;
+
     const ctx = this.getContext();
     if (!ctx) return;
 

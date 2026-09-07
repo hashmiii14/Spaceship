@@ -14,7 +14,7 @@ interface MainMenuProps {
   onToggleSound: () => void;
 }
 
-export const MainMenu: React.FC<MainMenuProps> = ({
+export const MainMenu: React.FC<MainMenuProps> = React.memo(({
   onStartGame,
   onOpenHowToPlay,
   highScore,
@@ -185,4 +185,4 @@ export const MainMenu: React.FC<MainMenuProps> = ({
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </div>
   );
-};
+});

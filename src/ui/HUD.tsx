@@ -27,7 +27,7 @@ const POWERUP_ICONS: Record<PowerUpType, { label: string; color: string; icon: R
   SLOW_MOTION: { label: 'CHRONO', color: '#818cf8', icon: <Clock className="w-3.5 h-3.5" /> },
 };
 
-export const HUD: React.FC<HUDProps> = ({
+export const HUD: React.FC<HUDProps> = React.memo(({
   stats,
   bossInfo,
   currentTrack,
@@ -333,4 +333,4 @@ export const HUD: React.FC<HUDProps> = ({
       )}
     </div>
   );
-};
+});
