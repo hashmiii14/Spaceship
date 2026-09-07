@@ -1,0 +1,234 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --neon-cyan: #00f0ff;
+  --neon-magenta: #ff0055;
+  --neon-gold: #facc15;
+  --neon-purple: #a855f7;
+  --neon-green: #22c55e;
+  --bg-dark: #030712;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-dark);
+  font-family: 'Rajdhani', sans-serif;
+  color: #ffffff;
+}
+
+/* Sci-fi Scanline Overlay */
+.scanlines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.25) 50%
+  );
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 40;
+  opacity: 0.6;
+}
+
+/* Sci-Fi Glass Panels */
+.cyber-panel {
+  background: rgba(10, 15, 30, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6),
+              inset 0 0 15px rgba(0, 240, 255, 0.05);
+  border-radius: 8px;
+  position: relative;
+}
+
+.cyber-panel-danger {
+  background: rgba(30, 10, 15, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 0, 85, 0.4);
+  box-shadow: 0 8px 32px 0 rgba(255, 0, 85, 0.2),
+              inset 0 0 20px rgba(255, 0, 85, 0.1);
+  border-radius: 8px;
+}
+
+/* Cyber Button */
+.cyber-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 28px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #00f0ff;
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid #00f0ff;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+}
+
+.cyber-btn:hover {
+  background: rgba(0, 240, 255, 0.25);
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.6),
+              inset 0 0 10px rgba(0, 240, 255, 0.4);
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+.cyber-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+}
+
+/* Secondary Button (Neutral / Gray) */
+.cyber-btn-secondary {
+  color: #94a3b8;
+  background: rgba(148, 163, 184, 0.08);
+  border-color: rgba(148, 163, 184, 0.3);
+  box-shadow: none;
+}
+
+.cyber-btn-secondary:hover {
+  background: rgba(148, 163, 184, 0.2);
+  border-color: #cbd5e1;
+  color: #ffffff;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+}
+
+/* Danger / Magenta Button */
+.cyber-btn-danger {
+  color: #ff0055;
+  background: rgba(255, 0, 85, 0.1);
+  border-color: #ff0055;
+  box-shadow: 0 0 15px rgba(255, 0, 85, 0.25);
+}
+
+.cyber-btn-danger:hover {
+  background: rgba(255, 0, 85, 0.3);
+  box-shadow: 0 0 25px rgba(255, 0, 85, 0.6);
+  color: #ffffff;
+}
+
+/* Glowing Neon Text */
+.neon-glow-cyan {
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.8),
+               0 0 20px rgba(0, 240, 255, 0.5),
+               0 0 35px rgba(0, 240, 255, 0.3);
+}
+
+.neon-glow-magenta {
+  text-shadow: 0 0 8px rgba(255, 0, 85, 0.8),
+               0 0 20px rgba(255, 0, 85, 0.5),
+               0 0 35px rgba(255, 0, 85, 0.3);
+}
+
+.neon-glow-gold {
+  text-shadow: 0 0 8px rgba(250, 204, 21, 0.8),
+               0 0 20px rgba(250, 204, 21, 0.5);
+}
+
+/* Health and Shield progress bars */
+.bar-track {
+  position: relative;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar-fill-hp {
+  height: 100%;
+  background: linear-gradient(90deg, #ef4444, #22c55e);
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+  transition: width 0.25s ease-out;
+}
+
+.bar-fill-shield {
+  height: 100%;
+  background: linear-gradient(90deg, #0284c7, #00f0ff);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+  transition: width 0.25s ease-out;
+}
+
+.bar-fill-boss {
+  height: 100%;
+  background: linear-gradient(90deg, #9333ea, #ff0055, #f43f5e);
+  box-shadow: 0 0 15px rgba(255, 0, 85, 0.8);
+  transition: width 0.2s linear;
+}
+
+/* Pulsing Keyframe Animations */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+    border-color: rgba(0, 240, 255, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(0, 240, 255, 0.8);
+    border-color: rgba(0, 240, 255, 1);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s infinite;
+}
+
+@keyframes bossAlertFlash {
+  0%, 100% {
+    background: rgba(255, 0, 85, 0.15);
+    border-color: rgba(255, 0, 85, 0.8);
+  }
+  50% {
+    background: rgba(255, 0, 85, 0.45);
+    border-color: #ff0055;
+  }
+}
+
+.animate-boss-alert {
+  animation: bossAlertFlash 0.5s infinite;
+}
+
+/* High Score Celebration Banner */
+@keyframes celebrationPulse {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.animate-celebrate {
+  animation: celebrationPulse 1.4s ease-in-out infinite;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.4);
+}
+::-webkit-scrollbar-thumb {
+  background: #00f0ff;
+  border-radius: 3px;
+}
