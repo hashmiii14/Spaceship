@@ -1,7 +1,27 @@
 import React from 'react';
-import { Shield, Heart, Trophy, Pause, Music, Zap, Flame, Crosshair, Award, Clock, AlertTriangle, Target, Radio } from 'lucide-react';
+import {
+  Shield,
+  Heart,
+  Trophy,
+  Pause,
+  Music,
+  Zap,
+  Flame,
+  Crosshair,
+  Award,
+  Clock,
+  AlertTriangle,
+  Target,
+  Radio,
+  Volume2,
+  VolumeX,
+  SkipForward,
+  SkipBack,
+} from 'lucide-react';
 import { PlayerStats, BossInfo, AudioTrack, PowerUpType } from '../types/game';
 import { SoundEffects } from '../audio/SoundEffects';
+import { MusicManager } from '../audio/MusicManager';
+import { EventBus } from '../utils/EventBus';
 
 interface HUDProps {
   stats: PlayerStats;
@@ -34,6 +54,35 @@ export const HUD: React.FC<HUDProps> = React.memo(({
   onPause,
   bossWarning,
 }) => {
+  const [isMuted, setIsMuted] = React.useState(MusicManager.getIsMuted());
+
+  React.useEffect(() => {
+    const handleMute = (muted: boolean) => setIsMuted(muted);
+    EventBus.on('music:mutedChanged', handleMute);
+    return () => {
+      EventBus.off('music:mutedChanged', handleMute);
+    };
+  }, []);
+
+  const handleToggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    SoundEffects.playClick();
+    const newMuted = MusicManager.toggleMute();
+    setIsMuted(newMuted);
+  };
+
+  const handleNextTrack = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    SoundEffects.playClick();
+    MusicManager.nextTrack();
+  };
+
+  const handlePrevTrack = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    SoundEffects.playClick();
+    MusicManager.prevTrack();
+  };
+
   const hpPercent = Math.max(0, Math.min(100, (stats.health / stats.maxHealth) * 100));
   const shieldPercent = Math.max(0, Math.min(100, (stats.shield / stats.maxShield) * 100));
   const xpPercent = stats.nextLevelXp > 0 ? Math.max(0, Math.min(100, (stats.xp / stats.nextLevelXp) * 100)) : 0;
@@ -272,15 +321,47 @@ export const HUD: React.FC<HUDProps> = React.memo(({
             <span className="font-bold text-white tracking-wider">{timeFormatted}</span>
           </div>
 
-          {/* Now Playing Music Indicator */}
-          {currentTrack && (
-            <div className="cyber-panel-military px-3 py-1 flex items-center gap-2 text-[10px] sm:text-xs font-mono text-red-300 max-w-[200px] sm:max-w-xs truncate border-red-500/30">
-              <Music className="w-3 h-3 text-red-400 animate-spin shrink-0" />
-              <div className="truncate">
-                <span className="font-semibold">{currentTrack.title}</span>
-              </div>
+          {/* Interactive Music Widget (Mute, Prev, Next, Current Track) */}
+          <div className="cyber-panel-military px-2.5 py-1.5 flex items-center gap-1.5 sm:gap-2 border-red-500/40 bg-black/85 pointer-events-auto shadow-[0_0_15px_rgba(255,0,51,0.25)]">
+            {/* Mute / Unmute Button */}
+            <button
+              onClick={handleToggleMute}
+              className="p-1 rounded hover:bg-red-500/20 text-red-400 hover:text-red-200 transition-colors cursor-pointer"
+              title={isMuted ? 'Unmute Audio (M)' : 'Mute Audio (M)'}
+            >
+              {isMuted ? (
+                <VolumeX className="w-3.5 h-3.5 text-red-500 animate-pulse" />
+              ) : (
+                <Volume2 className="w-3.5 h-3.5 text-red-400" />
+              )}
+            </button>
+
+            {/* Prev Track Button */}
+            <button
+              onClick={handlePrevTrack}
+              className="p-1 rounded hover:bg-red-500/20 text-gray-400 hover:text-white transition-colors cursor-pointer"
+              title="Previous Song"
+            >
+              <SkipBack className="w-3 h-3" />
+            </button>
+
+            {/* Track Info */}
+            <div className="flex items-center gap-1.5 max-w-[130px] sm:max-w-[170px] truncate text-[10px] sm:text-xs font-mono">
+              <Music className={`w-3 h-3 text-red-400 shrink-0 ${!isMuted ? 'animate-spin' : 'opacity-40'}`} />
+              <span className={`truncate font-semibold ${isMuted ? 'text-gray-500 line-through' : 'text-red-200'}`}>
+                {currentTrack ? currentTrack.title : 'AUDIO READY'}
+              </span>
             </div>
-          )}
+
+            {/* Next Track Button */}
+            <button
+              onClick={handleNextTrack}
+              className="p-1 rounded hover:bg-red-500/20 text-gray-400 hover:text-white transition-colors cursor-pointer"
+              title="Next Song (N)"
+            >
+              <SkipForward className="w-3 h-3" />
+            </button>
+          </div>
 
           {/* Red Weapon Telemetry Indicator */}
           <div className="cyber-panel-military px-2.5 py-1 flex items-center gap-1.5 text-[9px] font-mono text-rose-300 border-red-500/30">

@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { EventBus } from '../../utils/EventBus';
 import { SoundEffects } from '../../audio/SoundEffects';
+import { MusicManager } from '../../audio/MusicManager';
 import { Storage } from '../../utils/storage';
 import {
   PowerUpType,
@@ -333,6 +334,8 @@ export class GameScene extends Phaser.Scene {
         Phaser.Input.Keyboard.KeyCodes.DOWN,
         Phaser.Input.Keyboard.KeyCodes.LEFT,
         Phaser.Input.Keyboard.KeyCodes.RIGHT,
+        Phaser.Input.Keyboard.KeyCodes.M,
+        Phaser.Input.Keyboard.KeyCodes.N,
       ]);
 
       this.cursors = this.input.keyboard.createCursorKeys();
@@ -342,6 +345,21 @@ export class GameScene extends Phaser.Scene {
       this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
       this.keySpace = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
       this.keyEsc = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+      const keyM = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
+      const keyN = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.N);
+
+      keyM.on('down', () => {
+        SoundEffects.playClick();
+        const muted = MusicManager.toggleMute();
+        this.showFloatingText(muted ? 'AUDIO: MUTED' : 'AUDIO: ACTIVE', this.player.x, this.player.y - 35, muted ? '#ef4444' : '#22c55e', '16px');
+      });
+
+      keyN.on('down', () => {
+        SoundEffects.playClick();
+        MusicManager.nextTrack();
+        const track = MusicManager.getCurrentTrack();
+        this.showFloatingText(`TRACK: ${track.title}`, this.player.x, this.player.y - 35, '#00f0ff', '16px');
+      });
 
       this.keyEsc.on('down', () => {
         if (this.isAlive && !this.isLevelUpPaused) {

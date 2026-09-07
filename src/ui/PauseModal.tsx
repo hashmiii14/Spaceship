@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Play, RotateCcw, Home, Music, Volume2, Settings } from 'lucide-react';
+import { Play, RotateCcw, Home, Music, Volume2, Settings, SkipBack, SkipForward } from 'lucide-react';
 import { SoundEffects } from '../audio/SoundEffects';
+import { MusicManager } from '../audio/MusicManager';
 import { AudioTrack } from '../types/game';
 import { SettingsModal } from './SettingsModal';
 
@@ -35,16 +36,35 @@ export const PauseModal: React.FC<PauseModalProps> = ({
         </h2>
         <div className="h-0.5 w-24 bg-gradient-to-r from-transparent via-red-500 to-transparent mb-5" />
 
-        {/* Current Song in Pause Menu */}
-        {currentTrack && (
-          <div className="w-full bg-red-950/40 border border-red-500/30 rounded-lg p-2.5 mb-5 flex items-center justify-center gap-2 text-xs font-mono text-red-300">
-            <Music className="w-4 h-4 text-red-400 shrink-0" />
-            <div className="truncate">
-              <span className="text-gray-400 mr-1">PLAYING:</span>
-              <span className="font-bold">{currentTrack.title}</span>
-            </div>
+        {/* Current Song in Pause Menu with Skip Controls */}
+        <div className="w-full bg-red-950/40 border border-red-500/30 rounded-lg p-2.5 mb-5 flex items-center justify-between gap-2 text-xs font-mono text-red-300">
+          <button
+            onClick={() => {
+              SoundEffects.playClick();
+              MusicManager.prevTrack();
+            }}
+            className="p-1 rounded hover:bg-red-500/20 text-gray-400 hover:text-white transition-colors cursor-pointer"
+            title="Previous Song"
+          >
+            <SkipBack className="w-4 h-4" />
+          </button>
+
+          <div className="flex items-center gap-1.5 truncate max-w-[180px]">
+            <Music className={`w-4 h-4 text-red-400 shrink-0 ${musicEnabled ? 'animate-spin' : 'opacity-40'}`} />
+            <span className="font-bold truncate">{currentTrack ? currentTrack.title : 'AUDIO READY'}</span>
           </div>
-        )}
+
+          <button
+            onClick={() => {
+              SoundEffects.playClick();
+              MusicManager.nextTrack();
+            }}
+            className="p-1 rounded hover:bg-red-500/20 text-gray-400 hover:text-white transition-colors cursor-pointer"
+            title="Next Song"
+          >
+            <SkipForward className="w-4 h-4" />
+          </button>
+        </div>
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-3 w-full">

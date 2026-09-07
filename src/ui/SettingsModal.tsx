@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Volume2, Music, Monitor, Palette, X, Check } from 'lucide-react';
 import { Storage } from '../utils/storage';
-import { MusicManager } from '../audio/MusicManager';
+import { MusicManager, PLAYLIST } from '../audio/MusicManager';
 import { SoundEffects } from '../audio/SoundEffects';
 import { GraphicsQuality, ShipSkin } from '../types/game';
 import { EventBus } from '../utils/EventBus';
@@ -28,21 +28,21 @@ const SHIP_SKINS: ShipSkin[] = [
   {
     id: 'solar',
     name: 'SOLAR FLARE',
-    description: 'Titanium-gold plated hull forged near energetic stellar cores.',
-    color: '#facc15',
-    glowColor: 'rgba(250, 204, 21, 0.6)',
+    description: 'Solar-charged prototype with blazing orange thermal shielding.',
+    color: '#f97316',
+    glowColor: 'rgba(249, 115, 22, 0.6)',
   },
   {
     id: 'crimson',
-    name: 'CRIMSON BERSERKER',
-    description: 'Aggressive reinforced warframe designed for intense vanguard combat.',
-    color: '#f43f5e',
-    glowColor: 'rgba(244, 63, 94, 0.6)',
+    name: 'CRIMSON CORSAIR',
+    description: 'Pirate-modified interceptor with aggressive ruby-red hyperdrive.',
+    color: '#ef4444',
+    glowColor: 'rgba(239, 68, 68, 0.6)',
   },
   {
     id: 'cyber',
-    name: 'CYBER MATRIX',
-    description: 'Experimental emerald quantum-core vessel built for neural overclocking.',
+    name: 'CYBER TITAN',
+    description: 'Heavy vanguard gunship with radioactive emerald energy core.',
     color: '#10b981',
     glowColor: 'rgba(16, 185, 129, 0.6)',
   },
@@ -53,6 +53,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
   const [sfxVol, setSfxVol] = useState<number>(() => Math.round(Storage.getSoundVolume() * 100));
   const [quality, setQuality] = useState<GraphicsQuality>(() => Storage.getQuality());
   const [selectedSkin, setSelectedSkin] = useState<ShipSkin>(() => Storage.getSkin());
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(() => MusicManager.getCurrentTrackIndex());
+
+  const handleTrackSelect = (index: number) => {
+    SoundEffects.playClick();
+    setCurrentTrackIndex(index);
+    MusicManager.playTrack(index);
+  };
 
   const handleMusicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value, 10);
@@ -147,6 +154,41 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
                   onChange={handleSfxChange}
                   className="w-full accent-red-500 cursor-pointer"
                 />
+              </div>
+            </div>
+
+            {/* Soundtrack Selector */}
+            <div className="flex flex-col gap-2 pt-1">
+              <span className="text-[11px] font-mono text-gray-400 font-bold uppercase tracking-wider">
+                SELECT SOUNDTRACK ({PLAYLIST.length} TRACKS)
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {PLAYLIST.map((track, idx) => {
+                  const isCurrent = currentTrackIndex === idx;
+                  return (
+                    <button
+                      key={track.id}
+                      onClick={() => handleTrackSelect(idx)}
+                      className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                        isCurrent
+                          ? 'bg-red-950/70 border-red-500 shadow-[0_0_15px_rgba(255,0,51,0.35)]'
+                          : 'bg-black/50 border-gray-800 hover:border-gray-600'
+                      }`}
+                    >
+                      <div className="flex flex-col truncate">
+                        <span className={`text-xs font-mono font-bold truncate ${isCurrent ? 'text-white' : 'text-gray-300'}`}>
+                          {track.title}
+                        </span>
+                        <span className="text-[10px] font-mono text-gray-500 truncate">
+                          {track.artist}
+                        </span>
+                      </div>
+                      {isCurrent && (
+                        <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>

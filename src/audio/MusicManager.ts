@@ -177,6 +177,53 @@ class MusicManagerClass {
     }
   }
 
+  public prevTrack(): void {
+    this.currentTrackIndex = (this.currentTrackIndex - 1 + PLAYLIST.length) % PLAYLIST.length;
+    const track = this.getCurrentTrack();
+    const audio = this.initAudio();
+    audio.src = track.url;
+    audio.currentTime = 0;
+
+    if (!this.isMuted) {
+      audio.play().then(() => {
+        this.isPlaying = true;
+        EventBus.emit('music:trackChanged', track);
+        EventBus.emit('music:stateChanged', { isPlaying: true, track });
+      }).catch((err) => {
+        console.warn('[MusicManager] Prev track play error:', err);
+      });
+    } else {
+      EventBus.emit('music:trackChanged', track);
+    }
+  }
+
+  public playTrack(index: number): void {
+    if (index >= 0 && index < PLAYLIST.length) {
+      this.currentTrackIndex = index;
+      const track = this.getCurrentTrack();
+      const audio = this.initAudio();
+      audio.src = track.url;
+      audio.currentTime = 0;
+
+      if (!this.isMuted) {
+        audio.play().then(() => {
+          this.isPlaying = true;
+          EventBus.emit('music:trackChanged', track);
+          EventBus.emit('music:stateChanged', { isPlaying: true, track });
+        }).catch((err) => {
+          console.warn('[MusicManager] Play track error:', err);
+        });
+      } else {
+        EventBus.emit('music:trackChanged', track);
+      }
+    }
+  }
+
+  public toggleMute(): boolean {
+    this.setMuted(!this.isMuted);
+    return this.isMuted;
+  }
+
   public setMuted(muted: boolean): void {
     this.isMuted = muted;
     Storage.setMusicEnabled(!muted);

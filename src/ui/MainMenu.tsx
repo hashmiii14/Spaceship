@@ -174,7 +174,7 @@ export const MainMenu: React.FC<MainMenuProps> = React.memo(({
       {/* Footer Info */}
       <div className="w-full text-center pb-2 text-[11px] sm:text-xs font-mono text-gray-400 tracking-wider">
         <p className="flex items-center justify-center gap-2">
-          <span>DESKTOP: [WASD / ARROWS] MOVE | [SPACE] NEON RED LASER FIRE | [ESC] PAUSE</span>
+          <span>DESKTOP: [WASD / ARROWS] MOVE | [SPACE] FIRE | [M] MUTE | [N] NEXT TRACK | [ESC] PAUSE</span>
         </p>
         <p className="mt-1 text-gray-500">
           TOUCH / DUAL-THUMB JOYSTICK AUTO-ENGAGED FOR MOBILE TABLET
