@@ -77,14 +77,24 @@ export const MobileControls: React.FC = () => {
     EventBus.emit('input:mobileMove', { x: nx, y: ny });
   };
 
+  const [autoFire, setAutoFire] = useState(false);
+
+  const toggleAutoFire = () => {
+    const next = !autoFire;
+    setAutoFire(next);
+    EventBus.emit('input:mobileShoot', next);
+  };
+
   const handleShootStart = (e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault();
+    if (autoFire) return; // already firing
     setIsShooting(true);
     EventBus.emit('input:mobileShoot', true);
   };
 
   const handleShootEnd = (e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault();
+    if (autoFire) return; // keep firing if auto is active
     setIsShooting(false);
     EventBus.emit('input:mobileShoot', false);
   };
@@ -93,33 +103,34 @@ export const MobileControls: React.FC = () => {
 
   return (
     <>
-      {/* Optional Portrait Warning Banner */}
+      {/* Sleek Landscape Hint for Portrait Mode */}
       {isPortrait && (
-        <div className="absolute top-14 left-1/2 -translate-x-1/2 bg-red-950/90 border border-red-500 text-red-200 text-[10px] font-mono font-bold px-3 py-1 rounded-full pointer-events-none z-40 animate-pulse flex items-center gap-1.5 shadow-[0_0_15px_rgba(255,0,51,0.5)]">
-          <RotateCcw className="w-3.5 h-3.5 text-red-400" />
-          <span>ROTATE DEVICE FOR FULL COMBAT VIEW</span>
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 bg-black/80 border border-red-500/60 text-red-300 text-[9px] sm:text-[10px] font-mono font-bold px-3 py-1 rounded-full pointer-events-none z-40 flex items-center gap-1.5 shadow-[0_0_15px_rgba(255,0,51,0.4)] backdrop-blur-xs">
+          <RotateCcw className="w-3 h-3 text-red-400 animate-spin" />
+          <span>LANDSCAPE RECOMMENDED FOR MAXIMUM RADAR VIEW</span>
         </div>
       )}
 
-      <div className="absolute inset-x-0 bottom-0 p-4 sm:p-8 flex justify-between items-end pointer-events-none z-30 select-none touch-none">
-        {/* Virtual Joystick (Bottom Left) */}
+      {/* Screen Edge Mobile HUD Controls */}
+      <div className="absolute inset-x-0 bottom-0 px-3 sm:px-6 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex justify-between items-end pointer-events-none z-30 select-none touch-none">
+        {/* Virtual Joystick (Bottom Left, Semi-Transparent, High-Forward Visibility) */}
         <div
           ref={joystickBaseRef}
           onTouchStart={handleJoystickTouchStart}
           onTouchMove={handleJoystickTouchMove}
           onTouchEnd={handleJoystickTouchEnd}
           onTouchCancel={handleJoystickTouchEnd}
-          className="w-28 h-28 sm:w-36 sm:h-36 rounded-full border-2 border-red-500/50 bg-black/70 relative flex items-center justify-center pointer-events-auto touch-none shadow-[0_0_20px_rgba(255,0,51,0.2)]"
+          className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border border-red-500/35 bg-black/40 backdrop-blur-[2px] relative flex items-center justify-center pointer-events-auto touch-none shadow-[0_0_15px_rgba(255,0,51,0.15)] transition-all"
         >
           {/* Outer Ring Accent */}
-          <div className="absolute inset-2 rounded-full border border-dashed border-red-500/30" />
+          <div className="absolute inset-1.5 rounded-full border border-dashed border-red-500/20" />
 
           {/* Joystick Knob */}
           <div
-            className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 transition-transform ${
+            className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full border transition-transform ${
               isDragging
-                ? 'bg-red-600/70 border-red-400 shadow-[0_0_25px_rgba(255,0,51,0.9)]'
-                : 'bg-red-950/60 border-red-500/70'
+                ? 'bg-red-600/80 border-rose-300 shadow-[0_0_20px_rgba(255,0,51,0.8)] scale-105'
+                : 'bg-red-950/40 border-red-500/50'
             }`}
             style={{
               transform: `translate(${knobPos.x}px, ${knobPos.y}px)`,
@@ -127,25 +138,44 @@ export const MobileControls: React.FC = () => {
           />
         </div>
 
-        {/* Touch Fire Button (Bottom Right) */}
-        <button
-          onTouchStart={handleShootStart}
-          onTouchEnd={handleShootEnd}
-          onTouchCancel={handleShootEnd}
-          onMouseDown={handleShootStart}
-          onMouseUp={handleShootEnd}
-          className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 flex flex-col items-center justify-center pointer-events-auto touch-none transition-all ${
-            isShooting
-              ? 'bg-red-600/80 border-rose-300 scale-95 shadow-[0_0_35px_rgba(255,0,51,1)]'
-              : 'bg-red-950/70 border-red-500/80 shadow-[0_0_25px_rgba(255,0,51,0.4)] active:scale-95'
-          }`}
-        >
-          <Crosshair className="w-8 h-8 text-rose-300 animate-pulse" />
-          <span className="text-[10px] sm:text-xs font-black font-['Orbitron'] tracking-wider text-rose-100 mt-0.5">
-            FIRE
-          </span>
-        </button>
+        {/* Right Combat Controls: Auto-Fire Toggle + Primary Fire Button */}
+        <div className="flex flex-col items-end gap-2 pointer-events-auto touch-none">
+          {/* Auto-Fire Toggle Button */}
+          <button
+            onClick={toggleAutoFire}
+            onTouchStart={(e) => { e.stopPropagation(); }}
+            className={`px-2.5 py-1 rounded-full border font-mono text-[9px] sm:text-[10px] font-bold tracking-wider uppercase transition-all backdrop-blur-[2px] flex items-center gap-1 ${
+              autoFire
+                ? 'bg-red-600/80 border-rose-300 text-white shadow-[0_0_15px_rgba(255,0,51,0.8)]'
+                : 'bg-black/50 border-red-500/40 text-red-300 hover:border-red-400/70'
+            }`}
+            title="Toggle Automatic Firing"
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${autoFire ? 'bg-white animate-ping' : 'bg-red-500'}`} />
+            <span>AUTO FIRE: {autoFire ? 'ON' : 'OFF'}</span>
+          </button>
+
+          {/* Touch Fire Button (Bottom Right) */}
+          <button
+            onTouchStart={handleShootStart}
+            onTouchEnd={handleShootEnd}
+            onTouchCancel={handleShootEnd}
+            onMouseDown={handleShootStart}
+            onMouseUp={handleShootEnd}
+            className={`w-18 h-18 sm:w-22 sm:h-22 rounded-full border-2 flex flex-col items-center justify-center pointer-events-auto touch-none transition-all ${
+              isShooting || autoFire
+                ? 'bg-red-600/80 border-rose-300 scale-95 shadow-[0_0_30px_rgba(255,0,51,0.9)]'
+                : 'bg-black/50 border-red-500/60 backdrop-blur-[2px] shadow-[0_0_18px_rgba(255,0,51,0.25)] active:scale-95'
+            }`}
+          >
+            <Crosshair className="w-6 h-6 sm:w-7 sm:h-7 text-rose-300" />
+            <span className="text-[9px] sm:text-[10px] font-black font-['Orbitron'] tracking-wider text-rose-100 mt-0.5">
+              {autoFire ? 'FIRING' : 'FIRE'}
+            </span>
+          </button>
+        </div>
       </div>
     </>
   );
 };
+

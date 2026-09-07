@@ -29,7 +29,6 @@ export class GameScene extends Phaser.Scene {
   // Player
   private player!: Phaser.Physics.Arcade.Sprite;
   private playerEngineParticles!: Phaser.GameObjects.Particles.ParticleEmitter;
-  private shieldSprite!: Phaser.GameObjects.Sprite;
   private basePlayerSpeed = 360;
   private playerSpeed = 360;
   private playerHealth = 100;
@@ -299,7 +298,8 @@ export class GameScene extends Phaser.Scene {
     const skinKey = `player_ship_${skin.id.toLowerCase()}`;
     const initialSkin = this.textures.exists(skinKey) ? skinKey : 'player_ship';
 
-    this.player = this.physics.add.sprite(width / 2, height - 100, initialSkin);
+    const spawnY = Math.min(height - 85, height * 0.84);
+    this.player = this.physics.add.sprite(width / 2, spawnY, initialSkin);
     this.player.setCollideWorldBounds(true);
     this.player.setDrag(1800, 1800);
     this.player.setMaxVelocity(620, 620);
@@ -319,12 +319,6 @@ export class GameScene extends Phaser.Scene {
       followOffset: { x: 0, y: 32 },
     });
     this.playerEngineParticles.setDepth(9);
-
-    // Shield Forcefield Dome
-    this.shieldSprite = this.add.sprite(this.player.x, this.player.y, 'shield_bubble');
-    this.shieldSprite.setDepth(11);
-    this.shieldSprite.setVisible(this.playerShield > 0);
-    this.shieldSprite.setAlpha(0.85);
 
     // 4. Keyboard Controls & Browser Scroll Prevention
     if (this.input.keyboard) {
@@ -553,11 +547,6 @@ export class GameScene extends Phaser.Scene {
     // Parallax background drift
     this.game.events.emit('background:setDrift', vx);
 
-    // Shield follow
-    if (this.shieldSprite && this.shieldSprite.visible) {
-      this.shieldSprite.setPosition(this.player.x, this.player.y);
-      this.shieldSprite.rotation += dt * 1.5;
-    }
 
     // 4. Shooting (Immediate response, holding Spacebar continuous fire)
     const isSpaceDown = (this.keySpace && this.keySpace.isDown) ||
@@ -1407,8 +1396,13 @@ export class GameScene extends Phaser.Scene {
     if (this.playerShield > 0) {
       this.playerShield = Math.max(0, this.playerShield - amount * 1.3);
       SoundEffects.playShieldAbsorb();
-      this.cyanSparkEmitter.explode(12, this.player.x, this.player.y);
-      this.shieldSprite.setVisible(this.playerShield > 0);
+      this.redSparkEmitter.explode(12, this.player.x, this.player.y);
+      this.player.setTintFill(0xff2a5f);
+      this.time.delayedCall(70, () => {
+        if (this.player && this.player.active) {
+          this.player.clearTint();
+        }
+      });
       if (this.playerShield === 0) {
         this.activePowerUps.delete('SHIELD');
       }
@@ -1861,7 +1855,6 @@ export class GameScene extends Phaser.Scene {
     } else if (option.id === 'shield_boost') {
       this.maxShield += 25;
       this.playerShield = this.maxShield;
-      this.shieldSprite.setVisible(true);
     } else if (option.id === 'thruster_overdrive') {
       this.basePlayerSpeed += 40;
     } else if (option.id === 'damage_matrix') {
@@ -1981,7 +1974,6 @@ export class GameScene extends Phaser.Scene {
 
       case 'SHIELD':
         this.playerShield = this.maxShield;
-        this.shieldSprite.setVisible(true);
         this.showFloatingText('SHIELD OVERCHARGE', this.player.x, this.player.y, '#00f0ff');
         this.activePowerUps.set('SHIELD', { type, endTime: now + 20000, duration: 20000 });
         break;
@@ -2107,7 +2099,6 @@ export class GameScene extends Phaser.Scene {
   private killPlayer(): void {
     this.isAlive = false;
     this.player.setVisible(false);
-    this.shieldSprite.setVisible(false);
     this.playerEngineParticles.stop();
 
     SoundEffects.playExplosion('large');

@@ -115,136 +115,147 @@ export const HUD: React.FC<HUDProps> = React.memo(({
       {/* Top Header Grid */}
       <div className="flex items-start justify-between w-full">
         {/* Top Left: Score, Weapon Telemetry, Vitals & Tactical Mission */}
-        <div className="flex flex-col gap-2 pointer-events-auto">
+        <div className="flex flex-col gap-1.5 sm:gap-2 pointer-events-auto">
           {/* Score & Red Weapon Status Box */}
-          <div className="cyber-panel-military px-4 py-2 flex flex-col w-52 sm:w-64 border-red-500/40">
+          <div className="cyber-panel-military px-2.5 sm:px-4 py-1 sm:py-2 flex flex-col w-36 sm:w-64 border-red-500/40">
             <div className="flex justify-between items-center">
-              <span className="text-[10px] sm:text-xs font-mono tracking-widest text-red-400 font-bold uppercase flex items-center gap-1.5">
+              <span className="text-[9px] sm:text-xs font-mono tracking-widest text-red-400 font-bold uppercase flex items-center gap-1 sm:gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
-                COMBAT SCORE
+                <span className="hidden sm:inline">COMBAT </span>SCORE
               </span>
-              <span className="text-[9px] font-mono tracking-wider text-rose-300 font-bold px-1.5 py-0.5 rounded bg-red-950/80 border border-red-500/50 uppercase">
+              <span className="hidden sm:inline-block text-[9px] font-mono tracking-wider text-rose-300 font-bold px-1.5 py-0.5 rounded bg-red-950/80 border border-red-500/50 uppercase">
                 {stats.activeWeapon || 'RED CANNON'}
               </span>
             </div>
-            <span className="text-xl sm:text-2xl md:text-3xl font-black font-mono tracking-wider text-white neon-glow-red mt-0.5">
+            <span className="text-base sm:text-2xl md:text-3xl font-black font-mono tracking-wider text-white neon-glow-red mt-0.5">
               {stats.score.toString().padStart(6, '0')}
             </span>
           </div>
 
           {/* Vitals: Hull HP, Shield, and XP Bars */}
-          <div className="cyber-panel-military px-3 py-2.5 flex flex-col gap-2 w-52 sm:w-64 border-red-500/40">
+          <div className="cyber-panel-military px-2 sm:px-3 py-1 sm:py-2.5 flex flex-col gap-1 sm:gap-2 w-36 sm:w-64 border-red-500/40">
             {/* Hull HP */}
-            <div className="flex items-center gap-2">
-              <Heart className="w-3.5 h-3.5 text-red-500 shrink-0" />
-              <div className="bar-track flex-1 h-2.5 sm:h-3">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Heart className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-500 shrink-0" />
+              <div className="bar-track flex-1 h-1.5 sm:h-2.5">
                 <div
                   className="bar-fill-hp transition-all duration-150"
                   style={{ width: `${hpPercent}%` }}
                 />
               </div>
-              <span className="text-[11px] font-mono font-bold text-gray-200 w-8 text-right">
+              <span className="text-[9px] sm:text-[11px] font-mono font-bold text-gray-200 w-6 sm:w-8 text-right">
                 {Math.round(stats.health)}%
               </span>
             </div>
 
             {/* Forcefield Shield */}
-            <div className="flex items-center gap-2">
-              <Shield className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-              <div className="bar-track flex-1 h-2.5 sm:h-3">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Shield className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-sky-400 shrink-0" />
+              <div className="bar-track flex-1 h-1.5 sm:h-2.5">
                 <div
                   className="bar-fill-shield transition-all duration-150"
                   style={{ width: `${shieldPercent}%` }}
                 />
               </div>
-              <span className="text-[11px] font-mono font-bold text-sky-300 w-8 text-right">
+              <span className="text-[9px] sm:text-[11px] font-mono font-bold text-sky-300 w-6 sm:w-8 text-right">
                 {Math.round(stats.shield)}%
               </span>
             </div>
 
             {/* Level & XP Bar */}
-            <div className="flex items-center gap-2 pt-1 border-t border-red-900/40">
-              <span className="text-[10px] font-mono font-black text-red-400 shrink-0 uppercase">
-                LVL {stats.level}
+            <div className="flex items-center gap-1.5 sm:gap-2 pt-0.5 sm:pt-1 border-t border-red-900/40">
+              <span className="text-[8px] sm:text-[10px] font-mono font-black text-red-400 shrink-0 uppercase">
+                L{stats.level}
               </span>
-              <div className="bar-track flex-1 h-2 bg-gray-950">
+              <div className="bar-track flex-1 h-1 sm:h-2 bg-gray-950">
                 <div
                   className="h-full bg-gradient-to-r from-red-700 via-rose-600 to-red-400 rounded-full transition-all duration-200 shadow-[0_0_8px_rgba(255,0,51,0.6)]"
                   style={{ width: `${xpPercent}%` }}
                 />
               </div>
-              <span className="text-[10px] font-mono font-bold text-red-300 w-8 text-right">
+              <span className="text-[8px] sm:text-[10px] font-mono font-bold text-red-300 w-6 sm:w-8 text-right">
                 {Math.round(xpPercent)}%
               </span>
             </div>
           </div>
 
-          {/* Active Tactical Mission Panel */}
+          {/* Active Tactical Mission: Desktop full panel */}
           {stats.activeMission && (
-            <div className="cyber-panel-military px-3.5 py-2 flex flex-col gap-1.5 w-52 sm:w-64 border-red-500/30 bg-black/75">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-red-400">
-                  <Crosshair className="w-3.5 h-3.5 animate-pulse" />
-                  <span className="text-[10px] font-mono tracking-wider font-black uppercase text-red-300">
-                    MISSION OBJECTIVE
+            <>
+              <div className="hidden sm:flex cyber-panel-military px-3.5 py-2 flex-col gap-1.5 w-64 border-red-500/30 bg-black/75">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-red-400">
+                    <Crosshair className="w-3.5 h-3.5 animate-pulse" />
+                    <span className="text-[10px] font-mono tracking-wider font-black uppercase text-red-300">
+                      MISSION OBJECTIVE
+                    </span>
+                  </div>
+                  {stats.activeMission.completed ? (
+                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-950/80 border border-emerald-500 text-emerald-300 font-bold">
+                      COMPLETED
+                    </span>
+                  ) : (
+                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-red-950/60 border border-red-500/40 text-red-300 font-bold">
+                      IN PROGRESS
+                    </span>
+                  )}
+                </div>
+
+                <div className="text-xs font-mono font-bold text-white tracking-wide truncate">
+                  {stats.activeMission.title}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="bar-track flex-1 h-2 bg-gray-950/90 border border-red-900/40">
+                    <div
+                      className="h-full bg-gradient-to-r from-red-600 via-rose-500 to-amber-400 rounded-full transition-all duration-200 shadow-[0_0_8px_rgba(255,0,51,0.7)]"
+                      style={{
+                        width: `${Math.min(100, Math.max(0, (stats.activeMission.progress / stats.activeMission.target) * 100))}%`,
+                      }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-mono font-bold text-red-200 shrink-0">
+                    {stats.activeMission.progress}/{stats.activeMission.target}
                   </span>
                 </div>
-                {stats.activeMission.completed ? (
-                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-950/80 border border-emerald-500 text-emerald-300 font-bold">
-                    COMPLETED
-                  </span>
-                ) : (
-                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-red-950/60 border border-red-500/40 text-red-300 font-bold">
-                    IN PROGRESS
-                  </span>
+
+                <div className="text-[9px] font-mono text-gray-400 flex items-center justify-between">
+                  <span className="truncate mr-1">{stats.activeMission.description}</span>
+                  <span className="text-yellow-400 font-bold shrink-0">{stats.activeMission.rewardText}</span>
+                </div>
+              </div>
+
+              {/* Mobile Compact Mission Tag */}
+              <div className="sm:hidden cyber-panel-military px-2 py-0.5 flex items-center justify-between w-36 border-red-500/30 bg-black/80">
+                <span className="text-[8px] font-mono font-bold text-red-300 truncate">
+                  OBJ: {stats.activeMission.progress}/{stats.activeMission.target}
+                </span>
+                {stats.activeMission.completed && (
+                  <span className="text-[7px] font-mono text-emerald-400 font-black">DONE</span>
                 )}
               </div>
-
-              <div className="text-xs font-mono font-bold text-white tracking-wide truncate">
-                {stats.activeMission.title}
-              </div>
-
-              {/* Tactical Mission Progress Bar */}
-              <div className="flex items-center gap-2">
-                <div className="bar-track flex-1 h-2 bg-gray-950/90 border border-red-900/40">
-                  <div
-                    className="h-full bg-gradient-to-r from-red-600 via-rose-500 to-amber-400 rounded-full transition-all duration-200 shadow-[0_0_8px_rgba(255,0,51,0.7)]"
-                    style={{
-                      width: `${Math.min(100, Math.max(0, (stats.activeMission.progress / stats.activeMission.target) * 100))}%`,
-                    }}
-                  />
-                </div>
-                <span className="text-[10px] font-mono font-bold text-red-200 shrink-0">
-                  {stats.activeMission.progress}/{stats.activeMission.target}
-                </span>
-              </div>
-
-              <div className="text-[9px] font-mono text-gray-400 flex items-center justify-between">
-                <span className="truncate mr-1">{stats.activeMission.description}</span>
-                <span className="text-yellow-400 font-bold shrink-0">{stats.activeMission.rewardText}</span>
-              </div>
-            </div>
+            </>
           )}
         </div>
 
         {/* Top Center: Sector / Boss Warning / Boss HP Bar / Kill Combo Meter */}
         <div className="flex flex-col items-center pointer-events-auto">
           {bossWarning ? (
-            <div className="cyber-panel-danger animate-boss-alert px-6 py-2.5 rounded-lg flex flex-col items-center">
-              <span className="text-xs font-mono font-black text-red-300 tracking-[0.25em] uppercase">
+            <div className="cyber-panel-danger animate-boss-alert px-3 sm:px-6 py-1.5 sm:py-2.5 rounded-lg flex flex-col items-center">
+              <span className="text-[9px] sm:text-xs font-mono font-black text-red-300 tracking-[0.15em] sm:tracking-[0.25em] uppercase">
                 CRITICAL EMERGENCY
               </span>
-              <span className="text-lg sm:text-xl font-black font-['Orbitron'] text-white tracking-widest neon-glow-magenta animate-pulse">
+              <span className="text-sm sm:text-xl font-black font-['Orbitron'] text-white tracking-widest neon-glow-magenta animate-pulse">
                 BOSS INCOMING
               </span>
             </div>
           ) : (
-            <div className="cyber-panel-military px-6 py-2 flex flex-col items-center border-red-500/30">
-              <span className="text-[10px] sm:text-xs font-mono tracking-[0.2em] text-red-400 font-bold uppercase flex items-center gap-1.5">
-                <Target className="w-3 h-3 text-red-400" />
-                COMBAT SECTOR
+            <div className="cyber-panel-military px-3 sm:px-6 py-1 sm:py-2 flex flex-col items-center border-red-500/30">
+              <span className="text-[8px] sm:text-xs font-mono tracking-[0.15em] sm:tracking-[0.2em] text-red-400 font-bold uppercase flex items-center gap-1 sm:gap-1.5">
+                <Target className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-400" />
+                <span>SECTOR</span>
               </span>
-              <span className="text-lg sm:text-2xl font-black font-['Orbitron'] tracking-widest text-white neon-glow-red">
+              <span className="text-xs sm:text-2xl font-black font-['Orbitron'] tracking-widest text-white neon-glow-red">
                 SECTOR {stats.wave}
               </span>
             </div>
@@ -252,16 +263,16 @@ export const HUD: React.FC<HUDProps> = React.memo(({
 
           {/* Boss Health Bar */}
           {bossInfo.active && (
-            <div className="cyber-panel-danger mt-2 px-4 py-2 w-64 sm:w-80 md:w-96 flex flex-col gap-1 pointer-events-auto animate-pulse-glow">
-              <div className="flex justify-between items-center text-xs font-mono font-bold">
-                <span className="text-red-400 tracking-wider font-['Orbitron'] uppercase">
+            <div className="cyber-panel-danger mt-1.5 sm:mt-2 px-3 sm:px-4 py-1 sm:py-2 w-48 sm:w-80 md:w-96 flex flex-col gap-1 pointer-events-auto animate-pulse-glow">
+              <div className="flex justify-between items-center text-[9px] sm:text-xs font-mono font-bold">
+                <span className="text-red-400 tracking-wider font-['Orbitron'] uppercase truncate">
                   {bossInfo.name}
                 </span>
-                <span className="text-yellow-400 tracking-widest">
+                <span className="text-yellow-400 tracking-widest shrink-0">
                   PHASE {bossInfo.phase}
                 </span>
               </div>
-              <div className="bar-track h-3 sm:h-3.5">
+              <div className="bar-track h-2 sm:h-3.5">
                 <div
                   className="bar-fill-boss transition-all duration-100"
                   style={{
@@ -274,12 +285,12 @@ export const HUD: React.FC<HUDProps> = React.memo(({
 
           {/* Kill Combo Multiplier Meter */}
           {stats.combo > 1 && (
-            <div className="mt-2.5 px-4 py-1.5 rounded-full bg-black/90 border border-yellow-500/70 flex items-center gap-2 shadow-[0_0_20px_rgba(250,204,21,0.5)] animate-bounce">
-              <Zap className="w-4 h-4 text-yellow-400 animate-pulse" />
-              <span className="text-xs sm:text-sm font-black font-['Orbitron'] text-yellow-300 tracking-wider">
-                COMBO x{stats.comboMultiplier} ({stats.combo} KILLS)
+            <div className="mt-1.5 sm:mt-2.5 px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full bg-black/90 border border-yellow-500/70 flex items-center gap-1.5 sm:gap-2 shadow-[0_0_20px_rgba(250,204,21,0.5)] animate-bounce">
+              <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 animate-pulse" />
+              <span className="text-[10px] sm:text-sm font-black font-['Orbitron'] text-yellow-300 tracking-wider">
+                x{stats.comboMultiplier} ({stats.combo} KILLS)
               </span>
-              <div className="w-12 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+              <div className="w-8 sm:w-12 h-1 sm:h-1.5 bg-gray-800 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-yellow-400 transition-all duration-75"
                   style={{ width: `${((stats.comboTimer || 0) / 2.5) * 100}%` }}
@@ -290,9 +301,10 @@ export const HUD: React.FC<HUDProps> = React.memo(({
         </div>
 
         {/* Top Right: High Score, Pause & Telemetry */}
-        <div className="flex flex-col items-end gap-2 pointer-events-auto">
-          <div className="flex items-center gap-2">
-            <div className="cyber-panel-military px-3 py-1.5 flex items-center gap-2 border-yellow-500/40">
+        <div className="flex flex-col items-end gap-1.5 sm:gap-2 pointer-events-auto">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Top record: desktop only */}
+            <div className="hidden sm:flex cyber-panel-military px-3 py-1.5 items-center gap-2 border-yellow-500/40">
               <Trophy className="w-4 h-4 text-yellow-400" />
               <div className="flex flex-col text-right">
                 <span className="text-[9px] sm:text-[10px] font-mono tracking-widest text-gray-400 font-bold uppercase">
@@ -307,22 +319,22 @@ export const HUD: React.FC<HUDProps> = React.memo(({
             {/* Quick Pause Button */}
             <button
               onClick={handlePauseClick}
-              className="cyber-panel-military p-2.5 rounded-lg border border-red-500/40 bg-black/70 hover:bg-red-500/20 text-red-400 transition-all"
+              className="cyber-panel-military p-1.5 sm:p-2.5 rounded-lg border border-red-500/40 bg-black/70 hover:bg-red-500/20 text-red-400 transition-all"
               title="Pause Game (ESC)"
             >
-              <Pause className="w-5 h-5" />
+              <Pause className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
 
           {/* Survival Time Display */}
-          <div className="cyber-panel-military px-3 py-1 flex items-center gap-2 text-xs font-mono text-gray-300 border-red-900/30">
-            <Clock className="w-3.5 h-3.5 text-red-400 shrink-0" />
-            <span className="text-gray-400 font-bold">TIME:</span>
+          <div className="cyber-panel-military px-2 sm:px-3 py-0.5 sm:py-1 flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-mono text-gray-300 border-red-900/30">
+            <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-400 shrink-0" />
+            <span className="text-gray-400 font-bold hidden sm:inline">TIME:</span>
             <span className="font-bold text-white tracking-wider">{timeFormatted}</span>
           </div>
 
           {/* Interactive Music Widget (Mute, Prev, Next, Current Track) */}
-          <div className="cyber-panel-military px-2.5 py-1.5 flex items-center gap-1.5 sm:gap-2 border-red-500/40 bg-black/85 pointer-events-auto shadow-[0_0_15px_rgba(255,0,51,0.25)]">
+          <div className="cyber-panel-military px-1.5 sm:px-2.5 py-1 sm:py-1.5 flex items-center gap-1 sm:gap-2 border-red-500/40 bg-black/85 pointer-events-auto shadow-[0_0_15px_rgba(255,0,51,0.25)]">
             {/* Mute / Unmute Button */}
             <button
               onClick={handleToggleMute}
@@ -330,24 +342,24 @@ export const HUD: React.FC<HUDProps> = React.memo(({
               title={isMuted ? 'Unmute Audio (M)' : 'Mute Audio (M)'}
             >
               {isMuted ? (
-                <VolumeX className="w-3.5 h-3.5 text-red-500 animate-pulse" />
+                <VolumeX className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-500 animate-pulse" />
               ) : (
-                <Volume2 className="w-3.5 h-3.5 text-red-400" />
+                <Volume2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-400" />
               )}
             </button>
 
             {/* Prev Track Button */}
             <button
               onClick={handlePrevTrack}
-              className="p-1 rounded hover:bg-red-500/20 text-gray-400 hover:text-white transition-colors cursor-pointer"
+              className="p-0.5 sm:p-1 rounded hover:bg-red-500/20 text-gray-400 hover:text-white transition-colors cursor-pointer"
               title="Previous Song"
             >
-              <SkipBack className="w-3 h-3" />
+              <SkipBack className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
             </button>
 
             {/* Track Info */}
-            <div className="flex items-center gap-1.5 max-w-[130px] sm:max-w-[170px] truncate text-[10px] sm:text-xs font-mono">
-              <Music className={`w-3 h-3 text-red-400 shrink-0 ${!isMuted ? 'animate-spin' : 'opacity-40'}`} />
+            <div className="flex items-center gap-1 max-w-[80px] sm:max-w-[170px] truncate text-[9px] sm:text-xs font-mono">
+              <Music className={`w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-400 shrink-0 ${!isMuted ? 'animate-spin' : 'opacity-40'}`} />
               <span className={`truncate font-semibold ${isMuted ? 'text-gray-500 line-through' : 'text-red-200'}`}>
                 {currentTrack ? currentTrack.title : 'AUDIO READY'}
               </span>
@@ -356,15 +368,15 @@ export const HUD: React.FC<HUDProps> = React.memo(({
             {/* Next Track Button */}
             <button
               onClick={handleNextTrack}
-              className="p-1 rounded hover:bg-red-500/20 text-gray-400 hover:text-white transition-colors cursor-pointer"
+              className="p-0.5 sm:p-1 rounded hover:bg-red-500/20 text-gray-400 hover:text-white transition-colors cursor-pointer"
               title="Next Song (N)"
             >
-              <SkipForward className="w-3 h-3" />
+              <SkipForward className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
             </button>
           </div>
 
-          {/* Red Weapon Telemetry Indicator */}
-          <div className="cyber-panel-military px-2.5 py-1 flex items-center gap-1.5 text-[9px] font-mono text-rose-300 border-red-500/30">
+          {/* Red Weapon Telemetry Indicator: Desktop only */}
+          <div className="hidden sm:flex cyber-panel-military px-2.5 py-1 items-center gap-1.5 text-[9px] font-mono text-rose-300 border-red-500/30">
             <Radio className="w-3 h-3 text-red-400 animate-pulse" />
             <span>RED EMITTER: ONLINE</span>
           </div>

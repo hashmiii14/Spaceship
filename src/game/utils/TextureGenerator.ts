@@ -1182,27 +1182,6 @@ export class TextureGenerator {
       scene.textures.addCanvas(key, canvas);
     });
 
-    // 8. Shield Forcefield Dome (96 x 96)
-    if (!scene.textures.exists('shield_bubble')) {
-      const canvas = document.createElement('canvas');
-      canvas.width = 96;
-      canvas.height = 96;
-      const ctx = canvas.getContext('2d')!;
-      ctx.shadowColor = '#00f0ff';
-      ctx.shadowBlur = 16;
-      const grad = ctx.createRadialGradient(48, 48, 28, 48, 48, 46);
-      grad.addColorStop(0, 'rgba(0, 240, 255, 0.05)');
-      grad.addColorStop(0.8, 'rgba(0, 240, 255, 0.25)');
-      grad.addColorStop(1, 'rgba(0, 240, 255, 0.9)');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(48, 48, 44, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      scene.textures.addCanvas('shield_bubble', canvas);
-    }
 
     // 9. Particle & FX Textures
     if (!scene.textures.exists('spark')) {
