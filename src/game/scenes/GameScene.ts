@@ -465,7 +465,7 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    // 3. Player Movement (Fast, Responsive, Agile)
+    // 3. Player Movement (Fast, Ultra-Smooth, Responsive Handling)
     let vx = 0;
     let vy = 0;
 
@@ -480,10 +480,17 @@ export class GameScene extends Phaser.Scene {
     const len = Math.hypot(vx, vy);
     if (len > 0.05) {
       const norm = len > 1 ? len : 1;
-      this.player.setVelocity((vx / norm) * this.playerSpeed, (vy / norm) * this.playerSpeed);
+      const targetVx = (vx / norm) * this.playerSpeed;
+      const targetVy = (vy / norm) * this.playerSpeed;
+      const smoothFactor = Math.min(1, dt * 22);
+      this.player.setVelocity(
+        Phaser.Math.Linear(this.player.body.velocity.x, targetVx, smoothFactor),
+        Phaser.Math.Linear(this.player.body.velocity.y, targetVy, smoothFactor)
+      );
     } else {
-      // Instant responsive deceleration
-      this.player.setVelocity(this.player.body.velocity.x * 0.82, this.player.body.velocity.y * 0.82);
+      // Instant responsive deceleration with dt-damping
+      const decay = Math.pow(0.06, dt);
+      this.player.setVelocity(this.player.body.velocity.x * decay, this.player.body.velocity.y * decay);
     }
 
     // Banking tilt animation
@@ -1345,7 +1352,11 @@ export class GameScene extends Phaser.Scene {
 
     if (this.bossHp < this.bossMaxHp * 0.5 && this.bossPhase === 1) {
       this.bossPhase = 2;
-      this.cameras.main.flash(300, 255, 0, 85);
+      this.cameras.main.flash(350, 255, 0, 85);
+      this.cameras.main.shake(300, 0.012);
+      this.explosionEmitter.explode(22, boss.x, boss.y);
+      this.redSparkEmitter.explode(26, boss.x, boss.y);
+      this.showFloatingText('CRITICAL OVERCHARGE: PHASE 2', boss.x, boss.y - 45, '#ff0055', '22px');
       SoundEffects.playBossAlarm();
     }
 
@@ -1387,6 +1398,7 @@ export class GameScene extends Phaser.Scene {
     if (this.playerShield > 0) {
       this.playerShield = Math.max(0, this.playerShield - amount * 1.3);
       SoundEffects.playShieldAbsorb();
+      this.cyanSparkEmitter.explode(12, this.player.x, this.player.y);
       this.shieldSprite.setVisible(this.playerShield > 0);
       if (this.playerShield === 0) {
         this.activePowerUps.delete('SHIELD');
@@ -1442,10 +1454,25 @@ export class GameScene extends Phaser.Scene {
 
     this.updateMissionProgress('combo', this.combo);
 
-    if ([3, 5, 8, 10, 15, 20].includes(this.combo)) {
+    if ([3, 5, 8, 10, 15, 20, 25, 30].includes(this.combo)) {
       SoundEffects.playCombo(this.combo);
-      this.showFloatingText(`COMBO x${this.comboMultiplier}!`, x, y - 20, '#ff0055', '22px');
-      this.cameras.main.shake(60, 0.002);
+      let title = `COMBO x${this.comboMultiplier}!`;
+      let color = '#ff0055';
+      if (this.combo >= 20) {
+        title = `★ GODLIKE x${this.comboMultiplier}! ★`;
+        color = '#facc15';
+      } else if (this.combo >= 15) {
+        title = `⚡ UNSTOPPABLE x${this.comboMultiplier}! ⚡`;
+        color = '#ec4899';
+      } else if (this.combo >= 10) {
+        title = `🔥 RAMPAGE x${this.comboMultiplier}! 🔥`;
+        color = '#f97316';
+      } else if (this.combo >= 5) {
+        title = `★ COMBAT SPREE x${this.comboMultiplier}! ★`;
+        color = '#00f0ff';
+      }
+      this.showFloatingText(title, x, y - 24, color, '22px');
+      this.cameras.main.shake(70, 0.003);
     }
   }
 
@@ -1987,13 +2014,15 @@ export class GameScene extends Phaser.Scene {
     });
     txt.setOrigin(0.5);
     txt.setDepth(20);
+    txt.setScale(0.85);
 
     this.tweens.add({
       targets: txt,
-      y: y - 40,
+      y: y - 46,
+      scale: 1.1,
       alpha: 0,
-      duration: 800,
-      ease: 'Power1',
+      duration: 850,
+      ease: 'Back.easeOut',
       onComplete: () => txt.destroy(),
     });
   }

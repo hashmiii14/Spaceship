@@ -52,12 +52,15 @@ export const HUD: React.FC<HUDProps> = React.memo(({
 
   return (
     <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-between p-3 sm:p-5 select-none">
-      {/* Critical Low Hull Warning Banner */}
+      {/* Critical Low Hull Warning Banner & Red Threat Vignette */}
       {isLowHp && (
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-red-950/80 border border-red-500 text-red-300 px-4 py-1 rounded-full text-xs font-mono font-bold tracking-widest flex items-center gap-2 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.6)]">
-          <AlertTriangle className="w-4 h-4 text-red-400" />
-          <span>WARNING: CRITICAL HULL INTEGRITY</span>
-        </div>
+        <>
+          <div className="absolute inset-0 pointer-events-none border-2 border-red-500/40 shadow-[inset_0_0_60px_rgba(239,68,68,0.45)] animate-pulse" />
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-red-950/80 border border-red-500 text-red-300 px-4 py-1 rounded-full text-xs font-mono font-bold tracking-widest flex items-center gap-2 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.6)]">
+            <AlertTriangle className="w-4 h-4 text-red-400" />
+            <span>WARNING: CRITICAL HULL INTEGRITY</span>
+          </div>
+        </>
       )}
 
       {/* Top Header Grid */}

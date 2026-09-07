@@ -15,12 +15,6 @@ export const PLAYLIST: AudioTrack[] = [
     artist: 'Crazy Frog',
     url: '/audio/axel-f.mp3',
   },
-  {
-    id: 'gangnam-style',
-    title: 'Gangnam Style',
-    artist: 'PSY',
-    url: '/audio/gangnam-style.mp3',
-  },
 ];
 
 class MusicManagerClass {

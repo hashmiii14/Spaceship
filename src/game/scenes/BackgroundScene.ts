@@ -94,10 +94,11 @@ export class BackgroundScene extends Phaser.Scene {
 
   private initStars(width: number, height: number): void {
     this.stars = [];
-    const colors = [0xffffff, 0xdffff, 0xfff4cc, 0xe0e7ff, 0x67e8f9, 0xa78bfa, 0xff0055];
+    this.spaceDust = [];
+    const colors = [0xffffff, 0xdfffff, 0xfff4cc, 0xe0e7ff, 0x67e8f9, 0xa78bfa, 0xff0055];
 
-    // Layer 1: Distant micro stars (lightweight, stable count: 40)
-    for (let i = 0; i < 40; i++) {
+    // Layer 1: Distant micro stars (lightweight, stable count: 42)
+    for (let i = 0; i < 42; i++) {
       this.stars.push({
         x: Phaser.Math.Between(0, width),
         y: Phaser.Math.Between(0, height),
@@ -111,8 +112,8 @@ export class BackgroundScene extends Phaser.Scene {
       });
     }
 
-    // Layer 2: Mid-field stars (medium speed, stable count: 20)
-    for (let i = 0; i < 20; i++) {
+    // Layer 2: Mid-field stars (medium speed, stable count: 22)
+    for (let i = 0; i < 22; i++) {
       this.stars.push({
         x: Phaser.Math.Between(0, width),
         y: Phaser.Math.Between(0, height),
@@ -126,8 +127,8 @@ export class BackgroundScene extends Phaser.Scene {
       });
     }
 
-    // Layer 3: Fast stars (hyper speed streaks, stable count: 10)
-    for (let i = 0; i < 10; i++) {
+    // Layer 3: Fast stars (hyper speed streaks, stable count: 12)
+    for (let i = 0; i < 12; i++) {
       this.stars.push({
         x: Phaser.Math.Between(0, width),
         y: Phaser.Math.Between(0, height),
@@ -138,6 +139,17 @@ export class BackgroundScene extends Phaser.Scene {
         twinkleSpeed: 0,
         color: 0xff0055, // Signature red high-speed streaks
         layer: 3,
+      });
+    }
+
+    // Ambient Cosmic Dust (24 floating particles for 3D depth)
+    for (let i = 0; i < 24; i++) {
+      this.spaceDust.push({
+        x: Phaser.Math.Between(0, width),
+        y: Phaser.Math.Between(0, height),
+        size: Phaser.Math.FloatBetween(2.5, 4.5),
+        speed: Phaser.Math.FloatBetween(15, 35),
+        alpha: Phaser.Math.FloatBetween(0.08, 0.18),
       });
     }
   }
@@ -178,51 +190,92 @@ export class BackgroundScene extends Phaser.Scene {
     const height = this.scale.height;
     const currentSpeed = this.speedMultiplier * this.warpFactor;
 
-    // Layer 4 & 5: Dynamic Dark Atmosphere based on Level
+    // Layer 4 & 5: Volumetric Multi-Tier Atmospheric Nebulae
     this.nebulaOffset += dt * 14 * currentSpeed;
     this.nebulaeGraphics.clear();
 
     const nebColors = this.getLevelNebulaColors();
-    const neb1Y = (this.nebulaOffset * 0.3) % (height + 500) - 250;
-    this.nebulaeGraphics.fillStyle(nebColors.primary, 0.035);
-    this.nebulaeGraphics.fillCircle(width * 0.3, neb1Y, Math.max(width * 0.35, 240));
+    const neb1Y = (this.nebulaOffset * 0.3) % (height + 600) - 300;
+    this.nebulaeGraphics.fillStyle(nebColors.primary, 0.04);
+    this.nebulaeGraphics.fillCircle(width * 0.28, neb1Y, Math.max(width * 0.38, 260));
 
-    const neb2Y = (this.nebulaOffset * 0.25) % (height + 600) - 300;
-    this.nebulaeGraphics.fillStyle(nebColors.secondary, 0.03);
-    this.nebulaeGraphics.fillCircle(width * 0.7, neb2Y, Math.max(width * 0.4, 280));
+    const neb2Y = (this.nebulaOffset * 0.22) % (height + 700) - 350;
+    this.nebulaeGraphics.fillStyle(nebColors.secondary, 0.035);
+    this.nebulaeGraphics.fillCircle(width * 0.72, neb2Y, Math.max(width * 0.44, 300));
 
-    // Layer 6: Distant Celestial Planetoid (Only rendered when on-screen)
+    // Core energetic flare cluster
+    const neb3Y = (this.nebulaOffset * 0.38) % (height + 500) - 200;
+    this.nebulaeGraphics.fillStyle(nebColors.core, 0.03);
+    this.nebulaeGraphics.fillCircle(width * 0.5, neb3Y, Math.max(width * 0.22, 160));
+
+    // Ambient Cosmic Dust (Soft floating particles)
+    this.dustGraphics.clear();
+    for (let i = 0; i < this.spaceDust.length; i++) {
+      const d = this.spaceDust[i];
+      d.y += d.speed * dt * currentSpeed;
+      d.x -= this.horizontalDrift * 8 * dt;
+      if (d.y > height + 20) {
+        d.y = -20;
+        d.x = Phaser.Math.Between(0, width);
+      }
+      if (d.x < -20) d.x = width + 20;
+      if (d.x > width + 20) d.x = -20;
+
+      this.dustGraphics.fillStyle(0x38bdf8, d.alpha);
+      this.dustGraphics.fillRect(d.x, d.y, d.size, d.size);
+    }
+
+    // Layer 6: High-Definition Distant Celestial Planetoid
     this.planetY += dt * 14 * currentSpeed;
     this.planetGraphics.clear();
-    if (this.planetY > -100 && this.planetY < height + 100) {
+    if (this.planetY > -120 && this.planetY < height + 120) {
       if (this.planetType === 0) {
-        // Gas Giant with Planetary Rings
-        this.planetGraphics.fillStyle(0x1e1b4b, 0.5);
-        this.planetGraphics.fillCircle(this.planetX, this.planetY, 55);
-        this.planetGraphics.lineStyle(1.5, 0x818cf8, 0.35);
-        this.planetGraphics.strokeCircle(this.planetX, this.planetY, 55);
-        this.planetGraphics.lineStyle(3, 0x06b6d4, 0.3);
-        this.planetGraphics.strokeEllipse(this.planetX, this.planetY, 130, 28);
+        // Gas Giant with Atmospheric Bands & Planetary Rings
+        this.planetGraphics.fillStyle(0x1e1b4b, 0.6);
+        this.planetGraphics.fillCircle(this.planetX, this.planetY, 58);
+
+        // Gas Strata Bands
+        this.planetGraphics.fillStyle(0x312e81, 0.35);
+        this.planetGraphics.fillRect(this.planetX - 54, this.planetY - 14, 108, 12);
+        this.planetGraphics.fillRect(this.planetX - 52, this.planetY + 8, 104, 10);
+
+        // Glowing Planetary Rings
+        this.planetGraphics.lineStyle(4, 0x06b6d4, 0.35);
+        this.planetGraphics.strokeEllipse(this.planetX, this.planetY, 140, 30);
+        this.planetGraphics.lineStyle(1.5, 0x818cf8, 0.4);
+        this.planetGraphics.strokeCircle(this.planetX, this.planetY, 58);
       } else if (this.planetType === 1) {
-        // Molten Volcanic Planetoid
-        this.planetGraphics.fillStyle(0x450a0a, 0.5);
-        this.planetGraphics.fillCircle(this.planetX, this.planetY, 45);
-        this.planetGraphics.lineStyle(2, 0xf87171, 0.35);
-        this.planetGraphics.strokeCircle(this.planetX, this.planetY, 45);
-      } else if (this.planetType === 2) {
-        // Cyber Ice Moon
-        this.planetGraphics.fillStyle(0x083344, 0.45);
+        // Molten Volcanic Planetoid with Magma Fissures
+        this.planetGraphics.fillStyle(0x450a0a, 0.6);
         this.planetGraphics.fillCircle(this.planetX, this.planetY, 48);
-        this.planetGraphics.lineStyle(2, 0x22d3ee, 0.4);
+
+        // Magma Fissures
+        this.planetGraphics.lineStyle(2, 0xf97316, 0.5);
+        this.planetGraphics.lineBetween(this.planetX - 25, this.planetY - 10, this.planetX + 15, this.planetY + 5);
+        this.planetGraphics.lineBetween(this.planetX - 10, this.planetY + 15, this.planetX + 20, this.planetY + 25);
+
+        this.planetGraphics.lineStyle(2.5, 0xef4444, 0.45);
         this.planetGraphics.strokeCircle(this.planetX, this.planetY, 48);
-      } else {
-        // Dark Void Planetoid
-        this.planetGraphics.fillStyle(0x2e1065, 0.45);
+      } else if (this.planetType === 2) {
+        // Cyber Ice Moon with Specular Glint
+        this.planetGraphics.fillStyle(0x083344, 0.55);
         this.planetGraphics.fillCircle(this.planetX, this.planetY, 50);
-        this.planetGraphics.lineStyle(1.5, 0xc084fc, 0.35);
+
+        this.planetGraphics.lineStyle(2.5, 0x22d3ee, 0.5);
         this.planetGraphics.strokeCircle(this.planetX, this.planetY, 50);
+        this.planetGraphics.lineStyle(1, 0xa5f3fc, 0.6);
+        this.planetGraphics.strokeCircle(this.planetX - 14, this.planetY - 14, 8);
+      } else {
+        // Dark Void Singularity with Accretion Halo
+        this.planetGraphics.fillStyle(0x180226, 0.65);
+        this.planetGraphics.fillCircle(this.planetX, this.planetY, 52);
+
+        this.planetGraphics.lineStyle(3, 0xa855f7, 0.4);
+        this.planetGraphics.strokeCircle(this.planetX, this.planetY, 52);
+        this.planetGraphics.lineStyle(1.5, 0xc084fc, 0.3);
+        this.planetGraphics.strokeEllipse(this.planetX, this.planetY, 110, 24);
       }
-    } else if (this.planetY >= height + 100) {
+    } else if (this.planetY >= height + 120) {
       if (Math.random() < 0.008) {
         this.resetPlanet();
       }
@@ -250,8 +303,8 @@ export class BackgroundScene extends Phaser.Scene {
       }
 
       if (this.isWarping || star.layer === 3) {
-        const streakLen = Math.min((this.isWarping ? 70 : 22) * currentSpeed, 100);
-        this.starGraphics.lineStyle(star.size * (this.isWarping ? 1.5 : 1.0), star.color, star.alpha);
+        const streakLen = Math.min((this.isWarping ? 75 : 24) * currentSpeed, 110);
+        this.starGraphics.lineStyle(star.size * (this.isWarping ? 1.6 : 1.0), star.color, star.alpha);
         this.starGraphics.lineBetween(star.x, star.y - streakLen, star.x, star.y);
       } else {
         this.starGraphics.fillStyle(star.color, star.alpha);
