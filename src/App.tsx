@@ -13,6 +13,7 @@ import { GameOverModal } from './ui/GameOverModal';
 import { HowToPlayModal } from './ui/HowToPlayModal';
 import { MobileControls } from './ui/MobileControls';
 import { LevelUpModal } from './ui/LevelUpModal';
+import { IntroOverlay } from './ui/IntroOverlay';
 
 export const App: React.FC = () => {
   const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -158,7 +159,7 @@ export const App: React.FC = () => {
       game.scene.wake('GameScene');
       game.scene.start('GameScene');
     }
-    setGameState('PLAYING');
+    setGameState('INTRO');
     setIsNewHighScore(false);
     setLevelUpOptions(null);
     setBossInfo({ active: false, name: '', currentHp: 0, maxHp: 0, phase: 1 });
@@ -166,6 +167,11 @@ export const App: React.FC = () => {
     if (musicEnabled) {
       MusicManager.ensurePlaying();
     }
+  };
+
+  const handleIntroComplete = () => {
+    setGameState('PLAYING');
+    EventBus.emit('intro:complete');
   };
 
   const handlePause = () => {
@@ -194,7 +200,7 @@ export const App: React.FC = () => {
       game.scene.resume('GameScene');
       game.scene.start('GameScene');
     }
-    setGameState('PLAYING');
+    setGameState('INTRO');
     setIsNewHighScore(false);
     setLevelUpOptions(null);
     setBossInfo({ active: false, name: '', currentHp: 0, maxHp: 0, phase: 1 });
@@ -256,6 +262,10 @@ export const App: React.FC = () => {
           onToggleMusic={handleToggleMusic}
           onToggleSound={handleToggleSound}
         />
+      )}
+
+      {gameState === 'INTRO' && (
+        <IntroOverlay onComplete={handleIntroComplete} />
       )}
 
       {gameState === 'PLAYING' && (

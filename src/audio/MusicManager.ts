@@ -2,6 +2,19 @@ import { Storage } from '../utils/storage';
 import { EventBus } from '../utils/EventBus';
 import { AudioTrack } from '../types/game';
 
+export interface FourthTrackConfig extends AudioTrack {}
+
+/**
+ * Easily configurable 4th track entry
+ * Default points to the user-uploaded track saved at /audio/fourth-track.mp3
+ */
+export const fourthTrack: FourthTrackConfig = {
+  id: 'fourth-track',
+  title: 'Apun Jaise Tapori',
+  artist: 'Munna Bhai M.B.B.S.',
+  url: '/audio/fourth-track.mp3',
+};
+
 export const PLAYLIST: AudioTrack[] = [
   {
     id: 'chipi-chipi',
@@ -21,6 +34,7 @@ export const PLAYLIST: AudioTrack[] = [
     artist: 'PSY',
     url: '/audio/gangnam-style.mp3',
   },
+  fourthTrack,
 ];
 
 class MusicManagerClass {
@@ -30,6 +44,7 @@ class MusicManagerClass {
   private isMuted: boolean = false;
   private volume: number = 0.6;
   private isInitialized: boolean = false;
+  private consecutiveErrors: number = 0;
 
   constructor() {
     this.isMuted = !Storage.getMusicEnabled();
@@ -43,14 +58,25 @@ class MusicManagerClass {
       this.audio.volume = this.volume;
       this.audio.muted = this.isMuted;
 
-      // Sequential playback: Track 1 -> Track 2 -> Track 3 -> Track 1 ...
+      // Sequential playback: Track 1 -> Track 2 -> Track 3 -> Track 4 -> Track 1 ...
       this.audio.addEventListener('ended', () => {
+        this.consecutiveErrors = 0;
         this.nextTrack();
       });
 
+      // Graceful error recovery: log warning, skip missing track, advance without crashing gameplay
       this.audio.addEventListener('error', (e) => {
         const track = this.getCurrentTrack();
         console.warn(`[MusicManager] Audio track failed to load: ${track.title} (${track.url})`, e);
+        this.consecutiveErrors++;
+        if (this.consecutiveErrors < PLAYLIST.length) {
+          setTimeout(() => {
+            this.nextTrack();
+          }, 300);
+        } else {
+          console.warn('[MusicManager] All audio tracks failed or unavailable. Halting music playback safely.');
+          this.isPlaying = false;
+        }
       });
     }
     return this.audio;

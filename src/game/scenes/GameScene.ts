@@ -38,6 +38,7 @@ export class GameScene extends Phaser.Scene {
   private isInvulnerable = false;
   private isAlive = true;
   private isLevelUpPaused = false;
+  private isIntroPaused = false;
 
   // Progression & Stats
   private score = 0;
@@ -435,16 +436,24 @@ export class GameScene extends Phaser.Scene {
       }
     };
 
+    const onIntroComplete = () => {
+      this.isIntroPaused = false;
+      this.physics.resume();
+      this.startLevel(1);
+    };
+
     EventBus.on('input:mobileMove', onMobileMove);
     EventBus.on('input:mobileShoot', onMobileShoot);
     EventBus.on('upgrade:selected', onUpgrade);
     EventBus.on('player:skinChanged', onSkinChanged);
+    EventBus.on('intro:complete', onIntroComplete);
 
     this.events.once('shutdown', () => {
       EventBus.off('input:mobileMove', onMobileMove);
       EventBus.off('input:mobileShoot', onMobileShoot);
       EventBus.off('upgrade:selected', onUpgrade);
       EventBus.off('player:skinChanged', onSkinChanged);
+      EventBus.off('intro:complete', onIntroComplete);
       if (this.waveSpawnTimer) {
         this.waveSpawnTimer.destroy();
         this.waveSpawnTimer = null;
@@ -463,13 +472,14 @@ export class GameScene extends Phaser.Scene {
       this.game.canvas.focus();
     }
 
-    // Start Level 1
-    this.startLevel(1);
+    // Intro pause until 5-second countdown finishes or skipped
+    this.isIntroPaused = true;
+    this.physics.pause();
     this.emitStats(true);
   }
 
   update(time: number, delta: number): void {
-    if (!this.isAlive || this.isLevelUpPaused) return;
+    if (!this.isAlive || this.isLevelUpPaused || this.isIntroPaused) return;
     const dt = delta / 1000;
 
     // 1. Survival Time & Progressive Flight Speed Scaling

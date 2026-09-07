@@ -1,4 +1,4 @@
-export type GameState = 'MAIN_MENU' | 'PLAYING' | 'PAUSED' | 'GAME_OVER' | 'LEVEL_UP';
+export type GameState = 'MAIN_MENU' | 'INTRO' | 'PLAYING' | 'PAUSED' | 'GAME_OVER' | 'LEVEL_UP';
 
 export type ShipSkinId = 'NEON' | 'VOID' | 'SOLAR' | 'CRIMSON' | 'CYBER';
 

@@ -1,4 +1,4 @@
-﻿export type EnemyType = 'scout' | 'interceptor' | 'shooter' | 'tank' | 'bomber' | 'elite';
+export type EnemyType = 'scout' | 'interceptor' | 'shooter' | 'tank' | 'bomber' | 'elite';
 
 export type SignatureEvent = 
   | 'NONE'
@@ -60,7 +60,7 @@ export const SECTORS: SectorConfig[] = [
   {
     id: 2,
     name: 'SECTOR 02',
-    codename: 'RED NEBULA',
+    codename: 'CRIMSON NEBULA',
     subtitle: 'ATMOSPHERIC CRIMSON SURGE',
     startSecond: 60,
     endSecond: 120,
