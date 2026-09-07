@@ -77,9 +77,9 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ onClose }) => {
               <Sparkles className="w-4 h-4" /> XP & SYSTEM ENHANCEMENTS
             </h3>
             <div className="bg-purple-950/30 border border-purple-500/30 rounded-lg p-3 text-xs font-mono text-gray-300 space-y-1.5">
-              <p>• Destroying enemies and asteroids releases purple XP Gems.</p>
-              <p>• Ships feature an automatic Magnetic Harvester to vacuum nearby XP and power-ups.</p>
-              <p>• Leveling up pauses combat to let you choose 1 of 3 randomized enhancements: Spread Cannon, Plasma Mortar, Hyperbeam Core, Hull Plating, or Thruster Overdrive.</p>
+              <p>- Destroying enemies and asteroids releases purple XP Gems.</p>
+              <p>- Ships feature an automatic Magnetic Harvester to vacuum nearby XP and power-ups.</p>
+              <p>- Leveling up pauses combat to let you choose 1 of 3 randomized enhancements: Spread Cannon, Plasma Mortar, Hyperbeam Core, Hull Plating, or Thruster Overdrive.</p>
             </div>
           </div>
 
@@ -89,8 +89,8 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ onClose }) => {
               <Flame className="w-4 h-4" /> COMBAT KILL COMBOS
             </h3>
             <div className="bg-yellow-950/30 border border-yellow-500/30 rounded-lg p-3 text-xs font-mono text-gray-300 space-y-1.5">
-              <p>• Chain rapid kills within 2.5 seconds to build your combo multiplier up to 20x score!</p>
-              <p>• Higher combos trigger arcade audio fanfares and massive score boosts.</p>
+              <p>- Chain rapid kills within 2.5 seconds to build your combo multiplier up to 20x score!</p>
+              <p>- Higher combos trigger arcade audio fanfares and massive score boosts.</p>
             </div>
           </div>
 

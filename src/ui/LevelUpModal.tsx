@@ -128,7 +128,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ options, onSelect })
                 {/* Select Prompt */}
                 <div className="mt-6 pt-3 border-t border-gray-800 w-full flex items-center justify-center">
                   <span className="text-xs font-mono font-bold tracking-widest text-cyan-400 group-hover:text-cyan-200 uppercase">
-                    INITIALIZE UPGRADE ➔
+                    INITIALIZE UPGRADE &gt;&gt;
                   </span>
                 </div>
               </button>

@@ -10,6 +10,7 @@ import {
   PlayerStats,
   Mission,
 } from '../../types/game';
+import { getSectorForSurvivalTime, SectorConfig, SECTORS } from '../config/LevelConfig';
 
 interface ActivePowerUp {
   type: PowerUpType;
@@ -45,6 +46,7 @@ export class GameScene extends Phaser.Scene {
   private playerXp = 0;
   private nextLevelXp = 100;
   private currentLevel = 1; // 1 to 7
+  private currentSectorId = 1;
   private maxLevelReached = 1;
   private levelNames = [
     'AWAKENING',
@@ -78,7 +80,7 @@ export class GameScene extends Phaser.Scene {
       progress: 0,
       target: 25,
       completed: false,
-      rewardText: '+1,500 SCORE • +60 XP',
+      rewardText: '+1,500 SCORE | +60 XP',
     },
     {
       id: 'm2',
@@ -87,7 +89,7 @@ export class GameScene extends Phaser.Scene {
       progress: 0,
       target: 5,
       completed: false,
-      rewardText: '+2,500 SCORE • +90 XP',
+      rewardText: '+2,500 SCORE | +90 XP',
     },
     {
       id: 'm3',
@@ -96,7 +98,7 @@ export class GameScene extends Phaser.Scene {
       progress: 0,
       target: 90,
       completed: false,
-      rewardText: '+3,500 SCORE • +120 XP',
+      rewardText: '+3,500 SCORE | +120 XP',
     },
     {
       id: 'm4',
@@ -105,7 +107,7 @@ export class GameScene extends Phaser.Scene {
       progress: 0,
       target: 4,
       completed: false,
-      rewardText: '+3,000 SCORE • +100 XP',
+      rewardText: '+3,000 SCORE | +100 XP',
     },
     {
       id: 'm5',
@@ -114,7 +116,7 @@ export class GameScene extends Phaser.Scene {
       progress: 0,
       target: 1,
       completed: false,
-      rewardText: '+8,000 SCORE • +300 XP',
+      rewardText: '+8,000 SCORE | +300 XP',
     },
   ];
   private currentMissionIndex = 0;
@@ -169,11 +171,12 @@ export class GameScene extends Phaser.Scene {
   // Power-Ups
   private activePowerUps: Map<PowerUpType, ActivePowerUp> = new Map();
 
-  // FX (Red Muzzle Flash & Red Sparks)
+  // FX (Red Muzzle Flash & Red Sparks & Shrapnel)
   private redMuzzleEmitter!: Phaser.GameObjects.Particles.ParticleEmitter;
   private redSparkEmitter!: Phaser.GameObjects.Particles.ParticleEmitter;
   private cyanSparkEmitter!: Phaser.GameObjects.Particles.ParticleEmitter;
   private explosionEmitter!: Phaser.GameObjects.Particles.ParticleEmitter;
+  private shrapnelEmitter!: Phaser.GameObjects.Particles.ParticleEmitter;
 
   // Throttling
   private lastStatsEmitTime = 0;
@@ -253,6 +256,17 @@ export class GameScene extends Phaser.Scene {
       emitting: false,
     });
     this.explosionEmitter.setDepth(15);
+
+    this.shrapnelEmitter = this.add.particles(0, 0, 'shrapnel_shard', {
+      speed: { min: 140, max: 280 },
+      angle: { min: 0, max: 360 },
+      scale: { start: 1.0, end: 0.2 },
+      alpha: { start: 1.0, end: 0 },
+      lifespan: { min: 280, max: 500 },
+      blendMode: Phaser.BlendModes.ADD,
+      emitting: false,
+    });
+    this.shrapnelEmitter.setDepth(16);
 
     // 2. Physics Groups (Reusable Pools)
     this.playerBullets = this.physics.add.group({
@@ -450,6 +464,12 @@ export class GameScene extends Phaser.Scene {
     this.survivalTime += dt;
     this.updateProgressiveSpeed();
 
+    // Natural Timed Sector Progression (Config-driven, seamless, 0 resets)
+    const activeSector = getSectorForSurvivalTime(this.survivalTime);
+    if (activeSector.id !== this.currentSectorId && !this.boss) {
+      this.transitionToSector(activeSector, true);
+    }
+
     // Check time-based missions
     this.checkTimeMissions();
 
@@ -495,9 +515,22 @@ export class GameScene extends Phaser.Scene {
       this.player.setVelocity(this.player.body.velocity.x * decay, this.player.body.velocity.y * decay);
     }
 
-    // Banking tilt animation
-    const targetRotation = Phaser.Math.Clamp(vx, -1, 1) * 0.18;
-    this.player.rotation = Phaser.Math.Linear(this.player.rotation, targetRotation, 0.14);
+    // Banking roll & pitch compression animation
+    const targetRotation = Phaser.Math.Clamp(vx, -1, 1) * 0.22;
+    this.player.rotation = Phaser.Math.Linear(this.player.rotation, targetRotation, 0.16);
+    const targetScaleY = 1.0 - Math.abs(vy) * 0.08;
+    this.player.scaleY = Phaser.Math.Linear(this.player.scaleY, targetScaleY, 0.16);
+
+    // Dynamic engine exhaust modulation
+    if (this.playerEngineParticles) {
+      if (vy < -0.2) {
+        this.playerEngineParticles.setParticleSpeed(Phaser.Math.Between(-25, 25), Phaser.Math.Between(260, 420));
+      } else if (vy > 0.2) {
+        this.playerEngineParticles.setParticleSpeed(Phaser.Math.Between(-15, 15), Phaser.Math.Between(80, 160));
+      } else {
+        this.playerEngineParticles.setParticleSpeed(Phaser.Math.Between(-20, 20), Phaser.Math.Between(140, 280));
+      }
+    }
 
     // Parallax background drift
     this.game.events.emit('background:setDrift', vx);
@@ -747,46 +780,40 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ==========================================
-  // LEVEL & WAVE PROGRESSION (7 LEVELS)
+  // LEVEL & SECTOR PROGRESSION (7 SECTORS)
   // ==========================================
-  private startLevel(levelNum: number): void {
-    this.currentLevel = levelNum;
-    if (levelNum > this.maxLevelReached) {
-      this.maxLevelReached = levelNum;
-      Storage.setBestLevel(levelNum);
+  private transitionToSector(sector: SectorConfig, showNotification: boolean = true): void {
+    this.currentSectorId = sector.id;
+    this.currentLevel = sector.id;
+    if (sector.id > this.maxLevelReached) {
+      this.maxLevelReached = sector.id;
+      Storage.setBestLevel(sector.id);
     }
     this.waveInProgress = true;
 
-    this.game.events.emit('background:setLevel', levelNum);
-    EventBus.emit('wave:start', levelNum);
+    this.game.events.emit('background:setLevel', sector.id);
+    this.game.events.emit('background:setSpeedMultiplier', sector.starSpeedMult);
+    this.game.events.emit('background:event', sector.signatureEvent);
+    EventBus.emit('wave:start', sector.id);
 
-    const levelTitle = this.levelNames[levelNum - 1] || `SECTOR ${levelNum}`;
-    this.showLevelBanner(`LEVEL ${levelNum} — ${levelTitle}`);
+    if (showNotification) {
+      SoundEffects.playLevelUp();
+      this.showLevelBanner(`SECTOR 0${sector.id} // ${sector.codename}`);
+    }
 
-    if (levelNum === 4) {
-      this.triggerBossEncounter('boss_void_destroyer', 3500);
-      return;
-    } else if (levelNum === 6) {
-      this.triggerBossEncounter('boss_nebula_queen', 5200);
-      return;
-    } else if (levelNum === 7) {
-      this.startEndgameWave();
+    if (sector.bossType) {
+      this.triggerBossEncounter(sector.bossType, sector.bossHp || 3500);
       return;
     }
 
-    const enemyCount = 15 + levelNum * 6;
-    this.waveEnemiesRemaining = enemyCount;
-
     if (this.waveSpawnTimer) this.waveSpawnTimer.destroy();
 
-    const spawnInterval = Math.max(500, 1350 - levelNum * 110);
-
     this.waveSpawnTimer = this.time.addEvent({
-      delay: spawnInterval,
+      delay: sector.enemySpawnInterval,
       callback: () => {
         if (!this.waveInProgress || this.boss) return;
         this.spawnLevelEnemy();
-        if (Math.random() < 0.48) {
+        if (Math.random() < sector.asteroidDensity) {
           this.spawnAsteroid();
         }
       },
@@ -794,25 +821,9 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  private startEndgameWave(): void {
-    this.waveEnemiesRemaining = 45;
-    if (this.waveSpawnTimer) this.waveSpawnTimer.destroy();
-
-    let spawned = 0;
-    this.waveSpawnTimer = this.time.addEvent({
-      delay: 580,
-      callback: () => {
-        if (!this.waveInProgress || this.boss) return;
-        this.spawnLevelEnemy();
-        if (Math.random() < 0.5) this.spawnAsteroid();
-        spawned++;
-        if (spawned >= 25 && !this.boss) {
-          const finalBoss = Math.random() < 0.5 ? 'boss_star_eater' : 'boss_galactic_core';
-          this.triggerBossEncounter(finalBoss, 7000);
-        }
-      },
-      loop: true,
-    });
+  private startLevel(levelNum: number): void {
+    const sector = SECTORS[levelNum - 1] || SECTORS[SECTORS.length - 1];
+    this.transitionToSector(sector, true);
   }
 
   private showLevelBanner(text: string): void {
@@ -848,27 +859,8 @@ export class GameScene extends Phaser.Scene {
     const x = Phaser.Math.Between(40, width - 40);
     const y = -40;
 
-    let type = 'scout';
-    const roll = Math.random();
-
-    if (this.currentLevel >= 5) {
-      if (roll < 0.22) type = 'elite';
-      else if (roll < 0.42) type = 'bomber';
-      else if (roll < 0.62) type = 'tank';
-      else if (roll < 0.82) type = 'shooter';
-      else type = 'interceptor';
-    } else if (this.currentLevel >= 3) {
-      if (roll < 0.25) type = 'tank';
-      else if (roll < 0.5) type = 'shooter';
-      else if (roll < 0.75) type = 'interceptor';
-      else type = 'scout';
-    } else if (this.currentLevel >= 2) {
-      if (roll < 0.45) type = 'interceptor';
-      else if (roll < 0.75) type = 'scout';
-      else type = 'shooter';
-    } else {
-      type = roll < 0.75 ? 'scout' : 'interceptor';
-    }
+    const activeSector = getSectorForSurvivalTime(this.survivalTime);
+    const type = Phaser.Utils.Array.GetRandom(activeSector.enemyPool) || 'scout';
 
     this.createEnemy(type, x, y);
   }
@@ -1458,16 +1450,16 @@ export class GameScene extends Phaser.Scene {
       let title = `COMBO x${this.comboMultiplier}!`;
       let color = '#ff0055';
       if (this.combo >= 20) {
-        title = `★ GODLIKE x${this.comboMultiplier}! ★`;
+        title = `GODLIKE STRIKE x${this.comboMultiplier}!`;
         color = '#facc15';
       } else if (this.combo >= 15) {
-        title = `⚡ UNSTOPPABLE x${this.comboMultiplier}! ⚡`;
+        title = `UNSTOPPABLE SURGE x${this.comboMultiplier}!`;
         color = '#ec4899';
       } else if (this.combo >= 10) {
-        title = `🔥 RAMPAGE x${this.comboMultiplier}! 🔥`;
+        title = `RAMPAGE PROTOCOL x${this.comboMultiplier}!`;
         color = '#f97316';
       } else if (this.combo >= 5) {
-        title = `★ COMBAT SPREE x${this.comboMultiplier}! ★`;
+        title = `COMBAT SPREE x${this.comboMultiplier}!`;
         color = '#00f0ff';
       }
       this.showFloatingText(title, x, y - 24, color, '22px');
@@ -1545,6 +1537,53 @@ export class GameScene extends Phaser.Scene {
   // ==========================================
   // DESTRUCTION & REWARDS
   // ==========================================
+  private createLayeredExplosion(x: number, y: number, isLarge: boolean = false): void {
+    // 1. Core Flash (Blinding white/crimson glint)
+    if (this.textures.exists('core_flash')) {
+      const flash = this.add.image(x, y, 'core_flash');
+      flash.setDepth(18);
+      flash.setScale(isLarge ? 1.4 : 0.85);
+      flash.setBlendMode(Phaser.BlendModes.ADD);
+      this.tweens.add({
+        targets: flash,
+        scale: isLarge ? 2.2 : 1.4,
+        alpha: 0,
+        duration: 140,
+        onComplete: () => flash.destroy(),
+      });
+    }
+
+    // 2. Shockwave Ring (Expanding planar ripple)
+    if (this.textures.exists('shockwave_ring')) {
+      const ring = this.add.image(x, y, 'shockwave_ring');
+      ring.setDepth(17);
+      ring.setScale(0.2);
+      ring.setAlpha(0.95);
+      ring.setBlendMode(Phaser.BlendModes.ADD);
+      this.tweens.add({
+        targets: ring,
+        scale: isLarge ? 2.4 : 1.3,
+        alpha: 0,
+        duration: isLarge ? 380 : 260,
+        ease: 'Power2',
+        onComplete: () => ring.destroy(),
+      });
+    }
+
+    // 3. High-velocity Shrapnel Needle Shards
+    if (this.shrapnelEmitter) {
+      this.shrapnelEmitter.explode(isLarge ? 10 : 5, x, y);
+    }
+
+    // 4. Crimson Sparks & Smoke
+    this.redSparkEmitter.explode(isLarge ? 24 : 16, x, y);
+    this.explosionEmitter.explode(isLarge ? 20 : 12, x, y);
+
+    if (isLarge) {
+      this.cameras.main.shake(200, 0.008);
+    }
+  }
+
   private destroyEnemy(enemy: Phaser.Physics.Arcade.Sprite): void {
     const ex = enemy.x;
     const ey = enemy.y;
@@ -1555,13 +1594,12 @@ export class GameScene extends Phaser.Scene {
     this.addScore(baseScore * this.comboMultiplier, ex, ey);
     this.updateMissionProgress('kill', 1);
 
-    this.explosionEmitter.explode(14, ex, ey);
-    this.redSparkEmitter.explode(18, ex, ey);
-    SoundEffects.playExplosion('small');
+    const isElite = ['elite', 'bomber', 'reaper'].includes(enemy.getData('type'));
+    this.createLayeredExplosion(ex, ey, isElite);
+    SoundEffects.playExplosion(isElite ? 'medium' : 'small');
 
     this.spawnXpGem(ex, ey, xpVal);
 
-    const isElite = ['elite', 'bomber', 'reaper'].includes(enemy.getData('type'));
     if (Math.random() < (isElite ? 0.4 : 0.15)) {
       this.spawnPowerUp(ex, ey);
     }
@@ -1582,8 +1620,30 @@ export class GameScene extends Phaser.Scene {
     this.incrementCombo(ax, ay);
     this.addScore(baseScore * this.comboMultiplier, ax, ay);
 
-    this.explosionEmitter.explode(size === 'large' ? 18 : 10, ax, ay);
+    this.createLayeredExplosion(ax, ay, size === 'large');
     SoundEffects.playAsteroidBreak();
+
+    // Fragmentation: Cosmetic tumbling ore chunks
+    for (let c = 0; c < 2; c++) {
+      const chunkKey = c === 0 ? 'asteroid_chunk_1' : 'asteroid_chunk_2';
+      if (this.textures.exists(chunkKey)) {
+        const chunk = this.add.image(ax, ay, chunkKey);
+        chunk.setDepth(8);
+        const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+        const dist = Phaser.Math.Between(35, 75);
+        this.tweens.add({
+          targets: chunk,
+          x: ax + Math.cos(angle) * dist,
+          y: ay + Math.sin(angle) * dist + 25,
+          rotation: Phaser.Math.FloatBetween(-3, 3),
+          alpha: { start: 1, to: 0 },
+          scale: { start: 1, to: 0.3 },
+          duration: Phaser.Math.Between(380, 600),
+          ease: 'Power2',
+          onComplete: () => chunk.destroy(),
+        });
+      }
+    }
 
     if (size === 'large') {
       this.spawnAsteroid('medium', ax - 20, ay);

@@ -139,7 +139,7 @@ export const MainMenu: React.FC<MainMenuProps> = React.memo(({
         <div className="cyber-panel-military px-4 py-1.5 rounded-full mb-8 border-red-500/40 flex items-center gap-2 text-[11px] font-mono text-red-300/90 shadow-[0_0_15px_rgba(255,0,51,0.2)]">
           <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
           <span className="font-bold">SIGNATURE RED WEAPONS ACTIVE</span>
-          <span className="text-gray-500">•</span>
+          <span className="text-gray-500">|</span>
           <span className="text-rose-400 font-bold">600 PX/S WARP OVERDRIVE</span>
         </div>
 
@@ -174,7 +174,7 @@ export const MainMenu: React.FC<MainMenuProps> = React.memo(({
       {/* Footer Info */}
       <div className="w-full text-center pb-2 text-[11px] sm:text-xs font-mono text-gray-400 tracking-wider">
         <p className="flex items-center justify-center gap-2">
-          <span>DESKTOP: [WASD / ARROWS] MOVE • [SPACE] NEON RED LASER FIRE • [ESC] PAUSE</span>
+          <span>DESKTOP: [WASD / ARROWS] MOVE | [SPACE] NEON RED LASER FIRE | [ESC] PAUSE</span>
         </p>
         <p className="mt-1 text-gray-500">
           TOUCH / DUAL-THUMB JOYSTICK AUTO-ENGAGED FOR MOBILE TABLET

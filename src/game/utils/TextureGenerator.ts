@@ -6,44 +6,44 @@ export class TextureGenerator {
     // 1. Player Ship Skins (5 Varieties: NEON, VOID, SOLAR, CRIMSON, CYBER)
     const skinThemes: Record<ShipSkinId, { primary: string; secondary: string; trim: string; glow: string; cockpit: string; engine: string }> = {
       NEON: {
-        primary: '#0a192f',
-        secondary: '#172a45',
-        trim: '#00f0ff',
-        glow: '#00f0ff',
-        cockpit: '#00f0ff',
-        engine: '#00f0ff',
+        primary: '#0d1117',
+        secondary: '#1a202c',
+        trim: '#ff0033',
+        glow: '#ff0033',
+        cockpit: '#ff6b81',
+        engine: '#ff0055',
       },
       VOID: {
-        primary: '#120726',
-        secondary: '#250f4a',
-        trim: '#c084fc',
-        glow: '#a855f7',
-        cockpit: '#e9d5ff',
-        engine: '#9333ea',
+        primary: '#090a0f',
+        secondary: '#141722',
+        trim: '#e11d48',
+        glow: '#e11d48',
+        cockpit: '#fb7185',
+        engine: '#be123c',
       },
       SOLAR: {
-        primary: '#241402',
-        secondary: '#451a03',
-        trim: '#facc15',
-        glow: '#fb923c',
-        cockpit: '#fef08a',
-        engine: '#f97316',
+        primary: '#14161f',
+        secondary: '#202636',
+        trim: '#ff3344',
+        glow: '#ff0033',
+        cockpit: '#ffa3a8',
+        engine: '#dc2626',
       },
       CRIMSON: {
         primary: '#1c050d',
-        secondary: '#3b0717',
-        trim: '#f43f5e',
+        secondary: '#360613',
+        trim: '#ff0055',
         glow: '#ff0055',
-        cockpit: '#fecdd3',
+        cockpit: '#fda4af',
         engine: '#ff0055',
       },
       CYBER: {
-        primary: '#022117',
-        secondary: '#064e3b',
-        trim: '#10b981',
-        glow: '#34d399',
-        cockpit: '#a7f3d0',
-        engine: '#059669',
+        primary: '#0a0c10',
+        secondary: '#161c26',
+        trim: '#ff1744',
+        glow: '#ff1744',
+        cockpit: '#ff8a80',
+        engine: '#d50000',
       },
     };
 
@@ -434,20 +434,20 @@ export class TextureGenerator {
       scene.textures.addCanvas('enemy_scout', canvas);
     }
 
-    // 3.2 Interceptor (Golden Delta Striker) (48 x 52)
+    // 3.2 Interceptor (High-Speed Swept Pursuit Striker) (48 x 52)
     if (!scene.textures.exists('enemy_interceptor')) {
       const canvas = document.createElement('canvas');
       canvas.width = 48;
       canvas.height = 52;
       const ctx = canvas.getContext('2d')!;
-      ctx.shadowColor = '#facc15';
+      ctx.shadowColor = '#ff0033';
       ctx.shadowBlur = 12;
 
-      // Golden Composite Hull
+      // Dark Gunmetal & Steel Composite Hull
       const grad = ctx.createLinearGradient(24, 0, 24, 52);
-      grad.addColorStop(0, '#451a03');
-      grad.addColorStop(0.5, '#291001');
-      grad.addColorStop(1, '#0c0500');
+      grad.addColorStop(0, '#222736');
+      grad.addColorStop(0.5, '#12141c');
+      grad.addColorStop(1, '#08090d');
       ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.moveTo(24, 50);
@@ -459,19 +459,21 @@ export class TextureGenerator {
       ctx.closePath();
       ctx.fill();
 
-      ctx.strokeStyle = '#eab308';
-      ctx.lineWidth = 2.2;
+      // Sharp Crimson Trim & Edge Lighting
+      ctx.strokeStyle = '#ff0033';
+      ctx.lineWidth = 2.0;
       ctx.stroke();
 
-      // Forward Disruptor Needle Barrels
-      ctx.fillStyle = '#facc15';
+      // Forward Kinetic Disruptor Needle Barrels
+      ctx.fillStyle = '#ff0055';
       ctx.fillRect(44, 18, 3, 14);
       ctx.fillRect(1, 18, 3, 14);
 
-      // Energized Central Kinetic Strip
+      // Energized Central Crimson Conduit
       ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = '#ff0033';
       ctx.shadowBlur = 10;
-      ctx.fillRect(22, 22, 4, 16);
+      ctx.fillRect(22, 20, 4, 18);
 
       scene.textures.addCanvas('enemy_interceptor', canvas);
       scene.textures.addCanvas('enemy_striker', canvas);
@@ -483,14 +485,14 @@ export class TextureGenerator {
       canvas.width = 76;
       canvas.height = 80;
       const ctx = canvas.getContext('2d')!;
-      ctx.shadowColor = '#a855f7';
+      ctx.shadowColor = '#ff0055';
       ctx.shadowBlur = 14;
 
-      // Heavy Obsidian & Purple Armor Plating
+      // Heavy Dark Metallic Composite Armor Plating
       const grad = ctx.createLinearGradient(38, 0, 38, 80);
-      grad.addColorStop(0, '#2e1065');
-      grad.addColorStop(0.5, '#1e0538');
-      grad.addColorStop(1, '#080110');
+      grad.addColorStop(0, '#282d3c');
+      grad.addColorStop(0.5, '#161922');
+      grad.addColorStop(1, '#0a0b10');
       ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.moveTo(38, 74);
@@ -504,25 +506,25 @@ export class TextureGenerator {
       ctx.closePath();
       ctx.fill();
 
-      ctx.strokeStyle = '#9333ea';
-      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#ff0055';
+      ctx.lineWidth = 2.5;
       ctx.stroke();
 
-      // Reinforced Armor Sponsons
-      ctx.fillStyle = '#3b0764';
+      // Reinforced Gunmetal Sponsons
+      ctx.fillStyle = '#1c202b';
       ctx.fillRect(10, 24, 12, 28);
       ctx.fillRect(54, 24, 12, 28);
-      ctx.strokeStyle = '#c084fc';
+      ctx.strokeStyle = '#e11d48';
       ctx.lineWidth = 1.5;
       ctx.strokeRect(10, 24, 12, 28);
       ctx.strokeRect(54, 24, 12, 28);
 
-      // Singularity Reactor Core
+      // Exposed Crimson Reactor Core (Vulnerable Weakpoint)
       const coreGrad = ctx.createRadialGradient(38, 38, 2, 38, 38, 14);
       coreGrad.addColorStop(0, '#ffffff');
-      coreGrad.addColorStop(0.4, '#c084fc');
-      coreGrad.addColorStop(0.8, '#7e22ce');
-      coreGrad.addColorStop(1, 'rgba(126, 34, 206, 0)');
+      coreGrad.addColorStop(0.4, '#ff0033');
+      coreGrad.addColorStop(0.8, '#99001f');
+      coreGrad.addColorStop(1, 'rgba(153, 0, 31, 0)');
       ctx.fillStyle = coreGrad;
       ctx.beginPath();
       ctx.arc(38, 38, 14, 0, Math.PI * 2);
@@ -532,20 +534,20 @@ export class TextureGenerator {
       scene.textures.addCanvas('enemy_cruiser', canvas);
     }
 
-    // 3.4 Shooter (Tactical Rail Gunship) (60 x 64)
+    // 3.4 Shooter (Tactical Assault Rail Gunship) (60 x 64)
     if (!scene.textures.exists('enemy_shooter')) {
       const canvas = document.createElement('canvas');
       canvas.width = 60;
       canvas.height = 64;
       const ctx = canvas.getContext('2d')!;
-      ctx.shadowColor = '#06b6d4';
+      ctx.shadowColor = '#ff0055';
       ctx.shadowBlur = 12;
 
-      // Cyan Composite Hull
+      // Dark Iron Composite Fuselage
       const grad = ctx.createLinearGradient(30, 0, 30, 64);
-      grad.addColorStop(0, '#0e3b43');
-      grad.addColorStop(0.6, '#041c22');
-      grad.addColorStop(1, '#010c0f');
+      grad.addColorStop(0, '#242938');
+      grad.addColorStop(0.6, '#131620');
+      grad.addColorStop(1, '#090a10');
       ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.moveTo(30, 58);
@@ -559,12 +561,12 @@ export class TextureGenerator {
       ctx.closePath();
       ctx.fill();
 
-      ctx.strokeStyle = '#0891b2';
-      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#ff0055';
+      ctx.lineWidth = 2.2;
       ctx.stroke();
 
-      // Twin Forward Railgun Batteries
-      ctx.fillStyle = '#06b6d4';
+      // Twin Forward Railgun Batteries with Red Energy Conduits
+      ctx.fillStyle = '#ff0033';
       ctx.fillRect(16, 44, 5, 14);
       ctx.fillRect(39, 44, 5, 14);
       ctx.fillStyle = '#ffffff';
@@ -575,19 +577,20 @@ export class TextureGenerator {
       scene.textures.addCanvas('enemy_gunship', canvas);
     }
 
-    // 3.5 Bomber (Volatile Hazard Drone) (48 x 52)
+    // 3.5 Bomber (Heavy Munitions Hazard Drone) (48 x 52)
     if (!scene.textures.exists('enemy_bomber')) {
       const canvas = document.createElement('canvas');
       canvas.width = 48;
       canvas.height = 52;
       const ctx = canvas.getContext('2d')!;
-      ctx.shadowColor = '#ea580c';
+      ctx.shadowColor = '#ff0033';
       ctx.shadowBlur = 14;
 
+      // Heavy Charcoal Armor with Hazard Grooves
       const grad = ctx.createLinearGradient(24, 0, 24, 52);
-      grad.addColorStop(0, '#3f1504');
-      grad.addColorStop(0.6, '#200902');
-      grad.addColorStop(1, '#080200');
+      grad.addColorStop(0, '#262833');
+      grad.addColorStop(0.6, '#141620');
+      grad.addColorStop(1, '#090a0f');
       ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.moveTo(24, 48);
@@ -597,16 +600,16 @@ export class TextureGenerator {
       ctx.closePath();
       ctx.fill();
 
-      ctx.strokeStyle = '#f97316';
-      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#dc2626';
+      ctx.lineWidth = 2.2;
       ctx.stroke();
 
-      // Thermonuclear Fission Chamber
+      // Pulsing Thermonuclear Detonation Core
       const nukeGrad = ctx.createRadialGradient(24, 30, 2, 24, 30, 10);
       nukeGrad.addColorStop(0, '#ffffff');
-      nukeGrad.addColorStop(0.4, '#f97316');
-      nukeGrad.addColorStop(0.8, '#c2410c');
-      nukeGrad.addColorStop(1, 'rgba(194, 65, 12, 0)');
+      nukeGrad.addColorStop(0.4, '#ff0033');
+      nukeGrad.addColorStop(0.8, '#99001f');
+      nukeGrad.addColorStop(1, 'rgba(153, 0, 31, 0)');
       ctx.fillStyle = nukeGrad;
       ctx.beginPath();
       ctx.arc(24, 30, 10, 0, Math.PI * 2);
@@ -615,19 +618,20 @@ export class TextureGenerator {
       scene.textures.addCanvas('enemy_bomber', canvas);
     }
 
-    // 3.6 Elite Reaper (Apex Command Dreadnought) (80 x 84)
+    // 3.6 Elite Reaper (Apex Command Battlecruiser) (80 x 84)
     if (!scene.textures.exists('enemy_elite')) {
       const canvas = document.createElement('canvas');
       canvas.width = 80;
       canvas.height = 84;
       const ctx = canvas.getContext('2d')!;
-      ctx.shadowColor = '#f43f5e';
+      ctx.shadowColor = '#ff0033';
       ctx.shadowBlur = 16;
 
+      // Command Dreadnought Hull
       const grad = ctx.createLinearGradient(40, 0, 40, 84);
-      grad.addColorStop(0, '#4c0519');
-      grad.addColorStop(0.5, '#25020c');
-      grad.addColorStop(1, '#080003');
+      grad.addColorStop(0, '#32384a');
+      grad.addColorStop(0.5, '#181b24');
+      grad.addColorStop(1, '#090a10');
       ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.moveTo(40, 78);
@@ -641,20 +645,20 @@ export class TextureGenerator {
       ctx.closePath();
       ctx.fill();
 
-      ctx.strokeStyle = '#fb7185';
-      ctx.lineWidth = 3.0;
+      ctx.strokeStyle = '#ff0033';
+      ctx.lineWidth = 2.5;
       ctx.stroke();
 
-      // Protective Deflector Shield Halo
-      ctx.strokeStyle = '#fbbf24';
-      ctx.lineWidth = 2.0;
+      // Protective Crimson Deflector Pylon Halo
+      ctx.strokeStyle = '#ff0055';
+      ctx.lineWidth = 1.8;
       ctx.beginPath();
       ctx.arc(40, 40, 18, 0, Math.PI * 2);
       ctx.stroke();
 
-      // Forward Command Eye Visor
+      // Forward Sensor Array & Command Visor
       ctx.fillStyle = '#ffffff';
-      ctx.shadowColor = '#ff0055';
+      ctx.shadowColor = '#ff0033';
       ctx.shadowBlur = 14;
       ctx.beginPath();
       ctx.ellipse(40, 52, 6, 3, 0, 0, Math.PI * 2);
@@ -1025,6 +1029,46 @@ export class TextureGenerator {
     generateAsteroidCanvas(40, 'asteroid_medium');
     generateAsteroidCanvas(24, 'asteroid_small');
 
+    // 6b. Asteroid Shards & Chunks (For Multi-Stage Impact Fragmentation)
+    const generateChunkCanvas = (size: number, key: string, seed: number) => {
+      if (scene.textures.exists(key)) return;
+      const canvas = document.createElement('canvas');
+      canvas.width = size + 8;
+      canvas.height = size + 8;
+      const ctx = canvas.getContext('2d')!;
+      const center = canvas.width / 2;
+      const radius = size / 2;
+      const numPoints = 8;
+
+      ctx.fillStyle = '#27272a';
+      ctx.beginPath();
+      for (let i = 0; i < numPoints; i++) {
+        const angle = (i / numPoints) * Math.PI * 2;
+        const offset = Math.sin(i * 3.5 + seed) * (radius * 0.4);
+        const r = radius + offset;
+        const x = center + Math.cos(angle) * r;
+        const y = center + Math.sin(angle) * r;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#71717a';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // Exposed hot mineral fragment
+      ctx.fillStyle = seed % 2 === 0 ? '#ff0055' : '#00f0ff';
+      ctx.beginPath();
+      ctx.arc(center + 1, center - 1, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      scene.textures.addCanvas(key, canvas);
+    };
+
+    generateChunkCanvas(18, 'asteroid_chunk_1', 1);
+    generateChunkCanvas(14, 'asteroid_chunk_2', 2);
+
     // 7. Radiant XP Gem (Luminous Hex-Prism Crystal) (24 x 24)
     if (!scene.textures.exists('xp_gem')) {
       const canvas = document.createElement('canvas');
@@ -1081,10 +1125,10 @@ export class TextureGenerator {
       { key: 'powerup_hyperbeam', color: '#ec4899', symbol: 'B' },
       { key: 'powerup_plasma', color: '#818cf8', symbol: 'P' },
       { key: 'powerup_score', color: '#a855f7', symbol: '2X' },
-      { key: 'powerup_slow', color: '#06b6d4', symbol: '⏱' },
+      { key: 'powerup_slow', color: '#06b6d4', symbol: 'C' },
       // Aliases
       { key: 'powerup_damage', color: '#ec4899', symbol: 'D' },
-      { key: 'powerup_nuke', color: '#ef4444', symbol: '☢' },
+      { key: 'powerup_nuke', color: '#ef4444', symbol: 'N' },
     ];
 
     powerUps.forEach(({ key, color, symbol }) => {
@@ -1269,6 +1313,146 @@ export class TextureGenerator {
       ctx.lineWidth = 1;
       ctx.stroke();
       scene.textures.addCanvas('space_debris', canvas);
+    }
+
+    // 11. Additional Space Debris & Hull Wreckage Shards
+    if (!scene.textures.exists('debris_panel_1')) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 24;
+      canvas.height = 24;
+      const ctx = canvas.getContext('2d')!;
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath();
+      ctx.moveTo(4, 4);
+      ctx.lineTo(20, 6);
+      ctx.lineTo(18, 20);
+      ctx.lineTo(6, 18);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      // Hazard warning slash
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(8, 8);
+      ctx.lineTo(16, 16);
+      ctx.stroke();
+      scene.textures.addCanvas('debris_panel_1', canvas);
+    }
+
+    if (!scene.textures.exists('debris_panel_2')) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 20;
+      canvas.height = 20;
+      const ctx = canvas.getContext('2d')!;
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.moveTo(2, 8);
+      ctx.lineTo(10, 2);
+      ctx.lineTo(18, 12);
+      ctx.lineTo(14, 18);
+      ctx.lineTo(4, 16);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      // Red conduit vein
+      ctx.strokeStyle = '#ff0055';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(4, 8);
+      ctx.lineTo(14, 14);
+      ctx.stroke();
+      scene.textures.addCanvas('debris_panel_2', canvas);
+    }
+
+    if (!scene.textures.exists('debris_solar')) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 28;
+      canvas.height = 16;
+      const ctx = canvas.getContext('2d')!;
+      ctx.fillStyle = '#075985';
+      ctx.fillRect(2, 2, 24, 12);
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(2, 2, 24, 12);
+      // Photovoltaic grid lattice
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(10, 2); ctx.lineTo(10, 14);
+      ctx.moveTo(18, 2); ctx.lineTo(18, 14);
+      ctx.moveTo(2, 8); ctx.lineTo(26, 8);
+      ctx.stroke();
+      scene.textures.addCanvas('debris_solar', canvas);
+    }
+
+    // 12. Multi-Stage Cinematic Explosion Particle Textures
+    if (!scene.textures.exists('shockwave_ring')) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d')!;
+      const grad = ctx.createRadialGradient(32, 32, 18, 32, 32, 31);
+      grad.addColorStop(0, 'rgba(255, 0, 85, 0)');
+      grad.addColorStop(0.5, 'rgba(255, 255, 255, 0.9)');
+      grad.addColorStop(0.75, 'rgba(255, 0, 85, 0.8)');
+      grad.addColorStop(1, 'rgba(220, 38, 38, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(32, 32, 31, 0, Math.PI * 2);
+      ctx.fill();
+      scene.textures.addCanvas('shockwave_ring', canvas);
+    }
+
+    if (!scene.textures.exists('shrapnel_shard')) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 16;
+      canvas.height = 6;
+      const ctx = canvas.getContext('2d')!;
+      const grad = ctx.createLinearGradient(0, 3, 16, 3);
+      grad.addColorStop(0, '#ff0055');
+      grad.addColorStop(0.6, '#fca5a5');
+      grad.addColorStop(1, '#ffffff');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(0, 2);
+      ctx.lineTo(16, 3);
+      ctx.lineTo(0, 4);
+      ctx.closePath();
+      ctx.fill();
+      scene.textures.addCanvas('shrapnel_shard', canvas);
+    }
+
+    if (!scene.textures.exists('core_flash')) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 48;
+      canvas.height = 48;
+      const ctx = canvas.getContext('2d')!;
+      ctx.shadowColor = '#ff0033';
+      ctx.shadowBlur = 12;
+      const grad = ctx.createRadialGradient(24, 24, 2, 24, 24, 22);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.2, '#ffffff');
+      grad.addColorStop(0.5, '#ff0055');
+      grad.addColorStop(0.8, '#dc2626');
+      grad.addColorStop(1, 'rgba(220, 38, 38, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(24, 24, 22, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Sharp 4-point star glint
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(24, 4); ctx.lineTo(26, 24); ctx.lineTo(44, 24); ctx.lineTo(26, 24);
+      ctx.lineTo(24, 44); ctx.lineTo(22, 24); ctx.lineTo(4, 24); ctx.lineTo(22, 24);
+      ctx.closePath();
+      ctx.fill();
+      scene.textures.addCanvas('core_flash', canvas);
     }
   }
 }

@@ -277,7 +277,6 @@ export const HUD: React.FC<HUDProps> = React.memo(({
             <div className="cyber-panel-military px-3 py-1 flex items-center gap-2 text-[10px] sm:text-xs font-mono text-red-300 max-w-[200px] sm:max-w-xs truncate border-red-500/30">
               <Music className="w-3 h-3 text-red-400 animate-spin shrink-0" />
               <div className="truncate">
-                <span className="text-gray-400 mr-1 font-bold">♫</span>
                 <span className="font-semibold">{currentTrack.title}</span>
               </div>
             </div>
