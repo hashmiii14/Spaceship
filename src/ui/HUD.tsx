@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Shield,
   Heart,
   Trophy,
   Pause,
+  Play,
   Music,
   Zap,
   Flame,
@@ -17,6 +18,7 @@ import {
   VolumeX,
   SkipForward,
   SkipBack,
+  ChevronRight,
 } from 'lucide-react';
 import { PlayerStats, BossInfo, AudioTrack, PowerUpType } from '../types/game';
 import { SoundEffects } from '../audio/SoundEffects';
@@ -29,6 +31,15 @@ interface HUDProps {
   currentTrack: AudioTrack | null;
   onPause: () => void;
   bossWarning: boolean;
+}
+
+interface PriorityAlert {
+  id: string;
+  priority: number; // 100: Boss, 80: Level Up, 50: Sector
+  type: 'BOSS' | 'LEVEL_UP' | 'SECTOR';
+  title: string;
+  subtitle?: string;
+  timestamp: number;
 }
 
 const POWERUP_ICONS: Record<PowerUpType, { label: string; color: string; icon: React.ReactNode }> = {
@@ -54,21 +65,112 @@ export const HUD: React.FC<HUDProps> = React.memo(({
   onPause,
   bossWarning,
 }) => {
-  const [isMuted, setIsMuted] = React.useState(MusicManager.getIsMuted());
+  const [isMuted, setIsMuted] = useState(MusicManager.getIsMuted());
+  const [isPlaying, setIsPlaying] = useState(MusicManager.getIsPlaying());
+  const [activeTrack, setActiveTrack] = useState<AudioTrack | null>(currentTrack || MusicManager.getCurrentTrack());
+  
+  // Priority Alert Queue
+  const [currentAlert, setCurrentAlert] = useState<PriorityAlert | null>(null);
+  const alertTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  React.useEffect(() => {
+  const postAlert = (alert: Omit<PriorityAlert, 'id' | 'timestamp'>) => {
+    const newAlert: PriorityAlert = {
+      ...alert,
+      id: Math.random().toString(36).substring(2, 9),
+      timestamp: Date.now(),
+    };
+
+    setCurrentAlert((prev) => {
+      // If no active alert or new alert has equal/higher priority, show immediately
+      if (!prev || newAlert.priority >= prev.priority) {
+        if (alertTimerRef.current) clearTimeout(alertTimerRef.current);
+        alertTimerRef.current = setTimeout(() => {
+          setCurrentAlert(null);
+        }, 2400);
+        return newAlert;
+      }
+      return prev;
+    });
+  };
+
+  useEffect(() => {
     const handleMute = (muted: boolean) => setIsMuted(muted);
+    const handleState = (state: { isPlaying: boolean; isMuted: boolean; track: AudioTrack }) => {
+      setIsPlaying(state.isPlaying);
+      setIsMuted(state.isMuted);
+      if (state.track) setActiveTrack(state.track);
+    };
+    const handleTrack = (track: AudioTrack) => setActiveTrack(track);
+
+    const handleBossWarning = () => {
+      postAlert({
+        priority: 100,
+        type: 'BOSS',
+        title: 'CRITICAL EMERGENCY',
+        subtitle: 'BOSS VESSEL INCOMING',
+      });
+    };
+
+    const handleLevelUpAlert = (data: { level: number; upgradeTitle: string }) => {
+      postAlert({
+        priority: 80,
+        type: 'LEVEL_UP',
+        title: `LEVEL ${data.level} UPGRADE APPLIED`,
+        subtitle: data.upgradeTitle.toUpperCase(),
+      });
+    };
+
+    const handleSectorAlert = (data: { sectorId: number; codename: string }) => {
+      postAlert({
+        priority: 50,
+        type: 'SECTOR',
+        title: `SECTOR 0${data.sectorId} REACHED`,
+        subtitle: data.codename.toUpperCase(),
+      });
+    };
+
     EventBus.on('music:mutedChanged', handleMute);
+    EventBus.on('music:stateChanged', handleState);
+    EventBus.on('music:trackChanged', handleTrack);
+    EventBus.on('boss:warning', handleBossWarning);
+    EventBus.on('alert:levelUp', handleLevelUpAlert);
+    EventBus.on('alert:sector', handleSectorAlert);
+
     return () => {
       EventBus.off('music:mutedChanged', handleMute);
+      EventBus.off('music:stateChanged', handleState);
+      EventBus.off('music:trackChanged', handleTrack);
+      EventBus.off('boss:warning', handleBossWarning);
+      EventBus.off('alert:levelUp', handleLevelUpAlert);
+      EventBus.off('alert:sector', handleSectorAlert);
+      if (alertTimerRef.current) clearTimeout(alertTimerRef.current);
     };
   }, []);
+
+  // Sync external bossWarning prop
+  useEffect(() => {
+    if (bossWarning) {
+      postAlert({
+        priority: 100,
+        type: 'BOSS',
+        title: 'CRITICAL EMERGENCY',
+        subtitle: 'BOSS VESSEL INCOMING',
+      });
+    }
+  }, [bossWarning]);
 
   const handleToggleMute = (e: React.MouseEvent) => {
     e.stopPropagation();
     SoundEffects.playClick();
     const newMuted = MusicManager.toggleMute();
     setIsMuted(newMuted);
+  };
+
+  const handleTogglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    SoundEffects.playClick();
+    const playing = MusicManager.togglePlayPause();
+    setIsPlaying(playing);
   };
 
   const handleNextTrack = (e: React.MouseEvent) => {
@@ -357,11 +459,24 @@ export const HUD: React.FC<HUDProps> = React.memo(({
               <SkipBack className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
             </button>
 
+            {/* Play / Pause Toggle Button */}
+            <button
+              onClick={handleTogglePlay}
+              className="p-0.5 sm:p-1 rounded hover:bg-red-500/20 text-red-400 hover:text-white transition-colors cursor-pointer"
+              title={isPlaying ? 'Pause Music' : 'Play Music'}
+            >
+              {isPlaying ? (
+                <Pause className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-red-400" />
+              ) : (
+                <Play className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-red-400" />
+              )}
+            </button>
+
             {/* Track Info */}
             <div className="flex items-center gap-1 max-w-[80px] sm:max-w-[170px] truncate text-[9px] sm:text-xs font-mono">
-              <Music className={`w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-400 shrink-0 ${!isMuted ? 'animate-spin' : 'opacity-40'}`} />
+              <Music className={`w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-400 shrink-0 ${isPlaying && !isMuted ? 'animate-spin' : 'opacity-40'}`} />
               <span className={`truncate font-semibold ${isMuted ? 'text-gray-500 line-through' : 'text-red-200'}`}>
-                {currentTrack ? currentTrack.title : 'AUDIO READY'}
+                {activeTrack ? activeTrack.title : 'AUDIO READY'}
               </span>
             </div>
 
@@ -382,6 +497,38 @@ export const HUD: React.FC<HUDProps> = React.memo(({
           </div>
         </div>
       </div>
+
+      {/* Center Safe-Area Priority Alert Banner (Auto-dismiss 2.4s) */}
+      {currentAlert && (
+        <div className="absolute top-20 sm:top-24 left-1/2 -translate-x-1/2 pointer-events-none z-30 flex flex-col items-center animate-pulse">
+          <div
+            className={`px-4 sm:px-8 py-2 rounded-lg border flex flex-col items-center text-center shadow-2xl backdrop-blur-xs ${
+              currentAlert.type === 'BOSS'
+                ? 'bg-red-950/90 border-red-500 text-red-100 shadow-[0_0_40px_rgba(255,0,51,0.7)]'
+                : currentAlert.type === 'LEVEL_UP'
+                ? 'bg-black/90 border-amber-500 text-amber-100 shadow-[0_0_35px_rgba(245,158,11,0.6)]'
+                : 'bg-black/90 border-rose-500 text-rose-100 shadow-[0_0_30px_rgba(244,63,94,0.5)]'
+            }`}
+          >
+            <span
+              className={`text-[9px] sm:text-xs font-mono font-black tracking-[0.2em] uppercase ${
+                currentAlert.type === 'BOSS'
+                  ? 'text-red-400'
+                  : currentAlert.type === 'LEVEL_UP'
+                  ? 'text-amber-400'
+                  : 'text-rose-400'
+              }`}
+            >
+              {currentAlert.title}
+            </span>
+            {currentAlert.subtitle && (
+              <span className="text-sm sm:text-xl font-black font-['Orbitron'] tracking-wider text-white mt-0.5">
+                {currentAlert.subtitle}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Bottom Center: Active Power-Ups Row */}
       {stats.activePowerUps.length > 0 && (

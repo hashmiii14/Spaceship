@@ -428,6 +428,7 @@ export class GameScene extends Phaser.Scene {
       this.applyUpgrade(option);
       this.isLevelUpPaused = false;
       this.physics.resume();
+      EventBus.emit('alert:levelUp', { level: this.playerLevel, upgradeTitle: option.title });
     };
     const onSkinChanged = (newSkinId: string) => {
       const key = `player_ship_${newSkinId.toLowerCase()}`;
@@ -812,6 +813,7 @@ export class GameScene extends Phaser.Scene {
     this.game.events.emit('background:setSpeedMultiplier', sector.starSpeedMult);
     this.game.events.emit('background:event', sector.signatureEvent);
     EventBus.emit('wave:start', sector.id);
+    EventBus.emit('alert:sector', { sectorId: sector.id, codename: sector.codename });
 
     if (showNotification) {
       SoundEffects.playLevelUp();
@@ -1782,10 +1784,24 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.flash(300, 255, 0, 85);
 
     const options = this.generateUpgradeOptions();
-    this.isLevelUpPaused = true;
-    this.physics.pause();
 
-    EventBus.emit('game:levelUp', options);
+    const isMobile = typeof window !== 'undefined' && (
+      window.innerWidth <= 768 ||
+      'ontouchstart' in window ||
+      navigator.maxTouchPoints > 0
+    );
+
+    if (isMobile) {
+      // Auto-award the top progressive upgrade smoothly without freezing combat on mobile
+      const autoOption = options[0];
+      this.applyUpgrade(autoOption);
+      EventBus.emit('alert:levelUp', { level: this.playerLevel, upgradeTitle: autoOption.title });
+    } else {
+      this.isLevelUpPaused = true;
+      this.physics.pause();
+      EventBus.emit('game:levelUp', options);
+    }
+
     this.emitStats(true);
   }
 

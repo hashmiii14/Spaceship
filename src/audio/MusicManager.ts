@@ -5,8 +5,8 @@ import { AudioTrack } from '../types/game';
 export interface FourthTrackConfig extends AudioTrack {}
 
 /**
- * Easily configurable 4th track entry
- * Default points to the user-uploaded track saved at /audio/fourth-track.mp3
+ * Configurable 4th track entry:
+ * Points to user-provided file /audio/fourth-track.mp3
  */
 export const fourthTrack: FourthTrackConfig = {
   id: 'fourth-track',
@@ -45,12 +45,16 @@ class MusicManagerClass {
   private volume: number = 0.6;
   private isInitialized: boolean = false;
   private consecutiveErrors: number = 0;
+  private isTransitioning: boolean = false;
 
   constructor() {
     this.isMuted = !Storage.getMusicEnabled();
     this.volume = Storage.getMusicVolume();
   }
 
+  /**
+   * Singleton HTMLAudioElement initializer
+   */
   private initAudio(): HTMLAudioElement {
     if (!this.audio) {
       this.audio = new Audio();
@@ -58,24 +62,25 @@ class MusicManagerClass {
       this.audio.volume = this.volume;
       this.audio.muted = this.isMuted;
 
-      // Sequential playback: Track 1 -> Track 2 -> Track 3 -> Track 4 -> Track 1 ...
+      // Auto next track: Sequential 1 -> 2 -> 3 -> 4 -> 1 ...
       this.audio.addEventListener('ended', () => {
         this.consecutiveErrors = 0;
         this.nextTrack();
       });
 
-      // Graceful error recovery: log warning, skip missing track, advance without crashing gameplay
+      // Graceful error recovery if an audio asset fails to load
       this.audio.addEventListener('error', (e) => {
         const track = this.getCurrentTrack();
-        console.warn(`[MusicManager] Audio track failed to load: ${track.title} (${track.url})`, e);
+        console.warn(`[MusicManager] Track unavailable: ${track.title} (${track.url})`, e);
         this.consecutiveErrors++;
         if (this.consecutiveErrors < PLAYLIST.length) {
           setTimeout(() => {
             this.nextTrack();
-          }, 300);
+          }, 350);
         } else {
-          console.warn('[MusicManager] All audio tracks failed or unavailable. Halting music playback safely.');
+          console.warn('[MusicManager] All playlist audio assets failed to load.');
           this.isPlaying = false;
+          this.emitState();
         }
       });
     }
@@ -106,6 +111,78 @@ class MusicManagerClass {
     return this.volume;
   }
 
+  private emitState(): void {
+    const track = this.getCurrentTrack();
+    EventBus.emit('music:trackChanged', track);
+    EventBus.emit('music:stateChanged', {
+      isPlaying: this.isPlaying,
+      isMuted: this.isMuted,
+      track,
+      index: this.currentTrackIndex,
+    });
+  }
+
+  /**
+   * Safe play helper to handle promise rejections and AbortError
+   */
+  private async safePlay(): Promise<void> {
+    if (this.isMuted || !this.audio) {
+      this.isPlaying = false;
+      this.emitState();
+      return;
+    }
+
+    this.audio.volume = this.volume;
+    this.audio.muted = false;
+
+    try {
+      await this.audio.play();
+      this.isPlaying = true;
+      this.emitState();
+    } catch (err: any) {
+      if (err && err.name !== 'AbortError') {
+        console.warn(`[MusicManager] Play failed on ${this.getCurrentTrack().title}:`, err);
+      }
+      this.isPlaying = false;
+      this.emitState();
+    }
+  }
+
+  /**
+   * Internal clean track loader with guaranteed single-source playback
+   */
+  private async loadAndPlay(trackIndex: number): Promise<void> {
+    if (this.isTransitioning) return;
+    this.isTransitioning = true;
+
+    try {
+      this.currentTrackIndex = (trackIndex + PLAYLIST.length) % PLAYLIST.length;
+      const track = this.getCurrentTrack();
+      const audio = this.initAudio();
+      this.isInitialized = true;
+
+      // Cleanly halt previous playback before switching source
+      try {
+        audio.pause();
+      } catch {}
+
+      audio.src = track.url;
+      audio.currentTime = 0;
+      try {
+        audio.load();
+      } catch {}
+
+      // Update UI immediately
+      this.emitState();
+
+      if (!this.isMuted) {
+        await this.safePlay();
+      }
+    } finally {
+      this.isTransitioning = false;
+    }
+  }
+
   /**
    * Ensures music is playing without restarting the current track if already active
    */
@@ -114,7 +191,7 @@ class MusicManagerClass {
     const audio = this.initAudio();
     if (audio.paused) {
       if (!audio.src || audio.src === '' || !this.isInitialized) {
-        this.play(this.currentTrackIndex);
+        this.loadAndPlay(this.currentTrackIndex);
       } else {
         this.resume();
       }
@@ -125,123 +202,85 @@ class MusicManagerClass {
    * Starts playback of a track by index or current track
    */
   public async play(trackIndex?: number): Promise<void> {
-    if (trackIndex !== undefined && trackIndex >= 0 && trackIndex < PLAYLIST.length) {
-      this.currentTrackIndex = trackIndex;
-    }
+    const targetIndex = trackIndex !== undefined ? trackIndex : this.currentTrackIndex;
+    await this.loadAndPlay(targetIndex);
+  }
 
-    const track = this.getCurrentTrack();
+  /**
+   * Pause music while strictly preserving currentTime
+   */
+  public pause(): void {
+    if (this.audio && !this.audio.paused) {
+      try {
+        this.audio.pause();
+      } catch {}
+    }
+    this.isPlaying = false;
+    this.emitState();
+  }
+
+  /**
+   * Resume music from exact paused timestamp
+   */
+  public resume(): void {
+    if (this.isMuted) return;
     const audio = this.initAudio();
-    this.isInitialized = true;
-
-    // Check if the source is already set to current track
-    const expectedSrc = new URL(track.url, window.location.href).href;
-    if (audio.src !== expectedSrc) {
-      audio.src = track.url;
-      audio.currentTime = 0;
+    if (!audio.src || audio.src === '') {
+      this.loadAndPlay(this.currentTrackIndex);
+      return;
     }
+    this.safePlay();
+  }
 
-    audio.volume = this.volume;
-    audio.muted = this.isMuted;
+  /**
+   * Toggles Play / Pause preserving timestamp
+   */
+  public togglePlayPause(): boolean {
+    const audio = this.initAudio();
+    if (this.isPlaying && !audio.paused) {
+      this.pause();
+      return false;
+    } else {
+      this.resume();
+      return true;
+    }
+  }
 
-    if (this.isMuted) {
-      this.isPlaying = false;
-      EventBus.emit('music:trackChanged', track);
+  /**
+   * NEXT button: Cleanly advances to next playlist track (1 -> 2 -> 3 -> 4 -> 1)
+   */
+  public nextTrack(): void {
+    const nextIndex = (this.currentTrackIndex + 1) % PLAYLIST.length;
+    this.loadAndPlay(nextIndex);
+  }
+
+  /**
+   * PREVIOUS button:
+   * If current track played > 3.0 seconds, restart current track.
+   * Otherwise, go to previous playlist track.
+   */
+  public prevTrack(): void {
+    const audio = this.initAudio();
+    if (audio.currentTime > 3.0) {
+      audio.currentTime = 0;
+      if (!this.isMuted && audio.paused) {
+        this.safePlay();
+      } else {
+        this.emitState();
+      }
       return;
     }
 
-    try {
-      await audio.play();
-      this.isPlaying = true;
-      EventBus.emit('music:trackChanged', track);
-      EventBus.emit('music:stateChanged', { isPlaying: true, track });
-    } catch (err) {
-      console.warn(`[MusicManager] Playback postponed or blocked: ${track.title}`, err);
-      this.isPlaying = false;
-      EventBus.emit('music:trackChanged', track);
-    }
+    const prevIndex = (this.currentTrackIndex - 1 + PLAYLIST.length) % PLAYLIST.length;
+    this.loadAndPlay(prevIndex);
   }
 
-  public pause(): void {
-    if (this.audio && !this.audio.paused) {
-      this.audio.pause();
-    }
-    this.isPlaying = false;
-    EventBus.emit('music:stateChanged', { isPlaying: false, track: this.getCurrentTrack() });
-  }
-
-  public resume(): void {
-    if (this.isMuted) return;
-    if (this.audio) {
-      this.audio.play().then(() => {
-        this.isPlaying = true;
-        EventBus.emit('music:stateChanged', { isPlaying: true, track: this.getCurrentTrack() });
-      }).catch((err) => {
-        console.warn('[MusicManager] Resume error:', err);
-      });
-    } else {
-      this.play();
-    }
-  }
-
-  public nextTrack(): void {
-    this.currentTrackIndex = (this.currentTrackIndex + 1) % PLAYLIST.length;
-    const track = this.getCurrentTrack();
-    const audio = this.initAudio();
-    audio.src = track.url;
-    audio.currentTime = 0;
-
-    if (!this.isMuted) {
-      audio.play().then(() => {
-        this.isPlaying = true;
-        EventBus.emit('music:trackChanged', track);
-        EventBus.emit('music:stateChanged', { isPlaying: true, track });
-      }).catch((err) => {
-        console.warn('[MusicManager] Next track play error:', err);
-      });
-    } else {
-      EventBus.emit('music:trackChanged', track);
-    }
-  }
-
-  public prevTrack(): void {
-    this.currentTrackIndex = (this.currentTrackIndex - 1 + PLAYLIST.length) % PLAYLIST.length;
-    const track = this.getCurrentTrack();
-    const audio = this.initAudio();
-    audio.src = track.url;
-    audio.currentTime = 0;
-
-    if (!this.isMuted) {
-      audio.play().then(() => {
-        this.isPlaying = true;
-        EventBus.emit('music:trackChanged', track);
-        EventBus.emit('music:stateChanged', { isPlaying: true, track });
-      }).catch((err) => {
-        console.warn('[MusicManager] Prev track play error:', err);
-      });
-    } else {
-      EventBus.emit('music:trackChanged', track);
-    }
-  }
-
+  /**
+   * Direct track selector by index
+   */
   public playTrack(index: number): void {
     if (index >= 0 && index < PLAYLIST.length) {
-      this.currentTrackIndex = index;
-      const track = this.getCurrentTrack();
-      const audio = this.initAudio();
-      audio.src = track.url;
-      audio.currentTime = 0;
-
-      if (!this.isMuted) {
-        audio.play().then(() => {
-          this.isPlaying = true;
-          EventBus.emit('music:trackChanged', track);
-          EventBus.emit('music:stateChanged', { isPlaying: true, track });
-        }).catch((err) => {
-          console.warn('[MusicManager] Play track error:', err);
-        });
-      } else {
-        EventBus.emit('music:trackChanged', track);
-      }
+      this.loadAndPlay(index);
     }
   }
 
@@ -260,9 +299,12 @@ class MusicManagerClass {
 
     if (muted) {
       if (this.audio && !this.audio.paused) {
-        this.audio.pause();
+        try {
+          this.audio.pause();
+        } catch {}
       }
       this.isPlaying = false;
+      this.emitState();
     } else {
       this.ensurePlaying();
     }

@@ -241,7 +241,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-black flex items-center justify-center select-none font-['Rajdhani']">
+    <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-black flex items-center justify-center select-none font-['Rajdhani'] touch-none">
       {/* Sci-Fi Scanline Overlay */}
       <div className="scanlines" />
 

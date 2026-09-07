@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { Play, RotateCcw, Home, Music, Volume2, Settings, SkipBack, SkipForward } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Play, Pause, RotateCcw, Home, Music, Volume2, Settings, SkipBack, SkipForward } from 'lucide-react';
 import { SoundEffects } from '../audio/SoundEffects';
 import { MusicManager } from '../audio/MusicManager';
 import { AudioTrack } from '../types/game';
 import { SettingsModal } from './SettingsModal';
+import { EventBus } from '../utils/EventBus';
 
 interface PauseModalProps {
   onResume: () => void;
@@ -27,6 +28,30 @@ export const PauseModal: React.FC<PauseModalProps> = ({
   currentTrack,
 }) => {
   const [showSettings, setShowSettings] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(MusicManager.getIsPlaying());
+  const [activeTrack, setActiveTrack] = useState<AudioTrack | null>(currentTrack || MusicManager.getCurrentTrack());
+
+  useEffect(() => {
+    const handleState = (state: { isPlaying: boolean; isMuted: boolean; track: AudioTrack }) => {
+      setIsPlaying(state.isPlaying);
+      if (state.track) setActiveTrack(state.track);
+    };
+    const handleTrack = (track: AudioTrack) => setActiveTrack(track);
+
+    EventBus.on('music:stateChanged', handleState);
+    EventBus.on('music:trackChanged', handleTrack);
+    return () => {
+      EventBus.off('music:stateChanged', handleState);
+      EventBus.off('music:trackChanged', handleTrack);
+    };
+  }, []);
+
+  const handleTogglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    SoundEffects.playClick();
+    const playing = MusicManager.togglePlayPause();
+    setIsPlaying(playing);
+  };
 
   return (
     <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/90 p-4 select-none pointer-events-auto">
@@ -36,7 +61,7 @@ export const PauseModal: React.FC<PauseModalProps> = ({
         </h2>
         <div className="h-0.5 w-24 bg-gradient-to-r from-transparent via-red-500 to-transparent mb-5" />
 
-        {/* Current Song in Pause Menu with Skip Controls */}
+        {/* Current Song in Pause Menu with Prev / Play-Pause / Next Controls */}
         <div className="w-full bg-red-950/40 border border-red-500/30 rounded-lg p-2.5 mb-5 flex items-center justify-between gap-2 text-xs font-mono text-red-300">
           <button
             onClick={() => {
@@ -49,9 +74,21 @@ export const PauseModal: React.FC<PauseModalProps> = ({
             <SkipBack className="w-4 h-4" />
           </button>
 
-          <div className="flex items-center gap-1.5 truncate max-w-[180px]">
-            <Music className={`w-4 h-4 text-red-400 shrink-0 ${musicEnabled ? 'animate-spin' : 'opacity-40'}`} />
-            <span className="font-bold truncate">{currentTrack ? currentTrack.title : 'AUDIO READY'}</span>
+          <button
+            onClick={handleTogglePlay}
+            className="p-1 rounded hover:bg-red-500/20 text-red-400 hover:text-white transition-colors cursor-pointer"
+            title={isPlaying ? 'Pause Music' : 'Play Music'}
+          >
+            {isPlaying ? (
+              <Pause className="w-4 h-4 fill-red-400" />
+            ) : (
+              <Play className="w-4 h-4 fill-red-400" />
+            )}
+          </button>
+
+          <div className="flex items-center gap-1.5 truncate max-w-[140px] sm:max-w-[180px]">
+            <Music className={`w-4 h-4 text-red-400 shrink-0 ${isPlaying && musicEnabled ? 'animate-spin' : 'opacity-40'}`} />
+            <span className="font-bold truncate">{activeTrack ? activeTrack.title : 'AUDIO READY'}</span>
           </div>
 
           <button
