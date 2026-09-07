@@ -84,47 +84,47 @@ export const HUD: React.FC<HUDProps> = React.memo(({
           </div>
 
           {/* Vitals: Hull HP, Shield, and XP Bars */}
-          <div className="cyber-panel-military px-3 py-2.5 flex flex-col gap-2 w-52 sm:w-64 border-cyan-500/30">
+          <div className="cyber-panel-military px-3 py-2.5 flex flex-col gap-2 w-52 sm:w-64 border-red-500/40">
             {/* Hull HP */}
             <div className="flex items-center gap-2">
-              <Heart className="w-3.5 h-3.5 text-red-400 shrink-0" />
+              <Heart className="w-3.5 h-3.5 text-red-500 shrink-0" />
               <div className="bar-track flex-1 h-2.5 sm:h-3">
                 <div
                   className="bar-fill-hp transition-all duration-150"
                   style={{ width: `${hpPercent}%` }}
                 />
               </div>
-              <span className="text-[11px] font-mono font-bold text-gray-300 w-8 text-right">
+              <span className="text-[11px] font-mono font-bold text-gray-200 w-8 text-right">
                 {Math.round(stats.health)}%
               </span>
             </div>
 
             {/* Forcefield Shield */}
             <div className="flex items-center gap-2">
-              <Shield className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <Shield className="w-3.5 h-3.5 text-sky-400 shrink-0" />
               <div className="bar-track flex-1 h-2.5 sm:h-3">
                 <div
                   className="bar-fill-shield transition-all duration-150"
                   style={{ width: `${shieldPercent}%` }}
                 />
               </div>
-              <span className="text-[11px] font-mono font-bold text-cyan-300 w-8 text-right">
+              <span className="text-[11px] font-mono font-bold text-sky-300 w-8 text-right">
                 {Math.round(stats.shield)}%
               </span>
             </div>
 
             {/* Level & XP Bar */}
-            <div className="flex items-center gap-2 pt-1 border-t border-gray-800/80">
-              <span className="text-[10px] font-mono font-black text-purple-400 shrink-0 uppercase">
+            <div className="flex items-center gap-2 pt-1 border-t border-red-900/40">
+              <span className="text-[10px] font-mono font-black text-red-400 shrink-0 uppercase">
                 LVL {stats.level}
               </span>
-              <div className="bar-track flex-1 h-2 bg-gray-900">
+              <div className="bar-track flex-1 h-2 bg-gray-950">
                 <div
-                  className="h-full bg-gradient-to-r from-purple-600 to-pink-500 rounded-full transition-all duration-200"
+                  className="h-full bg-gradient-to-r from-red-700 via-rose-600 to-red-400 rounded-full transition-all duration-200 shadow-[0_0_8px_rgba(255,0,51,0.6)]"
                   style={{ width: `${xpPercent}%` }}
                 />
               </div>
-              <span className="text-[10px] font-mono font-bold text-purple-300 w-8 text-right">
+              <span className="text-[10px] font-mono font-bold text-red-300 w-8 text-right">
                 {Math.round(xpPercent)}%
               </span>
             </div>
@@ -266,16 +266,16 @@ export const HUD: React.FC<HUDProps> = React.memo(({
           </div>
 
           {/* Survival Time Display */}
-          <div className="cyber-panel-military px-3 py-1 flex items-center gap-2 text-xs font-mono text-gray-300 border-gray-700">
-            <Clock className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+          <div className="cyber-panel-military px-3 py-1 flex items-center gap-2 text-xs font-mono text-gray-300 border-red-900/30">
+            <Clock className="w-3.5 h-3.5 text-red-400 shrink-0" />
             <span className="text-gray-400 font-bold">TIME:</span>
             <span className="font-bold text-white tracking-wider">{timeFormatted}</span>
           </div>
 
           {/* Now Playing Music Indicator */}
           {currentTrack && (
-            <div className="cyber-panel-military px-3 py-1 flex items-center gap-2 text-[10px] sm:text-xs font-mono text-cyan-300 max-w-[200px] sm:max-w-xs truncate border-cyan-500/30">
-              <Music className="w-3 h-3 text-cyan-400 animate-spin shrink-0" />
+            <div className="cyber-panel-military px-3 py-1 flex items-center gap-2 text-[10px] sm:text-xs font-mono text-red-300 max-w-[200px] sm:max-w-xs truncate border-red-500/30">
+              <Music className="w-3 h-3 text-red-400 animate-spin shrink-0" />
               <div className="truncate">
                 <span className="text-gray-400 mr-1 font-bold">♫</span>
                 <span className="font-semibold">{currentTrack.title}</span>

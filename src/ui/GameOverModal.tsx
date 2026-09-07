@@ -59,7 +59,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   const timeFormatted = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 select-none pointer-events-auto">
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/90 p-4 select-none pointer-events-auto">
       <div className="cyber-panel cyber-panel-danger w-full max-w-lg p-6 sm:p-8 flex flex-col items-center text-center shadow-[0_0_60px_rgba(255,0,85,0.4)]">
         {/* Skull Icon / Title */}
         <div className="w-14 h-14 rounded-full bg-red-950/60 border border-red-500/50 flex items-center justify-center mb-3 text-red-400">
@@ -86,8 +86,8 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
 
         {/* Primary Scores Grid */}
         <div className="grid grid-cols-2 gap-3 w-full mb-3">
-          <div className="bg-black/60 border border-cyan-500/30 rounded-lg p-3 flex flex-col items-center">
-            <span className="text-[10px] sm:text-xs font-mono uppercase tracking-widest text-cyan-400 font-bold">
+          <div className="bg-black/60 border border-red-500/40 rounded-lg p-3 flex flex-col items-center">
+            <span className="text-[10px] sm:text-xs font-mono uppercase tracking-widest text-red-400 font-bold">
               FINAL SCORE
             </span>
             <span className="text-2xl sm:text-3xl font-black font-mono text-white mt-0.5">
@@ -112,7 +112,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
         <div className="grid grid-cols-3 gap-2 w-full mb-6 text-xs font-mono">
           <div className="bg-black/50 border border-gray-800 rounded p-2 flex flex-col items-center">
             <span className="text-[10px] text-gray-400 uppercase flex items-center gap-1">
-              <Award className="w-3 h-3 text-cyan-400" /> SECTOR
+              <Award className="w-3 h-3 text-red-400" /> SECTOR
             </span>
             <span className="font-bold text-white mt-0.5">LEVEL {wave}</span>
           </div>
@@ -126,9 +126,9 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
 
           <div className="bg-black/50 border border-gray-800 rounded p-2 flex flex-col items-center">
             <span className="text-[10px] text-gray-400 uppercase flex items-center gap-1">
-              <Clock className="w-3 h-3 text-purple-400" /> TIME
+              <Clock className="w-3 h-3 text-red-400" /> TIME
             </span>
-            <span className="font-bold text-purple-300 mt-0.5">{timeFormatted}</span>
+            <span className="font-bold text-red-300 mt-0.5">{timeFormatted}</span>
           </div>
         </div>
 
@@ -139,7 +139,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
               SoundEffects.playClick();
               onRestart();
             }}
-            className="cyber-btn flex-1 py-3.5 flex items-center justify-center gap-2 text-base font-bold bg-cyan-500/25 border-cyan-400 text-white shadow-[0_0_20px_rgba(0,240,255,0.4)]"
+            className="cyber-btn-red flex-1 py-3.5 flex items-center justify-center gap-2 text-base font-bold shadow-[0_0_25px_rgba(255,0,51,0.6)]"
           >
             <RotateCcw className="w-5 h-5" />
             REDEPLOY VESSEL

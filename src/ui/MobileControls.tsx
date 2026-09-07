@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Crosshair } from 'lucide-react';
+import { Crosshair, RotateCcw } from 'lucide-react';
 import { EventBus } from '../utils/EventBus';
 
 export const MobileControls: React.FC = () => {
   const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(false);
   const joystickBaseRef = useRef<HTMLDivElement>(null);
   const [knobPos, setKnobPos] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -15,6 +16,7 @@ export const MobileControls: React.FC = () => {
     const checkTouch = () => {
       const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth <= 1024;
       setIsTouchDevice(hasTouch);
+      setIsPortrait(window.innerHeight > window.innerWidth && window.innerWidth <= 840);
     };
     checkTouch();
     window.addEventListener('resize', checkTouch);
@@ -90,50 +92,60 @@ export const MobileControls: React.FC = () => {
   if (!isTouchDevice) return null;
 
   return (
-    <div className="absolute inset-x-0 bottom-0 p-4 sm:p-8 flex justify-between items-end pointer-events-none z-30 select-none">
-      {/* Virtual Joystick (Bottom Left) */}
-      <div
-        ref={joystickBaseRef}
-        onTouchStart={handleJoystickTouchStart}
-        onTouchMove={handleJoystickTouchMove}
-        onTouchEnd={handleJoystickTouchEnd}
-        onTouchCancel={handleJoystickTouchEnd}
-        className="w-28 h-28 sm:w-36 sm:h-36 rounded-full border-2 border-cyan-500/40 bg-black/40 backdrop-blur-sm relative flex items-center justify-center pointer-events-auto touch-none shadow-[0_0_20px_rgba(0,240,255,0.15)]"
-      >
-        {/* Outer Ring Accent */}
-        <div className="absolute inset-2 rounded-full border border-dashed border-cyan-500/20" />
+    <>
+      {/* Optional Portrait Warning Banner */}
+      {isPortrait && (
+        <div className="absolute top-14 left-1/2 -translate-x-1/2 bg-red-950/90 border border-red-500 text-red-200 text-[10px] font-mono font-bold px-3 py-1 rounded-full pointer-events-none z-40 animate-pulse flex items-center gap-1.5 shadow-[0_0_15px_rgba(255,0,51,0.5)]">
+          <RotateCcw className="w-3.5 h-3.5 text-red-400" />
+          <span>ROTATE DEVICE FOR FULL COMBAT VIEW</span>
+        </div>
+      )}
 
-        {/* Joystick Knob */}
+      <div className="absolute inset-x-0 bottom-0 p-4 sm:p-8 flex justify-between items-end pointer-events-none z-30 select-none touch-none">
+        {/* Virtual Joystick (Bottom Left) */}
         <div
-          className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 transition-transform ${
-            isDragging
-              ? 'bg-cyan-500/60 border-cyan-300 shadow-[0_0_20px_rgba(0,240,255,0.8)]'
-              : 'bg-cyan-500/30 border-cyan-400'
-          }`}
-          style={{
-            transform: `translate(${knobPos.x}px, ${knobPos.y}px)`,
-          }}
-        />
-      </div>
+          ref={joystickBaseRef}
+          onTouchStart={handleJoystickTouchStart}
+          onTouchMove={handleJoystickTouchMove}
+          onTouchEnd={handleJoystickTouchEnd}
+          onTouchCancel={handleJoystickTouchEnd}
+          className="w-28 h-28 sm:w-36 sm:h-36 rounded-full border-2 border-red-500/50 bg-black/70 relative flex items-center justify-center pointer-events-auto touch-none shadow-[0_0_20px_rgba(255,0,51,0.2)]"
+        >
+          {/* Outer Ring Accent */}
+          <div className="absolute inset-2 rounded-full border border-dashed border-red-500/30" />
 
-      {/* Touch Fire Button (Bottom Right) */}
-      <button
-        onTouchStart={handleShootStart}
-        onTouchEnd={handleShootEnd}
-        onTouchCancel={handleShootEnd}
-        onMouseDown={handleShootStart}
-        onMouseUp={handleShootEnd}
-        className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 flex flex-col items-center justify-center pointer-events-auto touch-none transition-all ${
-          isShooting
-            ? 'bg-pink-500/60 border-pink-300 scale-95 shadow-[0_0_30px_rgba(255,0,85,0.9)]'
-            : 'bg-pink-600/30 border-pink-500/70 shadow-[0_0_20px_rgba(255,0,85,0.3)] active:scale-95'
-        }`}
-      >
-        <Crosshair className="w-8 h-8 text-pink-300 animate-pulse" />
-        <span className="text-[10px] sm:text-xs font-black font-['Orbitron'] tracking-wider text-pink-200 mt-0.5">
-          FIRE
-        </span>
-      </button>
-    </div>
+          {/* Joystick Knob */}
+          <div
+            className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 transition-transform ${
+              isDragging
+                ? 'bg-red-600/70 border-red-400 shadow-[0_0_25px_rgba(255,0,51,0.9)]'
+                : 'bg-red-950/60 border-red-500/70'
+            }`}
+            style={{
+              transform: `translate(${knobPos.x}px, ${knobPos.y}px)`,
+            }}
+          />
+        </div>
+
+        {/* Touch Fire Button (Bottom Right) */}
+        <button
+          onTouchStart={handleShootStart}
+          onTouchEnd={handleShootEnd}
+          onTouchCancel={handleShootEnd}
+          onMouseDown={handleShootStart}
+          onMouseUp={handleShootEnd}
+          className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 flex flex-col items-center justify-center pointer-events-auto touch-none transition-all ${
+            isShooting
+              ? 'bg-red-600/80 border-rose-300 scale-95 shadow-[0_0_35px_rgba(255,0,51,1)]'
+              : 'bg-red-950/70 border-red-500/80 shadow-[0_0_25px_rgba(255,0,51,0.4)] active:scale-95'
+          }`}
+        >
+          <Crosshair className="w-8 h-8 text-rose-300 animate-pulse" />
+          <span className="text-[10px] sm:text-xs font-black font-['Orbitron'] tracking-wider text-rose-100 mt-0.5">
+            FIRE
+          </span>
+        </button>
+      </div>
+    </>
   );
 };

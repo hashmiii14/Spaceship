@@ -336,56 +336,58 @@ export class GameScene extends Phaser.Scene {
       });
     }
 
-    // 5. Collisions & Overlaps
+    // 5. Collisions & Overlaps (with active object filtering to skip dead pooled entities)
+    const isActiveObj = (a: any, b: any) => Boolean(a && a.active && b && b.active);
+
     // Player Bullets -> Enemies
     this.physics.add.overlap(this.playerBullets, this.enemies, (bullet, enemy) => {
       this.handleBulletEnemyCollision(bullet as Phaser.Physics.Arcade.Image, enemy as Phaser.Physics.Arcade.Sprite);
-    });
+    }, isActiveObj, this);
 
     // Player Bullets -> Asteroids
     this.physics.add.overlap(this.playerBullets, this.asteroids, (bullet, asteroid) => {
       this.handleBulletAsteroidCollision(bullet as Phaser.Physics.Arcade.Image, asteroid as Phaser.Physics.Arcade.Sprite);
-    });
+    }, isActiveObj, this);
 
     // Player Bullets -> Boss (Reliable Boss Collisions)
     this.physics.add.overlap(this.playerBullets, this.bossGroup, (bullet, boss) => {
       this.handleBulletBossCollision(bullet as Phaser.Physics.Arcade.Image, boss as Phaser.Physics.Arcade.Sprite);
-    });
+    }, isActiveObj, this);
 
     // Enemy Bullets -> Player
     this.physics.add.overlap(this.enemyBullets, this.player, (_p, bullet) => {
       this.handleEnemyBulletPlayerCollision(bullet as Phaser.Physics.Arcade.Image, 15);
-    });
+    }, isActiveObj, this);
 
     // Boss Bullets -> Player
     this.physics.add.overlap(this.bossBullets, this.player, (_p, bullet) => {
       this.handleEnemyBulletPlayerCollision(bullet as Phaser.Physics.Arcade.Image, 25);
-    });
+    }, isActiveObj, this);
 
     // Player -> Enemies (Ramming)
     this.physics.add.overlap(this.player, this.enemies, (_p, enemy) => {
       this.handlePlayerEntityCollision(enemy as Phaser.Physics.Arcade.Sprite, 30);
-    });
+    }, isActiveObj, this);
 
     // Player -> Asteroids (Collision)
     this.physics.add.overlap(this.player, this.asteroids, (_p, asteroid) => {
       this.handlePlayerEntityCollision(asteroid as Phaser.Physics.Arcade.Sprite, 25);
-    });
+    }, isActiveObj, this);
 
     // Player -> Boss (Ramming)
     this.physics.add.overlap(this.player, this.bossGroup, (_p, boss) => {
       this.handlePlayerEntityCollision(boss as Phaser.Physics.Arcade.Sprite, 40);
-    });
+    }, isActiveObj, this);
 
     // Player -> PowerUps
     this.physics.add.overlap(this.player, this.powerUps, (_p, powerUp) => {
       this.collectPowerUp(powerUp as Phaser.Physics.Arcade.Sprite);
-    });
+    }, isActiveObj, this);
 
     // Player -> XP Gems
     this.physics.add.overlap(this.player, this.xpGems, (_p, gem) => {
       this.collectXpGem(gem as Phaser.Physics.Arcade.Sprite);
-    });
+    }, isActiveObj, this);
 
     // 6. External Event Listeners with Safe Shutdown Cleanup
     const onMobileMove = (dir: { x: number; y: number }) => {
@@ -549,23 +551,20 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ==========================================
-  // PROGRESSIVE SPEED MODEL
+  // PROGRESSIVE SPEED MODEL (CONTROLLED 4-TIER MODEL)
   // ==========================================
   private updateProgressiveSpeed(): void {
-    // 0-30s: 360 px/s (1.0x)
-    // 30-60s: up to 410 px/s (1.14x)
-    // 60-120s: up to 470 px/s (1.30x)
-    // 120-180s: up to 530 px/s (1.47x)
-    // 180s+: 580 px/s (1.61x OVERDRIVE)
+    // 0-30s: 480 px/s (1.0x base)
+    // 30-60s: 520 px/s (1.083x)
+    // 60-120s: 560 px/s (1.167x)
+    // 120s+: 600 px/s (1.25x OVERDRIVE)
     let speedMult = 1.0;
-    if (this.survivalTime > 180) {
-      speedMult = 1.61;
-    } else if (this.survivalTime > 120) {
-      speedMult = 1.47 + ((this.survivalTime - 120) / 60) * 0.14;
+    if (this.survivalTime > 120) {
+      speedMult = 1.25;
     } else if (this.survivalTime > 60) {
-      speedMult = 1.30 + ((this.survivalTime - 60) / 60) * 0.17;
+      speedMult = 1.167 + ((this.survivalTime - 60) / 60) * 0.083;
     } else if (this.survivalTime > 30) {
-      speedMult = 1.0 + ((this.survivalTime - 30) / 30) * 0.14;
+      speedMult = 1.0 + ((this.survivalTime - 30) / 30) * 0.083;
     }
 
     this.playerSpeed = this.basePlayerSpeed * speedMult;
@@ -575,7 +574,7 @@ export class GameScene extends Phaser.Scene {
 
   private triggerCinematicWarp(): void {
     this.game.events.emit('background:triggerWarp', 4000);
-    this.showFloatingText('WARP DRIVE ENGAGED', this.scale.width / 2, this.scale.height / 3, '#00f0ff', '26px');
+    this.showFloatingText('WARP DRIVE ENGAGED', this.scale.width / 2, this.scale.height / 3, '#ff0055', '26px');
     this.cameras.main.shake(300, 0.008);
   }
 
@@ -716,35 +715,35 @@ export class GameScene extends Phaser.Scene {
 
   private cleanupBullets(): void {
     const { width, height } = this.scale;
-    this.playerBullets.children.each((child) => {
-      const b = child as Phaser.Physics.Arcade.Image;
+    const pBullets = this.playerBullets.getChildren();
+    for (let i = 0; i < pBullets.length; i++) {
+      const b = pBullets[i] as Phaser.Physics.Arcade.Image;
       if (b.active && (b.y < -40 || b.y > height + 40 || b.x < -40 || b.x > width + 40)) {
         b.setActive(false).setVisible(false);
         b.body.stop();
         b.body.enable = false;
       }
-      return null;
-    });
+    }
 
-    this.enemyBullets.children.each((child) => {
-      const b = child as Phaser.Physics.Arcade.Image;
+    const eBullets = this.enemyBullets.getChildren();
+    for (let i = 0; i < eBullets.length; i++) {
+      const b = eBullets[i] as Phaser.Physics.Arcade.Image;
       if (b.active && (b.y > height + 50 || b.y < -50 || b.x < -50 || b.x > width + 50)) {
         b.setActive(false).setVisible(false);
         b.body.stop();
         b.body.enable = false;
       }
-      return null;
-    });
+    }
 
-    this.bossBullets.children.each((child) => {
-      const b = child as Phaser.Physics.Arcade.Image;
+    const bBullets = this.bossBullets.getChildren();
+    for (let i = 0; i < bBullets.length; i++) {
+      const b = bBullets[i] as Phaser.Physics.Arcade.Image;
       if (b.active && (b.y > height + 60 || b.y < -60 || b.x < -60 || b.x > width + 60)) {
         b.setActive(false).setVisible(false);
         b.body.stop();
         b.body.enable = false;
       }
-      return null;
-    });
+    }
   }
 
   // ==========================================
@@ -951,9 +950,10 @@ export class GameScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const slowFactor = this.isSlowMo ? 0.5 : 1.0;
 
-    this.enemies.children.each((child) => {
-      const e = child as Phaser.Physics.Arcade.Sprite;
-      if (!e.active) return null;
+    const enemies = this.enemies.getChildren();
+    for (let i = 0; i < enemies.length; i++) {
+      const e = enemies[i] as Phaser.Physics.Arcade.Sprite;
+      if (!e.active) continue;
 
       const type = e.getData('type');
 
@@ -1004,10 +1004,11 @@ export class GameScene extends Phaser.Scene {
         if (shootTimer > 1.8) {
           shootTimer = 0;
           const angleToPlayer = Phaser.Math.Angle.Between(e.x, e.y, this.player.x, this.player.y);
-          [-0.22, 0, 0.22].forEach((offset) => {
-            const rad = angleToPlayer + offset;
+          const offsets = [-0.22, 0, 0.22];
+          for (let o = 0; o < offsets.length; o++) {
+            const rad = angleToPlayer + offsets[o];
             this.fireEnemyBullet(e.x, e.y + 25, Math.cos(rad) * 310 * slowFactor, Math.sin(rad) * 310 * slowFactor);
-          });
+          }
         }
         e.setData('shootTimer', shootTimer);
       }
@@ -1018,9 +1019,7 @@ export class GameScene extends Phaser.Scene {
         e.body.enable = false;
         this.checkWaveProgress();
       }
-
-      return null;
-    });
+    }
   }
 
   private fireEnemyBullet(x: number, y: number, vx: number, vy: number): void {
@@ -1128,15 +1127,15 @@ export class GameScene extends Phaser.Scene {
 
   private updateAsteroids(_dt: number): void {
     const height = this.scale.height;
-    this.asteroids.children.each((child) => {
-      const a = child as Phaser.Physics.Arcade.Sprite;
+    const asteroids = this.asteroids.getChildren();
+    for (let i = 0; i < asteroids.length; i++) {
+      const a = asteroids[i] as Phaser.Physics.Arcade.Sprite;
       if (a.active && a.y > height + 60) {
         a.setActive(false).setVisible(false);
         a.body.stop();
         a.body.enable = false;
       }
-      return null;
-    });
+    }
   }
 
   // ==========================================
@@ -1806,14 +1805,15 @@ export class GameScene extends Phaser.Scene {
     const py = this.player.y;
     const height = this.scale.height;
 
-    this.xpGems.children.each((child) => {
-      const g = child as Phaser.Physics.Arcade.Sprite;
-      if (!g.active) return null;
+    const gems = this.xpGems.getChildren();
+    for (let i = 0; i < gems.length; i++) {
+      const g = gems[i] as Phaser.Physics.Arcade.Sprite;
+      if (!g.active) continue;
       if (g.y > height + 60) {
         g.setActive(false).setVisible(false);
         g.body.stop();
         g.body.enable = false;
-        return null;
+        continue;
       }
       const dist = Phaser.Math.Distance.Between(g.x, g.y, px, py);
       if (dist < this.magnetRadius) {
@@ -1822,15 +1822,15 @@ export class GameScene extends Phaser.Scene {
         g.x += Math.cos(angle) * speed * dt;
         g.y += Math.sin(angle) * speed * dt;
       }
-      return null;
-    });
+    }
 
-    this.powerUps.children.each((child) => {
-      const p = child as Phaser.Physics.Arcade.Sprite;
-      if (!p.active) return null;
+    const powers = this.powerUps.getChildren();
+    for (let i = 0; i < powers.length; i++) {
+      const p = powers[i] as Phaser.Physics.Arcade.Sprite;
+      if (!p.active) continue;
       if (p.y > height + 60) {
         p.destroy();
-        return null;
+        continue;
       }
       const dist = Phaser.Math.Distance.Between(p.x, p.y, px, py);
       if (dist < this.magnetRadius * 0.8) {
@@ -1838,8 +1838,7 @@ export class GameScene extends Phaser.Scene {
         p.x += Math.cos(angle) * 350 * dt;
         p.y += Math.sin(angle) * 350 * dt;
       }
-      return null;
-    });
+    }
   }
 
   // ==========================================
@@ -1957,23 +1956,23 @@ export class GameScene extends Phaser.Scene {
 
     this.showFloatingText('ELECTROMAGNETIC NUKE!', this.scale.width / 2, this.scale.height / 2, '#ff0055', '28px');
 
-    this.enemies.children.each((child) => {
-      const e = child as Phaser.Physics.Arcade.Sprite;
+    const enemies = this.enemies.getChildren();
+    for (let i = 0; i < enemies.length; i++) {
+      const e = enemies[i] as Phaser.Physics.Arcade.Sprite;
       if (e.active) {
         this.explosionEmitter.explode(16, e.x, e.y);
         this.destroyEnemy(e);
       }
-      return null;
-    });
+    }
 
-    this.asteroids.children.each((child) => {
-      const a = child as Phaser.Physics.Arcade.Sprite;
+    const asteroids = this.asteroids.getChildren();
+    for (let i = 0; i < asteroids.length; i++) {
+      const a = asteroids[i] as Phaser.Physics.Arcade.Sprite;
       if (a.active) {
         this.explosionEmitter.explode(14, a.x, a.y);
         this.destroyAsteroid(a);
       }
-      return null;
-    });
+    }
   }
 
   private updatePowerUps(now: number): void {

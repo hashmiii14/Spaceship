@@ -10,10 +10,10 @@ interface LevelUpModalProps {
 
 const RARITY_STYLES: Record<string, { border: string; glow: string; badge: string; text: string }> = {
   common: {
-    border: 'border-cyan-500/40',
-    glow: 'hover:shadow-[0_0_25px_rgba(0,240,255,0.4)]',
-    badge: 'bg-cyan-950/60 text-cyan-300 border-cyan-500/40',
-    text: 'text-cyan-400',
+    border: 'border-red-500/40',
+    glow: 'hover:shadow-[0_0_25px_rgba(255,0,51,0.4)]',
+    badge: 'bg-red-950/60 text-red-300 border-red-500/40',
+    text: 'text-red-400',
   },
   rare: {
     border: 'border-yellow-500/50',
@@ -22,16 +22,16 @@ const RARITY_STYLES: Record<string, { border: string; glow: string; badge: strin
     text: 'text-yellow-400',
   },
   epic: {
-    border: 'border-purple-500/50',
-    glow: 'hover:shadow-[0_0_35px_rgba(168,85,247,0.6)]',
-    badge: 'bg-purple-950/60 text-purple-300 border-purple-500/50',
-    text: 'text-purple-400',
+    border: 'border-rose-500/60',
+    glow: 'hover:shadow-[0_0_35px_rgba(244,63,94,0.6)]',
+    badge: 'bg-rose-950/60 text-rose-300 border-rose-500/60',
+    text: 'text-rose-400',
   },
   legendary: {
-    border: 'border-orange-500/60',
-    glow: 'hover:shadow-[0_0_40px_rgba(249,115,22,0.7)]',
-    badge: 'bg-orange-950/60 text-orange-300 border-orange-500/60',
-    text: 'text-orange-400',
+    border: 'border-red-500/80',
+    glow: 'hover:shadow-[0_0_40px_rgba(255,0,51,0.8)]',
+    badge: 'bg-red-950/80 text-red-200 border-red-500/80',
+    text: 'text-red-400',
   },
 };
 
@@ -48,15 +48,10 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ options, onSelect })
   // Allow selecting with keys '1', '2', '3'
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === '1' && options[0]) {
-        handleCardClick(options[0]);
-      } else if (e.key === '2' && options[1]) {
-        handleCardClick(options[1]);
-      } else if (e.key === '3' && options[2]) {
-        handleCardClick(options[2]);
-      }
+      if (e.key === '1' && options[0]) onSelect(options[0]);
+      if (e.key === '2' && options[1]) onSelect(options[1]);
+      if (e.key === '3' && options[2]) onSelect(options[2]);
     };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [options]);
@@ -67,15 +62,15 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ options, onSelect })
   };
 
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 select-none pointer-events-auto">
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/90 p-4 select-none pointer-events-auto">
       <div className="w-full max-w-4xl flex flex-col items-center">
         {/* Header Title */}
         <div className="flex items-center gap-2 mb-1">
-          <Sparkles className="w-6 h-6 text-purple-400 animate-spin" />
-          <h2 className="text-3xl sm:text-5xl font-black font-['Orbitron'] tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-purple-300 to-pink-400 neon-glow-cyan">
+          <Sparkles className="w-6 h-6 text-red-400 animate-spin" />
+          <h2 className="text-3xl sm:text-5xl font-black font-['Orbitron'] tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white via-rose-200 to-red-500 neon-glow-red">
             LEVEL UPGRADE
           </h2>
-          <Sparkles className="w-6 h-6 text-purple-400 animate-spin" />
+          <Sparkles className="w-6 h-6 text-red-400 animate-spin" />
         </div>
         <p className="text-xs sm:text-sm font-mono tracking-[0.25em] text-gray-400 uppercase mb-8">
           SELECT 1 SYSTEM MATRIX ENHANCEMENT (PRESS 1, 2, OR 3)
@@ -92,10 +87,10 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ options, onSelect })
               <button
                 key={option.id}
                 onClick={() => handleCardClick(option)}
-                className={`cyber-panel group relative p-6 flex flex-col items-center text-center rounded-xl border-2 transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-black/70 backdrop-blur-lg ${style.border} ${style.glow}`}
+                className={`cyber-panel group relative p-6 flex flex-col items-center text-center rounded-xl border-2 transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-black/85 ${style.border} ${style.glow}`}
               >
                 {/* Hotkey Badge */}
-                <div className="absolute top-3 left-3 w-6 h-6 rounded-md bg-gray-900 border border-gray-700 flex items-center justify-center text-xs font-mono font-bold text-cyan-400">
+                <div className="absolute top-3 left-3 w-6 h-6 rounded-md bg-gray-900 border border-gray-700 flex items-center justify-center text-xs font-mono font-bold text-red-400">
                   {index + 1}
                 </div>
 

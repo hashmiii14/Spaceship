@@ -28,15 +28,14 @@ export class BackgroundScene extends Phaser.Scene {
   private debrisList: CosmicDebris[] = [];
 
   private starGraphics!: Phaser.GameObjects.Graphics;
-  private nebulaeGraphics!: Phaser.GameObjects.Graphics;
   private planetGraphics!: Phaser.GameObjects.Graphics;
-  private dustGraphics!: Phaser.GameObjects.Graphics;
-  private debrisGraphics!: Phaser.GameObjects.Graphics;
+  private nebula1!: Phaser.GameObjects.Image;
+  private nebula2!: Phaser.GameObjects.Image;
+  private nebula3!: Phaser.GameObjects.Image;
 
   private planetY: number = -350;
   private planetX: number = 400;
   private planetType: number = 0;
-  private nebulaOffset: number = 0;
   private horizontalDrift: number = 0;
   private speedMultiplier: number = 1.0;
   private currentLevel: number = 1;
@@ -53,11 +52,44 @@ export class BackgroundScene extends Phaser.Scene {
     const width = this.scale.width;
     const height = this.scale.height;
 
-    this.nebulaeGraphics = this.add.graphics();
+    // Create hardware-accelerated radial nebula cloud texture once
+    if (!this.textures.exists('nebula_cloud')) {
+      const rt = this.textures.createCanvas('nebula_cloud', 256, 256);
+      if (rt) {
+        const ctx = rt.getContext();
+        const grad = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+        grad.addColorStop(0, 'rgba(255, 255, 255, 0.7)');
+        grad.addColorStop(0.35, 'rgba(255, 255, 255, 0.35)');
+        grad.addColorStop(0.7, 'rgba(255, 255, 255, 0.08)');
+        grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 256, 256);
+        rt.refresh();
+      }
+    }
+
+    // Hardware-accelerated GPU sprite nebulae with zero per-frame CPU tessellation
+    const nebColors = this.getLevelNebulaColors();
+    this.nebula1 = this.add.image(width * 0.3, height * 0.2, 'nebula_cloud')
+      .setScale(Math.max(width / 180, 4.0))
+      .setAlpha(0.14)
+      .setTint(nebColors.primary)
+      .setBlendMode(Phaser.BlendModes.ADD);
+
+    this.nebula2 = this.add.image(width * 0.75, height * 0.65, 'nebula_cloud')
+      .setScale(Math.max(width / 150, 4.8))
+      .setAlpha(0.12)
+      .setTint(nebColors.secondary)
+      .setBlendMode(Phaser.BlendModes.ADD);
+
+    this.nebula3 = this.add.image(width * 0.5, height * 0.45, 'nebula_cloud')
+      .setScale(Math.max(width / 220, 3.2))
+      .setAlpha(0.1)
+      .setTint(nebColors.core)
+      .setBlendMode(Phaser.BlendModes.ADD);
+
     this.planetGraphics = this.add.graphics();
-    this.dustGraphics = this.add.graphics();
     this.starGraphics = this.add.graphics();
-    this.debrisGraphics = this.add.graphics();
 
     this.initStars(width, height);
     this.resetPlanet();
@@ -65,7 +97,13 @@ export class BackgroundScene extends Phaser.Scene {
     // Event Listeners
     const onDrift = (drift: number) => { this.horizontalDrift = drift; };
     const onSpeed = (multiplier: number) => { this.speedMultiplier = multiplier; };
-    const onLevel = (lvl: number) => { this.currentLevel = lvl; };
+    const onLevel = (lvl: number) => {
+      this.currentLevel = lvl;
+      const colors = this.getLevelNebulaColors();
+      if (this.nebula1) this.nebula1.setTint(colors.primary);
+      if (this.nebula2) this.nebula2.setTint(colors.secondary);
+      if (this.nebula3) this.nebula3.setTint(colors.core);
+    };
     const onWarp = (durationMs: number = 4000) => { this.triggerWarpDrive(durationMs); };
 
     this.game.events.on('background:setDrift', onDrift);
@@ -190,42 +228,32 @@ export class BackgroundScene extends Phaser.Scene {
     const height = this.scale.height;
     const currentSpeed = this.speedMultiplier * this.warpFactor;
 
-    // Layer 4 & 5: Volumetric Multi-Tier Atmospheric Nebulae
-    this.nebulaOffset += dt * 14 * currentSpeed;
-    this.nebulaeGraphics.clear();
-
-    const nebColors = this.getLevelNebulaColors();
-    const neb1Y = (this.nebulaOffset * 0.3) % (height + 600) - 300;
-    this.nebulaeGraphics.fillStyle(nebColors.primary, 0.04);
-    this.nebulaeGraphics.fillCircle(width * 0.28, neb1Y, Math.max(width * 0.38, 260));
-
-    const neb2Y = (this.nebulaOffset * 0.22) % (height + 700) - 350;
-    this.nebulaeGraphics.fillStyle(nebColors.secondary, 0.035);
-    this.nebulaeGraphics.fillCircle(width * 0.72, neb2Y, Math.max(width * 0.44, 300));
-
-    // Core energetic flare cluster
-    const neb3Y = (this.nebulaOffset * 0.38) % (height + 500) - 200;
-    this.nebulaeGraphics.fillStyle(nebColors.core, 0.03);
-    this.nebulaeGraphics.fillCircle(width * 0.5, neb3Y, Math.max(width * 0.22, 160));
-
-    // Ambient Cosmic Dust (Soft floating particles)
-    this.dustGraphics.clear();
-    for (let i = 0; i < this.spaceDust.length; i++) {
-      const d = this.spaceDust[i];
-      d.y += d.speed * dt * currentSpeed;
-      d.x -= this.horizontalDrift * 8 * dt;
-      if (d.y > height + 20) {
-        d.y = -20;
-        d.x = Phaser.Math.Between(0, width);
+    // Layer 4 & 5: Hardware-Accelerated Sprite Nebulae (Zero CPU triangulation)
+    if (this.nebula1) {
+      this.nebula1.y += dt * 14 * currentSpeed;
+      if (this.nebula1.y > height + 250) {
+        this.nebula1.y = -250;
+        this.nebula1.x = Phaser.Math.Between(width * 0.15, width * 0.45);
       }
-      if (d.x < -20) d.x = width + 20;
-      if (d.x > width + 20) d.x = -20;
-
-      this.dustGraphics.fillStyle(0x38bdf8, d.alpha);
-      this.dustGraphics.fillRect(d.x, d.y, d.size, d.size);
     }
 
-    // Layer 6: High-Definition Distant Celestial Planetoid
+    if (this.nebula2) {
+      this.nebula2.y += dt * 10 * currentSpeed;
+      if (this.nebula2.y > height + 300) {
+        this.nebula2.y = -300;
+        this.nebula2.x = Phaser.Math.Between(width * 0.55, width * 0.85);
+      }
+    }
+
+    if (this.nebula3) {
+      this.nebula3.y += dt * 18 * currentSpeed;
+      if (this.nebula3.y > height + 200) {
+        this.nebula3.y = -200;
+        this.nebula3.x = Phaser.Math.Between(width * 0.3, width * 0.7);
+      }
+    }
+
+    // Layer 6: Distant Celestial Planetoid
     this.planetY += dt * 14 * currentSpeed;
     this.planetGraphics.clear();
     if (this.planetY > -120 && this.planetY < height + 120) {
@@ -281,8 +309,26 @@ export class BackgroundScene extends Phaser.Scene {
       }
     }
 
-    // Layer 1, 2, 3: Batched Ultra-Smooth Starfield (Stable 60 FPS)
+    // Consolidated Starfield & Cosmic Dust Pass (Single WebGL draw call, 60 FPS)
     this.starGraphics.clear();
+
+    // Cosmic Dust
+    for (let i = 0; i < this.spaceDust.length; i++) {
+      const d = this.spaceDust[i];
+      d.y += d.speed * dt * currentSpeed;
+      d.x -= this.horizontalDrift * 8 * dt;
+      if (d.y > height + 20) {
+        d.y = -20;
+        d.x = Phaser.Math.Between(0, width);
+      }
+      if (d.x < -20) d.x = width + 20;
+      if (d.x > width + 20) d.x = -20;
+
+      this.starGraphics.fillStyle(0xff3366, d.alpha * 0.7);
+      this.starGraphics.fillRect(d.x, d.y, d.size, d.size);
+    }
+
+    // Stars
     for (let i = 0; i < this.stars.length; i++) {
       const star = this.stars[i];
 
@@ -315,20 +361,20 @@ export class BackgroundScene extends Phaser.Scene {
 
   private getLevelNebulaColors(): { primary: number; secondary: number; core: number } {
     switch (this.currentLevel) {
-      case 2: // Level 2: Deep Space (Deep Violet & Navy)
-        return { primary: 0x312e81, secondary: 0x4338ca, core: 0x0f172a };
-      case 3: // Level 3: Meteor Storm (Dark Charcoal & Crimson Core)
+      case 2: // Level 2: Deep Crimson Void
+        return { primary: 0x4c0519, secondary: 0x3b0712, core: 0x180208 };
+      case 3: // Level 3: Meteor Storm (Dark Charcoal & Intense Crimson Core)
         return { primary: 0x7f1d1d, secondary: 0x991b1b, core: 0x450a0a };
       case 4: // Level 4: Alien Front (Dark Void Emerald & Abyss)
         return { primary: 0x064e3b, secondary: 0x065f46, core: 0x022c22 };
       case 5: // Level 5: Void Zone (Deep Abyssal Purple)
         return { primary: 0x3b0764, secondary: 0x581c87, core: 0x1e0538 };
-      case 6: // Level 6: Nebula Core (Dark Magenta & Cosmic Blue)
-        return { primary: 0x831843, secondary: 0x1e3a8a, core: 0x0f172a };
+      case 6: // Level 6: Nebula Core (High-Speed Crimson & Dark Magenta)
+        return { primary: 0x881337, secondary: 0x9f1239, core: 0x3f0615 };
       case 7: // Level 7: Final Sector (Pure Obsidian & High-Coherence Crimson)
-        return { primary: 0x881337, secondary: 0x4c0519, core: 0x020617 };
-      default: // Level 1: Awakening (Deep Charcoal & Cold Navy)
-        return { primary: 0x0f172a, secondary: 0x1e293b, core: 0x020617 };
+        return { primary: 0x991b1b, secondary: 0x7f1d1d, core: 0x450a0a };
+      default: // Level 1: Deep Obsidian / Carbon Void
+        return { primary: 0x111827, secondary: 0x1f2937, core: 0x030712 };
     }
   }
 }

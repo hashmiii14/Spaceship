@@ -58,7 +58,7 @@ export const MainMenu: React.FC<MainMenuProps> = React.memo(({
       <div className="w-full max-w-5xl flex justify-between items-center pt-2 px-2 flex-wrap gap-3">
         {/* Galactic Records */}
         <div className="flex items-center gap-3 flex-wrap">
-          <div className="cyber-panel-military flex items-center gap-2 border-yellow-500/50 px-3.5 py-1.5 rounded-full backdrop-blur-md">
+          <div className="cyber-panel-military flex items-center gap-2 border-yellow-500/50 px-3.5 py-1.5 rounded-full">
             <Trophy className="w-4 h-4 text-yellow-400 animate-pulse" />
             <span className="text-[11px] uppercase tracking-widest text-gray-400 font-bold">TOP RECORD:</span>
             <span className="text-base font-bold font-mono text-yellow-400 tracking-wider">
@@ -66,13 +66,13 @@ export const MainMenu: React.FC<MainMenuProps> = React.memo(({
             </span>
           </div>
 
-          <div className="hidden sm:flex cyber-panel-military items-center gap-2 border-cyan-500/40 px-3 py-1.5 rounded-full backdrop-blur-md text-xs font-mono text-cyan-300">
-            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+          <div className="hidden sm:flex cyber-panel-military items-center gap-2 border-red-500/40 px-3 py-1.5 rounded-full text-xs font-mono text-rose-300">
+            <Sparkles className="w-3.5 h-3.5 text-red-400" />
             <span className="text-gray-400">BEST SECTOR:</span>
             <span className="font-bold">{bestLevel}</span>
           </div>
 
-          <div className="hidden sm:flex cyber-panel-military items-center gap-2 border-red-500/40 px-3 py-1.5 rounded-full backdrop-blur-md text-xs font-mono text-rose-300">
+          <div className="hidden sm:flex cyber-panel-military items-center gap-2 border-red-500/40 px-3 py-1.5 rounded-full text-xs font-mono text-rose-300">
             <Flame className="w-3.5 h-3.5 text-red-400" />
             <span className="text-gray-400">MAX COMBO:</span>
             <span className="font-bold">{bestCombo}x</span>
@@ -83,7 +83,7 @@ export const MainMenu: React.FC<MainMenuProps> = React.memo(({
         <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={handleSettingsClick}
-            className="p-2.5 sm:p-3 rounded-xl border border-red-950/80 bg-black/80 hover:border-red-500 text-gray-300 hover:text-red-300 backdrop-blur-md text-xs font-bold tracking-wider font-mono flex items-center gap-2 transition-all shadow-[0_0_10px_rgba(0,0,0,0.6)]"
+            className="p-2.5 sm:p-3 rounded-xl border border-red-950/80 bg-black/80 hover:border-red-500 text-gray-300 hover:text-red-300 text-xs font-bold tracking-wider font-mono flex items-center gap-2 transition-all shadow-[0_0_10px_rgba(0,0,0,0.6)]"
             title="Open Settings"
           >
             <Settings className="w-4 h-4" />
@@ -92,7 +92,7 @@ export const MainMenu: React.FC<MainMenuProps> = React.memo(({
 
           <button
             onClick={handleMusicClick}
-            className={`p-2.5 sm:p-3 rounded-xl border transition-all flex items-center gap-2 backdrop-blur-md text-xs font-bold tracking-wider uppercase font-mono ${
+            className={`p-2.5 sm:p-3 rounded-xl border transition-all flex items-center gap-2 text-xs font-bold tracking-wider uppercase font-mono ${
               musicEnabled
                 ? 'bg-red-950/40 border-red-500 text-red-300 shadow-[0_0_15px_rgba(255,0,51,0.3)]'
                 : 'bg-black/80 border-gray-800 text-gray-500'
@@ -105,7 +105,7 @@ export const MainMenu: React.FC<MainMenuProps> = React.memo(({
 
           <button
             onClick={handleSoundClick}
-            className={`p-2.5 sm:p-3 rounded-xl border transition-all flex items-center gap-2 backdrop-blur-md text-xs font-bold tracking-wider uppercase font-mono ${
+            className={`p-2.5 sm:p-3 rounded-xl border transition-all flex items-center gap-2 text-xs font-bold tracking-wider uppercase font-mono ${
               soundEnabled
                 ? 'bg-red-950/40 border-red-500 text-red-300 shadow-[0_0_15px_rgba(255,0,51,0.3)]'
                 : 'bg-black/80 border-gray-800 text-gray-500'
@@ -140,7 +140,7 @@ export const MainMenu: React.FC<MainMenuProps> = React.memo(({
           <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
           <span className="font-bold">SIGNATURE RED WEAPONS ACTIVE</span>
           <span className="text-gray-500">•</span>
-          <span className="text-cyan-400 font-bold">580 PX/S WARP OVERDRIVE</span>
+          <span className="text-rose-400 font-bold">600 PX/S WARP OVERDRIVE</span>
         </div>
 
         {/* Action Buttons */}
@@ -163,9 +163,9 @@ export const MainMenu: React.FC<MainMenuProps> = React.memo(({
 
           <button
             onClick={handleHowToPlayClick}
-            className="cyber-btn cyber-btn-secondary py-3 text-sm sm:text-base tracking-widest flex items-center justify-center gap-2 bg-black/80 border-gray-800 hover:border-cyan-500"
+            className="cyber-btn cyber-btn-secondary py-3 text-sm sm:text-base tracking-widest flex items-center justify-center gap-2 bg-black/80 border-gray-800 hover:border-red-500"
           >
-            <HelpCircle className="w-4 h-4 text-cyan-400" />
+            <HelpCircle className="w-4 h-4 text-red-400" />
             TACTICAL FLIGHT MANUAL
           </button>
         </div>

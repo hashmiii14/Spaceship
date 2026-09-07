@@ -13,21 +13,21 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 select-none pointer-events-auto">
-      <div className="cyber-panel w-full max-w-3xl max-h-[90vh] flex flex-col p-6 sm:p-8 overflow-hidden border-cyan-500/50 shadow-[0_0_50px_rgba(0,240,255,0.3)]">
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/90 p-4 select-none pointer-events-auto">
+      <div className="cyber-panel-military w-full max-w-3xl max-h-[90vh] flex flex-col p-6 sm:p-8 overflow-hidden border-red-500/50 shadow-[0_0_50px_rgba(255,0,51,0.35)]">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-cyan-500/30">
+        <div className="flex items-center justify-between pb-4 border-b border-red-500/30">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-black font-['Orbitron'] tracking-widest text-cyan-300 neon-glow-cyan">
+            <h2 className="text-2xl sm:text-3xl font-black font-['Orbitron'] tracking-widest text-white neon-glow-red">
               PILOT MANUAL 2026
             </h2>
-            <p className="text-xs font-mono text-cyan-400/80 tracking-wider">
+            <p className="text-xs font-mono text-red-400/80 tracking-wider">
               STARFALL COMBAT PROTOCOLS & SECTOR BRIEFING
             </p>
           </div>
           <button
             onClick={handleClose}
-            className="p-2 rounded-lg border border-cyan-500/30 text-gray-400 hover:text-white hover:bg-cyan-500/20 transition-all"
+            className="p-2 rounded-lg border border-red-500/30 text-gray-400 hover:text-white hover:bg-red-500/20 transition-all"
             title="Close"
           >
             <X className="w-6 h-6" />

@@ -84,12 +84,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 select-none pointer-events-auto">
-      <div className="cyber-panel w-full max-w-2xl p-6 sm:p-8 flex flex-col max-h-[90vh] overflow-y-auto border-cyan-500/50 shadow-[0_0_50px_rgba(0,240,255,0.3)]">
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/90 p-4 select-none pointer-events-auto">
+      <div className="cyber-panel-military w-full max-w-2xl p-6 sm:p-8 flex flex-col max-h-[90vh] overflow-y-auto border-red-500/50 shadow-[0_0_50px_rgba(255,0,51,0.35)]">
         {/* Header */}
-        <div className="flex justify-between items-center pb-4 border-b border-cyan-500/30 mb-6">
+        <div className="flex justify-between items-center pb-4 border-b border-red-500/30 mb-6">
           <div className="flex items-center gap-2">
-            <h2 className="text-2xl sm:text-3xl font-black font-['Orbitron'] tracking-widest text-cyan-300 neon-glow-cyan">
+            <h2 className="text-2xl sm:text-3xl font-black font-['Orbitron'] tracking-widest text-white neon-glow-red">
               SYSTEM SETTINGS
             </h2>
           </div>
@@ -108,18 +108,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
         <div className="flex flex-col gap-6">
           {/* Audio Section */}
           <div className="flex flex-col gap-4">
-            <h3 className="text-xs font-mono font-bold tracking-[0.25em] text-cyan-400 uppercase flex items-center gap-2">
+            <h3 className="text-xs font-mono font-bold tracking-[0.25em] text-red-400 uppercase flex items-center gap-2">
               <Music className="w-4 h-4" /> AUDIO CONFIGURATION
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Music Volume */}
-              <div className="bg-black/60 border border-cyan-500/20 rounded-lg p-3">
+              <div className="bg-black/60 border border-red-500/20 rounded-lg p-3">
                 <div className="flex justify-between items-center text-xs font-mono mb-2">
                   <span className="text-gray-300 flex items-center gap-1.5">
-                    <Music className="w-3.5 h-3.5 text-cyan-400" /> MUSIC VOLUME
+                    <Music className="w-3.5 h-3.5 text-red-400" /> MUSIC VOLUME
                   </span>
-                  <span className="text-cyan-400 font-bold">{musicVol}%</span>
+                  <span className="text-red-400 font-bold">{musicVol}%</span>
                 </div>
                 <input
                   type="range"
@@ -127,17 +127,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
                   max="100"
                   value={musicVol}
                   onChange={handleMusicChange}
-                  className="w-full accent-cyan-400 cursor-pointer"
+                  className="w-full accent-red-500 cursor-pointer"
                 />
               </div>
 
               {/* SFX Volume */}
-              <div className="bg-black/60 border border-cyan-500/20 rounded-lg p-3">
+              <div className="bg-black/60 border border-red-500/20 rounded-lg p-3">
                 <div className="flex justify-between items-center text-xs font-mono mb-2">
                   <span className="text-gray-300 flex items-center gap-1.5">
-                    <Volume2 className="w-3.5 h-3.5 text-cyan-400" /> SFX VOLUME
+                    <Volume2 className="w-3.5 h-3.5 text-red-400" /> SFX VOLUME
                   </span>
-                  <span className="text-cyan-400 font-bold">{sfxVol}%</span>
+                  <span className="text-red-400 font-bold">{sfxVol}%</span>
                 </div>
                 <input
                   type="range"
@@ -145,7 +145,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
                   max="100"
                   value={sfxVol}
                   onChange={handleSfxChange}
-                  className="w-full accent-cyan-400 cursor-pointer"
+                  className="w-full accent-red-500 cursor-pointer"
                 />
               </div>
             </div>
@@ -153,7 +153,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
 
           {/* Graphics Quality */}
           <div className="flex flex-col gap-3">
-            <h3 className="text-xs font-mono font-bold tracking-[0.25em] text-cyan-400 uppercase flex items-center gap-2">
+            <h3 className="text-xs font-mono font-bold tracking-[0.25em] text-red-400 uppercase flex items-center gap-2">
               <Monitor className="w-4 h-4" /> GRAPHICS PRESET
             </h3>
 
@@ -164,7 +164,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
                   onClick={() => handleQualityChange(q)}
                   className={`py-2 px-3 rounded-lg border text-xs font-mono font-bold tracking-wider transition-all ${
                     quality === q
-                      ? 'bg-cyan-500/30 border-cyan-400 text-cyan-200 shadow-[0_0_15px_rgba(0,240,255,0.4)]'
+                      ? 'bg-red-950/60 border-red-500 text-red-200 shadow-[0_0_15px_rgba(255,0,51,0.4)]'
                       : 'bg-black/40 border-gray-800 text-gray-400 hover:text-white'
                   }`}
                 >
@@ -176,7 +176,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
 
           {/* Ship Skins */}
           <div className="flex flex-col gap-3">
-            <h3 className="text-xs font-mono font-bold tracking-[0.25em] text-cyan-400 uppercase flex items-center gap-2">
+            <h3 className="text-xs font-mono font-bold tracking-[0.25em] text-red-400 uppercase flex items-center gap-2">
               <Palette className="w-4 h-4" /> VESSEL HULL SKINS
             </h3>
 
@@ -213,7 +213,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
                         </span>
                       </div>
                     </div>
-                    {isSelected && <Check className="w-4 h-4 text-cyan-400 shrink-0" />}
+                    {isSelected && <Check className="w-4 h-4 text-red-400 shrink-0" />}
                   </button>
                 );
               })}
@@ -222,13 +222,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
         </div>
 
         {/* Done Button */}
-        <div className="mt-8 pt-4 border-t border-cyan-500/30 flex justify-end">
+        <div className="mt-8 pt-4 border-t border-red-500/30 flex justify-end">
           <button
             onClick={() => {
               SoundEffects.playClick();
               onClose();
             }}
-            className="cyber-btn py-2.5 px-6 text-sm font-bold tracking-widest"
+            className="cyber-btn-red py-2.5 px-6 text-sm font-bold tracking-widest"
           >
             CONFIRM & CLOSE
           </button>
