@@ -45,7 +45,7 @@ export class GameScene extends Phaser.Scene {
   private survivalTime = 0; // in seconds
   private playerLevel = 1;
   private playerXp = 0;
-  private nextLevelXp = 100;
+  private nextLevelXp = 50;
   private currentLevel = 1; // 1 to 7
   private currentSectorId = 1;
   private maxLevelReached = 1;
@@ -76,28 +76,28 @@ export class GameScene extends Phaser.Scene {
   private missions: Mission[] = [
     {
       id: 'm1',
-      title: 'ELIMINATE 25 HOSTILES',
+      title: 'ELIMINATE 10 HOSTILES',
       description: 'Destroy alien scout & interceptor craft',
       progress: 0,
-      target: 25,
+      target: 10,
       completed: false,
       rewardText: '+1,500 SCORE | +60 XP',
     },
     {
       id: 'm2',
-      title: 'CHAIN x5 KILL COMBO',
+      title: 'CHAIN x3 KILL COMBO',
       description: 'Eliminate hostiles within 2.5 seconds',
       progress: 0,
-      target: 5,
+      target: 3,
       completed: false,
       rewardText: '+2,500 SCORE | +90 XP',
     },
     {
       id: 'm3',
-      title: 'SURVIVE 90 SECONDS',
+      title: 'SURVIVE 60 SECONDS',
       description: 'Withstand persistent galactic waves',
       progress: 0,
-      target: 90,
+      target: 60,
       completed: false,
       rewardText: '+3,500 SCORE | +120 XP',
     },
@@ -196,7 +196,7 @@ export class GameScene extends Phaser.Scene {
     this.survivalTime = 0;
     this.playerLevel = 1;
     this.playerXp = 0;
-    this.nextLevelXp = 100;
+    this.nextLevelXp = 50;
     this.currentLevel = 1;
     this.maxLevelReached = 1;
     this.combo = 0;

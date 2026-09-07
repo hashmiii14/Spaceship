@@ -40,7 +40,7 @@ export const App: React.FC = () => {
     wave: 1,
     level: 1,
     xp: 0,
-    nextLevelXp: 100,
+    nextLevelXp: 50,
     combo: 0,
     comboMultiplier: 1,
     comboTimer: 0,
