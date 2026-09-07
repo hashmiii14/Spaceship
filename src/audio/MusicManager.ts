@@ -58,7 +58,7 @@ class MusicManagerClass {
   private initAudio(): HTMLAudioElement {
     if (!this.audio) {
       this.audio = new Audio();
-      this.audio.preload = 'auto';
+      this.audio.preload = 'metadata';
       this.audio.volume = this.volume;
       this.audio.muted = this.isMuted;
 

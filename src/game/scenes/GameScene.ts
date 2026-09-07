@@ -131,7 +131,7 @@ export class GameScene extends Phaser.Scene {
   private keySpace!: Phaser.Input.Keyboard.Key;
   private keyEsc!: Phaser.Input.Keyboard.Key;
   private mobileInput = { x: 0, y: 0, shoot: false };
-  private playerNameContainer?: Phaser.GameObjects.Container;
+  private arenaBrandingContainer?: Phaser.GameObjects.Container;
 
   // Weapons & Bullets (RED WEAPON POOLS)
   private lastFiredTime = 0;
@@ -322,24 +322,31 @@ export class GameScene extends Phaser.Scene {
     });
     this.playerEngineParticles.setDepth(9);
 
-    // 3b. Player Callsign Identity Tag ("MUHAMMAD HASHMI")
-    const pilotNameText = this.add.text(0, 0, 'MUHAMMAD HASHMI', {
-      fontFamily: 'Rajdhani, sans-serif',
+    // 3b. Subtle Fixed Arena/Track Branding Watermark ("MUHAMMAD HASHMI")
+    const arenaBrandingText = this.add.text(0, 0, 'MUHAMMAD HASHMI', {
+      fontFamily: 'Orbitron, Rajdhani, sans-serif',
       fontSize: '10px',
       fontStyle: 'bold',
-      color: '#f1f5f9',
-      stroke: '#030306',
-      strokeThickness: 2.5,
+      color: '#cbd5e1',
+      align: 'center',
     }).setOrigin(0.5, 0.5);
 
-    const pilotAccentBar = this.add.rectangle(0, 7, 24, 1.5, 0xff0033, 0.85);
+    const leftLine = this.add.rectangle(-84, 0, 18, 1, 0xff0033, 0.5);
+    const rightLine = this.add.rectangle(84, 0, 18, 1, 0xff0033, 0.5);
+    const leftDot = this.add.rectangle(-70, 0, 2, 2, 0xff0033, 0.75);
+    const rightDot = this.add.rectangle(70, 0, 2, 2, 0xff0033, 0.75);
+    const bottomAccent = this.add.rectangle(0, 8, 28, 1, 0xff0033, 0.4);
 
-    this.playerNameContainer = this.add.container(width / 2, spawnY + 36, [
-      pilotNameText,
-      pilotAccentBar,
+    this.arenaBrandingContainer = this.add.container(width / 2, height * 0.52, [
+      leftLine,
+      rightLine,
+      leftDot,
+      rightDot,
+      arenaBrandingText,
+      bottomAccent,
     ]);
-    this.playerNameContainer.setDepth(11);
-    this.playerNameContainer.setAlpha(0.85);
+    this.arenaBrandingContainer.setDepth(1);
+    this.arenaBrandingContainer.setAlpha(0.24);
 
     // 4. Keyboard Controls & Browser Scroll Prevention
     if (this.input.keyboard) {
@@ -487,6 +494,9 @@ export class GameScene extends Phaser.Scene {
         this.player.x = Phaser.Math.Clamp(this.player.x, 35, gameSize.width - 35);
         this.player.y = Phaser.Math.Clamp(this.player.y, 45, gameSize.height - 45);
       }
+      if (this.arenaBrandingContainer) {
+        this.arenaBrandingContainer.setPosition(gameSize.width / 2, gameSize.height * 0.52);
+      }
     });
 
     if (this.game.canvas) {
@@ -577,19 +587,6 @@ export class GameScene extends Phaser.Scene {
 
     // Parallax background drift
     this.game.events.emit('background:setDrift', vx);
-
-    // Update Pilot Identity Callsign Tag ("MUHAMMAD HASHMI")
-    if (this.playerNameContainer) {
-      if (this.player && this.player.active && this.isAlive) {
-        this.playerNameContainer.setVisible(true);
-        const isNearBottom = this.player.y > this.scale.height - 55;
-        const tagY = isNearBottom ? this.player.y - 36 : this.player.y + 36;
-        this.playerNameContainer.setPosition(this.player.x, tagY);
-        this.playerNameContainer.setRotation(this.player.rotation * 0.4);
-      } else {
-        this.playerNameContainer.setVisible(false);
-      }
-    }
 
 
     // 4. Shooting (Immediate response, holding Spacebar continuous fire)
@@ -2163,7 +2160,6 @@ export class GameScene extends Phaser.Scene {
   private killPlayer(): void {
     this.isAlive = false;
     this.player.setVisible(false);
-    this.playerNameContainer?.setVisible(false);
     this.playerEngineParticles.stop();
 
     SoundEffects.playExplosion('large');

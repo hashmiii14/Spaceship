@@ -214,8 +214,144 @@ export const HUD: React.FC<HUDProps> = React.memo(({
         </>
       )}
 
-      {/* Top Header Grid */}
-      <div className="flex items-start justify-between w-full">
+      {/* Mobile Dedicated Clean Top Bar (sm:hidden) */}
+      <div className="flex sm:hidden flex-col gap-1 w-full pointer-events-auto">
+        <div className="flex items-center justify-between w-full">
+          {/* TOP LEFT: SCORE / LEVEL */}
+          <div className="flex items-center gap-1.5 bg-black/85 border border-red-500/40 px-2 py-1 rounded shadow-[0_0_12px_rgba(255,0,51,0.25)]">
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1 text-[8px] font-mono text-red-400 font-bold uppercase">
+                <span>SCORE</span>
+                <span className="text-[8px] text-rose-300 font-black px-1 rounded bg-red-950/90 border border-red-500/50">
+                  LVL {stats.level}
+                </span>
+              </div>
+              <span className="text-sm font-black font-mono tracking-wider text-white neon-glow-red">
+                {stats.score.toString().padStart(6, '0')}
+              </span>
+            </div>
+          </div>
+
+          {/* TOP CENTER: TIME */}
+          <div className="flex flex-col items-center">
+            {bossWarning ? (
+              <div className="cyber-panel-danger px-2 py-0.5 rounded flex items-center gap-1 animate-pulse">
+                <AlertTriangle className="w-3 h-3 text-red-400 animate-bounce" />
+                <span className="text-[9px] font-mono font-black text-red-200 uppercase">BOSS ALERT</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 bg-black/85 border border-red-500/40 px-2 py-1 rounded shadow-[0_0_12px_rgba(255,0,51,0.2)]">
+                <Clock className="w-3 h-3 text-red-400 shrink-0" />
+                <span className="text-xs font-mono font-black text-white tracking-widest">{timeFormatted}</span>
+                <span className="text-[8px] font-mono font-bold text-red-400 pl-1 border-l border-red-900/60">
+                  SEC {stats.wave}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* TOP RIGHT: MUSIC / PAUSE */}
+          <div className="flex items-center gap-1.5">
+            {/* Mobile Music Controller */}
+            <div className="flex items-center gap-1 bg-black/85 border border-red-500/40 p-1 rounded shadow-[0_0_12px_rgba(255,0,51,0.2)]">
+              <button
+                onClick={handleTogglePlay}
+                className="p-1 rounded bg-red-950/60 hover:bg-red-500/30 text-red-400 transition-colors"
+                title={isPlaying ? 'Pause Music' : 'Play Music'}
+              >
+                {isPlaying && !isMuted ? (
+                  <Pause className="w-3.5 h-3.5 fill-red-400 text-red-400" />
+                ) : (
+                  <Play className="w-3.5 h-3.5 fill-red-400 text-red-400" />
+                )}
+              </button>
+              <button
+                onClick={handleNextTrack}
+                className="p-1 rounded bg-red-950/60 hover:bg-red-500/30 text-gray-300 hover:text-white transition-colors"
+                title="Next Track"
+              >
+                <SkipForward className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={handleToggleMute}
+                className="p-1 rounded bg-red-950/60 hover:bg-red-500/30 text-red-400 transition-colors"
+                title={isMuted ? 'Unmute' : 'Mute'}
+              >
+                {isMuted ? (
+                  <VolumeX className="w-3.5 h-3.5 text-red-500 animate-pulse" />
+                ) : (
+                  <Volume2 className="w-3.5 h-3.5 text-red-400" />
+                )}
+              </button>
+            </div>
+
+            {/* Mobile Pause Button */}
+            <button
+              onClick={handlePauseClick}
+              className="p-1.5 rounded bg-black/85 border border-red-500/40 text-red-400 hover:bg-red-500/20 active:scale-95 transition-all shadow-[0_0_12px_rgba(255,0,51,0.2)]"
+              title="Pause Game"
+            >
+              <Pause className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Second Row: Compact Vitals (HP / Shield) + Active Objective (if any) */}
+        <div className="flex items-center justify-between w-full">
+          {/* Mini HP & Shield Bars */}
+          <div className="flex items-center gap-1.5 bg-black/80 border border-red-900/40 px-2 py-0.5 rounded w-32 shadow-[0_0_10px_rgba(255,0,51,0.15)]">
+            <Heart className="w-2.5 h-2.5 text-red-500 shrink-0" />
+            <div className="bar-track flex-1 h-1.5 bg-gray-950">
+              <div className="bar-fill-hp h-full transition-all duration-150" style={{ width: `${hpPercent}%` }} />
+            </div>
+            <Shield className="w-2.5 h-2.5 text-sky-400 shrink-0 ml-1" />
+            <div className="bar-track flex-1 h-1.5 bg-gray-950">
+              <div className="bar-fill-shield h-full transition-all duration-150" style={{ width: `${shieldPercent}%` }} />
+            </div>
+          </div>
+
+          {/* Mobile Compact Mission Tag */}
+          {stats.activeMission && (
+            <div className="cyber-panel-military px-2 py-0.5 flex items-center gap-1 border-red-500/30 bg-black/80">
+              <span className="text-[8px] font-mono font-bold text-red-300 truncate max-w-[130px]">
+                OBJ: {stats.activeMission.progress}/{stats.activeMission.target}
+              </span>
+              {stats.activeMission.completed && (
+                <span className="text-[7px] font-mono text-emerald-400 font-black">DONE</span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Mobile Boss HP Bar (if active) */}
+        {bossInfo.active && (
+          <div className="cyber-panel-danger px-2.5 py-1 w-full max-w-xs mx-auto flex flex-col gap-0.5 animate-pulse-glow">
+            <div className="flex justify-between items-center text-[8px] font-mono font-bold">
+              <span className="text-red-400 tracking-wider font-['Orbitron'] uppercase truncate">{bossInfo.name}</span>
+              <span className="text-yellow-400 tracking-widest shrink-0">PHASE {bossInfo.phase}</span>
+            </div>
+            <div className="bar-track h-1.5">
+              <div
+                className="bar-fill-boss transition-all duration-100"
+                style={{ width: `${Math.max(0, (bossInfo.currentHp / bossInfo.maxHp) * 100)}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Kill Combo (if active) */}
+        {stats.combo > 1 && (
+          <div className="self-center px-2 py-0.5 rounded-full bg-black/90 border border-yellow-500/70 flex items-center gap-1 shadow-[0_0_12px_rgba(250,204,21,0.5)]">
+            <Zap className="w-2.5 h-2.5 text-yellow-400 animate-pulse" />
+            <span className="text-[9px] font-black font-['Orbitron'] text-yellow-300 tracking-wider">
+              x{stats.comboMultiplier} ({stats.combo} KILLS)
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Top Header Grid (hidden sm:flex) */}
+      <div className="hidden sm:flex items-start justify-between w-full">
         {/* Top Left: Score, Weapon Telemetry, Vitals & Tactical Mission */}
         <div className="flex flex-col gap-1.5 sm:gap-2 pointer-events-auto">
           {/* Score & Red Weapon Status Box */}
@@ -290,60 +426,48 @@ export const HUD: React.FC<HUDProps> = React.memo(({
 
           {/* Active Tactical Mission: Desktop full panel */}
           {stats.activeMission && (
-            <>
-              <div className="hidden sm:flex cyber-panel-military px-3.5 py-2 flex-col gap-1.5 w-64 border-red-500/30 bg-black/75">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-red-400">
-                    <Crosshair className="w-3.5 h-3.5 animate-pulse" />
-                    <span className="text-[10px] font-mono tracking-wider font-black uppercase text-red-300">
-                      MISSION OBJECTIVE
-                    </span>
-                  </div>
-                  {stats.activeMission.completed ? (
-                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-950/80 border border-emerald-500 text-emerald-300 font-bold">
-                      COMPLETED
-                    </span>
-                  ) : (
-                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-red-950/60 border border-red-500/40 text-red-300 font-bold">
-                      IN PROGRESS
-                    </span>
-                  )}
-                </div>
-
-                <div className="text-xs font-mono font-bold text-white tracking-wide truncate">
-                  {stats.activeMission.title}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <div className="bar-track flex-1 h-2 bg-gray-950/90 border border-red-900/40">
-                    <div
-                      className="h-full bg-gradient-to-r from-red-600 via-rose-500 to-amber-400 rounded-full transition-all duration-200 shadow-[0_0_8px_rgba(255,0,51,0.7)]"
-                      style={{
-                        width: `${Math.min(100, Math.max(0, (stats.activeMission.progress / stats.activeMission.target) * 100))}%`,
-                      }}
-                    />
-                  </div>
-                  <span className="text-[10px] font-mono font-bold text-red-200 shrink-0">
-                    {stats.activeMission.progress}/{stats.activeMission.target}
+            <div className="hidden sm:flex cyber-panel-military px-3.5 py-2 flex-col gap-1.5 w-64 border-red-500/30 bg-black/75">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-red-400">
+                  <Crosshair className="w-3.5 h-3.5 animate-pulse" />
+                  <span className="text-[10px] font-mono tracking-wider font-black uppercase text-red-300">
+                    MISSION OBJECTIVE
                   </span>
                 </div>
-
-                <div className="text-[9px] font-mono text-gray-400 flex items-center justify-between">
-                  <span className="truncate mr-1">{stats.activeMission.description}</span>
-                  <span className="text-yellow-400 font-bold shrink-0">{stats.activeMission.rewardText}</span>
-                </div>
-              </div>
-
-              {/* Mobile Compact Mission Tag */}
-              <div className="sm:hidden cyber-panel-military px-2 py-0.5 flex items-center justify-between w-36 border-red-500/30 bg-black/80">
-                <span className="text-[8px] font-mono font-bold text-red-300 truncate">
-                  OBJ: {stats.activeMission.progress}/{stats.activeMission.target}
-                </span>
-                {stats.activeMission.completed && (
-                  <span className="text-[7px] font-mono text-emerald-400 font-black">DONE</span>
+                {stats.activeMission.completed ? (
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-950/80 border border-emerald-500 text-emerald-300 font-bold">
+                    COMPLETED
+                  </span>
+                ) : (
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-red-950/60 border border-red-500/40 text-red-300 font-bold">
+                    IN PROGRESS
+                  </span>
                 )}
               </div>
-            </>
+
+              <div className="text-xs font-mono font-bold text-white tracking-wide truncate">
+                {stats.activeMission.title}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="bar-track flex-1 h-2 bg-gray-950/90 border border-red-900/40">
+                  <div
+                    className="h-full bg-gradient-to-r from-red-600 via-rose-500 to-amber-400 rounded-full transition-all duration-200 shadow-[0_0_8px_rgba(255,0,51,0.7)]"
+                    style={{
+                      width: `${Math.min(100, Math.max(0, (stats.activeMission.progress / stats.activeMission.target) * 100))}%`,
+                    }}
+                  />
+                </div>
+                <span className="text-[10px] font-mono font-bold text-red-200 shrink-0">
+                  {stats.activeMission.progress}/{stats.activeMission.target}
+                </span>
+              </div>
+
+              <div className="text-[9px] font-mono text-gray-400 flex items-center justify-between">
+                <span className="truncate mr-1">{stats.activeMission.description}</span>
+                <span className="text-yellow-400 font-bold shrink-0">{stats.activeMission.rewardText}</span>
+              </div>
+            </div>
           )}
         </div>
 
@@ -428,7 +552,7 @@ export const HUD: React.FC<HUDProps> = React.memo(({
             {/* Quick Pause Button */}
             <button
               onClick={handlePauseClick}
-              className="cyber-panel-military p-1.5 sm:p-2.5 rounded-lg border border-red-500/40 bg-black/70 hover:bg-red-500/20 text-red-400 transition-all"
+              className="cyber-panel-military p-1.5 sm:p-2.5 rounded-lg border border-red-500/40 bg-black/70 hover:bg-red-500/20 text-red-400 transition-all cursor-pointer"
               title="Pause Game (ESC)"
             >
               <Pause className="w-4 h-4 sm:w-5 sm:h-5" />
