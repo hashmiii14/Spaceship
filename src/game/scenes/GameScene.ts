@@ -39,6 +39,7 @@ export class GameScene extends Phaser.Scene {
   private isAlive = true;
   private isLevelUpPaused = false;
   private isIntroPaused = false;
+  private isRestartGame = false;
 
   // Progression & Stats
   private score = 0;
@@ -164,7 +165,6 @@ export class GameScene extends Phaser.Scene {
   };
 
   // Wave & Spawning
-  private waveEnemiesRemaining = 0;
   private waveSpawnTimer: Phaser.Time.TimerEvent | null = null;
   private waveInProgress = false;
   private isSlowMo = false;
@@ -188,6 +188,10 @@ export class GameScene extends Phaser.Scene {
     super({ key: 'GameScene' });
   }
 
+  init(data?: { isRestart?: boolean }): void {
+    this.isRestartGame = Boolean(data && data.isRestart);
+  }
+
   create(): void {
     const { width, height } = this.scale;
     this.isAlive = true;
@@ -198,6 +202,7 @@ export class GameScene extends Phaser.Scene {
     this.playerXp = 0;
     this.nextLevelXp = 50;
     this.currentLevel = 1;
+    this.currentSectorId = 1;
     this.maxLevelReached = 1;
     this.combo = 0;
     this.comboMultiplier = 1;
@@ -218,6 +223,12 @@ export class GameScene extends Phaser.Scene {
     this.isSlowMo = false;
     this.currentMissionIndex = 0;
     this.nextEventTime = 75;
+
+    // Reset mission targets and completion flags for fresh sortie
+    this.missions.forEach((m) => {
+      m.progress = 0;
+      m.completed = false;
+    });
 
     // 1. Lightweight Particle Systems (Optimized for 60 FPS)
     this.redMuzzleEmitter = this.add.particles(0, 0, 'muzzle_flash_red', {
@@ -476,7 +487,23 @@ export class GameScene extends Phaser.Scene {
     EventBus.on('player:skinChanged', onSkinChanged);
     EventBus.on('intro:complete', onIntroComplete);
 
+    const onPause = () => {
+      this.mobileInput.x = 0;
+      this.mobileInput.y = 0;
+      this.mobileInput.shoot = false;
+    };
+    const onResume = () => {
+      this.lastFiredTime = this.time.now;
+      this.mobileInput.x = 0;
+      this.mobileInput.y = 0;
+      this.mobileInput.shoot = false;
+    };
+    this.events.on('pause', onPause);
+    this.events.on('resume', onResume);
+
     this.events.once('shutdown', () => {
+      this.events.off('pause', onPause);
+      this.events.off('resume', onResume);
       EventBus.off('input:mobileMove', onMobileMove);
       EventBus.off('input:mobileShoot', onMobileShoot);
       EventBus.off('upgrade:selected', onUpgrade);
@@ -490,6 +517,16 @@ export class GameScene extends Phaser.Scene {
         if (m.sprite && m.sprite.active) m.sprite.destroy();
       });
       this.enemyMines = [];
+      if (this.playerBullets) this.playerBullets.clear(true, true);
+      if (this.enemyBullets) this.enemyBullets.clear(true, true);
+      if (this.bossBullets) this.bossBullets.clear(true, true);
+      if (this.enemies) this.enemies.clear(true, true);
+      if (this.asteroids) this.asteroids.clear(true, true);
+      if (this.powerUps) this.powerUps.clear(true, true);
+      if (this.xpGems) this.xpGems.clear(true, true);
+      if (this.bossGroup) this.bossGroup.clear(true, true);
+      this.boss = null;
+      this.activePowerUps.clear();
     });
 
     // 7. Responsive Window Resize Handler
@@ -507,15 +544,21 @@ export class GameScene extends Phaser.Scene {
       this.game.canvas.focus();
     }
 
-    // Intro pause until 5-second countdown finishes or skipped
-    this.isIntroPaused = true;
-    this.physics.pause();
+    // Direct action on restart vs first launch countdown briefing
+    if (this.isRestartGame) {
+      this.isIntroPaused = false;
+      this.physics.resume();
+      this.startLevel(1);
+    } else {
+      this.isIntroPaused = true;
+      this.physics.pause();
+    }
     this.emitStats(true);
   }
 
   update(time: number, delta: number): void {
     if (!this.isAlive || this.isLevelUpPaused || this.isIntroPaused) return;
-    const dt = delta / 1000;
+    const dt = Math.min(delta / 1000, 0.05);
 
     // 1. Survival Time & Progressive Flight Speed Scaling
     this.survivalTime += dt;
@@ -859,18 +902,44 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    if (this.waveSpawnTimer) this.waveSpawnTimer.destroy();
+    if (this.waveSpawnTimer) {
+      this.waveSpawnTimer.destroy();
+      this.waveSpawnTimer = null;
+    }
+
+    // Launch instant engaging action if starting Sector 1
+    if (sector.id === 1) {
+      this.spawnOpeningSequence();
+    }
 
     this.waveSpawnTimer = this.time.addEvent({
       delay: sector.enemySpawnInterval,
       callback: () => {
-        if (!this.waveInProgress || this.boss) return;
+        if (!this.waveInProgress || this.boss || !this.isAlive) return;
         this.spawnLevelEnemy();
         if (Math.random() < sector.asteroidDensity) {
           this.spawnAsteroid();
         }
       },
       loop: true,
+    });
+  }
+
+  private spawnOpeningSequence(): void {
+    const width = this.scale.width;
+    // Initial scout pair at 400ms
+    this.time.delayedCall(400, () => {
+      if (!this.isAlive || this.boss) return;
+      this.createEnemy('scout', width * 0.35, -35);
+      this.createEnemy('scout', width * 0.65, -35);
+    });
+
+    // Follow-up arrowhead flight at 2200ms
+    this.time.delayedCall(2200, () => {
+      if (!this.isAlive || this.boss) return;
+      this.createEnemy('scout', width * 0.5, -40);
+      this.createEnemy('scout', width * 0.36, -70);
+      this.createEnemy('scout', width * 0.64, -70);
     });
   }
 
@@ -908,16 +977,32 @@ export class GameScene extends Phaser.Scene {
   // SMART ENEMY AI (6 ARCHETYPES)
   // ==========================================
   private spawnLevelEnemy(): void {
-    if (this.enemies.countActive(true) >= Math.min(18, 8 + this.currentLevel * 2)) return;
+    const maxEnemies = Math.min(18, 6 + this.currentLevel * 2 + Math.floor(this.playerLevel * 0.4));
+    if (this.enemies.countActive(true) >= maxEnemies) return;
 
     const width = this.scale.width;
-    const x = Phaser.Math.Between(40, width - 40);
-    const y = -40;
-
     const activeSector = getSectorForSurvivalTime(this.survivalTime);
     const type = Phaser.Utils.Array.GetRandom(activeSector.enemyPool) || 'scout';
 
-    this.createEnemy(type, x, y);
+    const pattern = Math.random();
+    if (pattern < 0.22 && this.enemies.countActive(true) <= maxEnemies - 2) {
+      // Duo Wingmen pattern
+      const centerX = Phaser.Math.Between(70, width - 70);
+      this.createEnemy(type, centerX - 32, -40);
+      this.createEnemy(type, centerX + 32, -40);
+    } else if (pattern < 0.42 && this.enemies.countActive(true) <= maxEnemies - 2) {
+      // Staggered Flankers pattern
+      const x1 = Phaser.Math.Between(45, width * 0.45);
+      const x2 = Phaser.Math.Between(width * 0.55, width - 45);
+      this.createEnemy(type, x1, -35);
+      this.time.delayedCall(250, () => {
+        if (this.isAlive && !this.boss) this.createEnemy(type, x2, -35);
+      });
+    } else {
+      // Standard dynamic drop
+      const x = Phaser.Math.Between(45, width - 45);
+      this.createEnemy(type, x, -40);
+    }
   }
 
   private createEnemy(type: string, x: number, y: number): Phaser.Physics.Arcade.Sprite {
@@ -936,8 +1021,9 @@ export class GameScene extends Phaser.Scene {
     enemy.setData('type', type);
     enemy.setDepth(8);
 
-    const diff = 1 + (this.currentLevel - 1) * 0.14;
-    const speedMult = 1 + Math.min(0.35, (this.currentLevel - 1) * 0.05);
+    const levelFactor = (this.playerLevel - 1) * 0.08 + (this.currentLevel - 1) * 0.12;
+    const diff = 1 + levelFactor;
+    const speedMult = 1 + Math.min(0.35, levelFactor * 0.35);
 
     switch (type) {
       case 'scout':
@@ -1065,7 +1151,6 @@ export class GameScene extends Phaser.Scene {
         e.setActive(false).setVisible(false);
         e.body.stop();
         e.body.enable = false;
-        this.checkWaveProgress();
       }
     }
   }
@@ -1670,7 +1755,6 @@ export class GameScene extends Phaser.Scene {
     enemy.setActive(false).setVisible(false);
     enemy.body.stop();
     enemy.body.enable = false;
-    this.checkWaveProgress();
   }
 
   private destroyAsteroid(asteroid: Phaser.Physics.Arcade.Sprite): void {
@@ -1758,18 +1842,6 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  private checkWaveProgress(): void {
-    this.waveEnemiesRemaining--;
-    if (this.waveEnemiesRemaining <= 0 && this.waveInProgress && !this.boss) {
-      this.waveInProgress = false;
-      if (this.waveSpawnTimer) this.waveSpawnTimer.destroy();
-
-      this.time.delayedCall(2000, () => {
-        this.startLevel(this.currentLevel + 1);
-      });
-    }
-  }
-
   // ==========================================
   // XP & LEVEL-UP PROGRESSION (POOLED GEMS)
   // ==========================================
@@ -1823,23 +1895,9 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.flash(300, 255, 0, 85);
 
     const options = this.generateUpgradeOptions();
-
-    const isMobile = typeof window !== 'undefined' && (
-      window.innerWidth <= 768 ||
-      'ontouchstart' in window ||
-      navigator.maxTouchPoints > 0
-    );
-
-    if (isMobile) {
-      // Auto-award the top progressive upgrade smoothly without freezing combat on mobile
-      const autoOption = options[0];
-      this.applyUpgrade(autoOption);
-      EventBus.emit('alert:levelUp', { level: this.playerLevel, upgradeTitle: autoOption.title });
-    } else {
-      this.isLevelUpPaused = true;
-      this.physics.pause();
-      EventBus.emit('game:levelUp', options);
-    }
+    this.isLevelUpPaused = true;
+    this.physics.pause();
+    EventBus.emit('game:levelUp', options);
 
     this.emitStats(true);
   }
@@ -2166,6 +2224,11 @@ export class GameScene extends Phaser.Scene {
     this.player.setVisible(false);
     this.playerEngineParticles.stop();
 
+    if (this.waveSpawnTimer) {
+      this.waveSpawnTimer.destroy();
+      this.waveSpawnTimer = null;
+    }
+
     SoundEffects.playExplosion('large');
     SoundEffects.playGameOver();
 
@@ -2174,10 +2237,13 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.shake(500, 0.02);
 
     Storage.setBestSurvivalTime(this.survivalTime);
+    Storage.setHighScore(this.score);
 
     this.time.delayedCall(1200, () => {
+      this.physics.pause();
       EventBus.emit('game:over', {
         score: this.score,
+        level: this.playerLevel,
         wave: this.currentLevel,
         bestCombo: this.bestCombo,
         survivalTime: this.survivalTime,

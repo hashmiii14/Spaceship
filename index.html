@@ -42,10 +42,19 @@
           <div style="font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.25em;color:#f43f5e;text-transform:uppercase;">
             INITIALIZING COMBAT SYSTEMS...
           </div>
+          <button id="boot-retry-btn" onclick="window.location.reload()" style="display:none;margin-top:8px;padding:8px 16px;background:rgba(255,0,51,0.2);border:1px solid #ff0033;color:#ffffff;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:0.2em;border-radius:4px;cursor:pointer;text-transform:uppercase;">
+            RELOAD SYSTEM
+          </button>
         </div>
         <style>
           @keyframes starfallSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         </style>
+        <script>
+          setTimeout(function() {
+            var btn = document.getElementById('boot-retry-btn');
+            if (btn) btn.style.display = 'inline-block';
+          }, 6000);
+        </script>
       </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>

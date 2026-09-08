@@ -24,6 +24,8 @@ export const createGameConfig = (parent: HTMLElement): Phaser.Types.Core.GameCon
   render: {
     pixelArt: false,
     antialias: true,
+    antialiasGL: true,
+    roundPixels: true,
     powerPreference: 'high-performance',
   },
 });

@@ -6,6 +6,7 @@ import { SoundEffects } from '../audio/SoundEffects';
 interface GameOverModalProps {
   score: number;
   highScore: number;
+  level?: number;
   wave: number;
   isNewHighScore: boolean;
   bestCombo?: number;
@@ -17,6 +18,7 @@ interface GameOverModalProps {
 export const GameOverModal: React.FC<GameOverModalProps> = ({
   score,
   highScore,
+  level = 1,
   wave,
   isNewHighScore,
   bestCombo = 0,
@@ -78,7 +80,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
           MISSION FAILED
         </h2>
         <span className="text-xs font-mono tracking-[0.3em] text-red-300/80 uppercase mb-5">
-          SHIP DESTROYED IN LEVEL {wave}
+          SHIP DESTROYED // PILOT LEVEL {level} // SECTOR 0{wave}
         </span>
 
         {/* New Record Celebration Badge */}
@@ -116,13 +118,20 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
           </div>
         </div>
 
-        {/* Flight Performance Metrics */}
-        <div className="grid grid-cols-3 gap-2 w-full mb-6 text-xs font-mono">
+        {/* Flight Performance Metrics: 4 Grid Elements */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full mb-6 text-xs font-mono">
           <div className="bg-black/50 border border-gray-800 rounded p-2 flex flex-col items-center">
             <span className="text-[10px] text-gray-400 uppercase flex items-center gap-1">
-              <Award className="w-3 h-3 text-red-400" /> SECTOR
+              <Award className="w-3 h-3 text-red-400" /> LEVEL
             </span>
-            <span className="font-bold text-white mt-0.5">LEVEL {wave}</span>
+            <span className="font-bold text-white mt-0.5">LVL {level}</span>
+          </div>
+
+          <div className="bg-black/50 border border-gray-800 rounded p-2 flex flex-col items-center">
+            <span className="text-[10px] text-gray-400 uppercase flex items-center gap-1">
+              <Award className="w-3 h-3 text-rose-400" /> SECTOR
+            </span>
+            <span className="font-bold text-white mt-0.5">SEC 0{wave}</span>
           </div>
 
           <div className="bg-black/50 border border-gray-800 rounded p-2 flex flex-col items-center">

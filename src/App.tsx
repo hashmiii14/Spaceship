@@ -30,7 +30,7 @@ export const App: React.FC = () => {
   const [isNewHighScore, setIsNewHighScore] = useState<boolean>(false);
   const [levelUpOptions, setLevelUpOptions] = useState<LevelUpOption[] | null>(null);
 
-  const [stats, setStats] = useState<PlayerStats>({
+  const getInitialStats = (): PlayerStats => ({
     score: 0,
     highScore: Storage.getHighScore(),
     health: 100,
@@ -49,6 +49,8 @@ export const App: React.FC = () => {
     lives: 3,
     activePowerUps: [],
   });
+
+  const [stats, setStats] = useState<PlayerStats>(getInitialStats);
 
   const [bossInfo, setBossInfo] = useState<BossInfo>({
     active: false,
@@ -150,10 +152,11 @@ export const App: React.FC = () => {
 
   // Handlers
   const handleStartGame = () => {
+    setStats(getInitialStats());
     const game = gameInstanceRef.current;
     if (game) {
       game.scene.wake('GameScene');
-      game.scene.start('GameScene');
+      game.scene.start('GameScene', { isRestart: false });
     }
     setGameState('INTRO');
     setIsNewHighScore(false);
@@ -174,6 +177,7 @@ export const App: React.FC = () => {
     const game = gameInstanceRef.current;
     if (game) {
       game.scene.pause('GameScene');
+      game.scene.pause('BackgroundScene');
     }
     setGameState('PAUSED');
     MusicManager.pause();
@@ -183,6 +187,7 @@ export const App: React.FC = () => {
     const game = gameInstanceRef.current;
     if (game) {
       game.scene.resume('GameScene');
+      game.scene.resume('BackgroundScene');
     }
     setGameState('PLAYING');
     if (musicEnabled) {
@@ -191,27 +196,37 @@ export const App: React.FC = () => {
   };
 
   const handleRestart = () => {
+    // Reset all React state to pristine game start values immediately
+    setStats(getInitialStats());
+    setIsNewHighScore(false);
+    setLevelUpOptions(null);
+    setBossWarning(false);
+    setBossInfo({ active: false, name: '', currentHp: 0, maxHp: 0, phase: 1 });
+
     const game = gameInstanceRef.current;
     if (game) {
       game.scene.resume('GameScene');
-      game.scene.start('GameScene');
+      game.scene.resume('BackgroundScene');
+      game.scene.start('GameScene', { isRestart: true });
     }
-    setGameState('INTRO');
-    setIsNewHighScore(false);
-    setLevelUpOptions(null);
-    setBossInfo({ active: false, name: '', currentHp: 0, maxHp: 0, phase: 1 });
+    // Directly enter PLAYING mode for immediate action
+    setGameState('PLAYING');
+
     if (musicEnabled) {
       MusicManager.ensurePlaying();
     }
   };
 
   const handleMainMenu = () => {
+    setStats(getInitialStats());
     const game = gameInstanceRef.current;
     if (game) {
       game.scene.sleep('GameScene');
+      game.scene.resume('BackgroundScene');
     }
     setGameState('MAIN_MENU');
     setLevelUpOptions(null);
+    setBossWarning(false);
     setBossInfo({ active: false, name: '', currentHp: 0, maxHp: 0, phase: 1 });
     MusicManager.fadeOut(400);
   };
@@ -302,6 +317,7 @@ export const App: React.FC = () => {
         <GameOverModal
           score={stats.score}
           highScore={highScore}
+          level={stats.level}
           wave={stats.wave}
           bestCombo={stats.combo}
           survivalTime={stats.survivalTime}
