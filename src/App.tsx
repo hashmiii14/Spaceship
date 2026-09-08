@@ -29,6 +29,21 @@ export const App: React.FC = () => {
   const [bossWarning, setBossWarning] = useState<boolean>(false);
   const [isNewHighScore, setIsNewHighScore] = useState<boolean>(false);
   const [levelUpOptions, setLevelUpOptions] = useState<LevelUpOption[] | null>(null);
+  const [gameOverData, setGameOverData] = useState<{
+    score: number;
+    highScore: number;
+    level: number;
+    wave: number;
+    bestCombo: number;
+    survivalTime: number;
+  }>({
+    score: 0,
+    highScore: Storage.getHighScore(),
+    level: 1,
+    wave: 1,
+    bestCombo: 0,
+    survivalTime: 0,
+  });
 
   const getInitialStats = (): PlayerStats => ({
     score: 0,
@@ -103,14 +118,23 @@ export const App: React.FC = () => {
     });
 
     // Listen for Game Over
-    EventBus.on('game:over', ({ score, wave, bestCombo, survivalTime }: { score: number; wave: number; bestCombo: number; survivalTime: number }) => {
+    EventBus.on('game:over', ({ score, level, wave, bestCombo, survivalTime }: { score: number; level?: number; wave?: number; bestCombo?: number; survivalTime?: number }) => {
       const savedHigh = Storage.getHighScore();
+      const finalHigh = Math.max(score, savedHigh);
       const isNew = score > savedHigh;
       if (isNew) {
         Storage.setHighScore(score);
         setHighScore(score);
       }
       setIsNewHighScore(isNew);
+      setGameOverData({
+        score: score ?? 0,
+        highScore: finalHigh,
+        level: level ?? 1,
+        wave: wave ?? 1,
+        bestCombo: bestCombo ?? 0,
+        survivalTime: survivalTime ?? 0,
+      });
       setGameState('GAME_OVER');
       setLevelUpOptions(null);
       MusicManager.fadeOut(600);
@@ -156,7 +180,13 @@ export const App: React.FC = () => {
     const game = gameInstanceRef.current;
     if (game) {
       game.scene.wake('GameScene');
-      game.scene.start('GameScene', { isRestart: false });
+      game.scene.resume('BackgroundScene');
+      const gameScene = game.scene.getScene('GameScene') as any;
+      if (gameScene && typeof gameScene.prepareForIntro === 'function') {
+        gameScene.prepareForIntro();
+      } else {
+        game.scene.start('GameScene', { isRestart: false });
+      }
     }
     setGameState('INTRO');
     setIsNewHighScore(false);
@@ -207,8 +237,13 @@ export const App: React.FC = () => {
     if (game) {
       game.scene.resume('GameScene');
       game.scene.resume('BackgroundScene');
-      game.scene.stop('GameScene');
-      game.scene.start('GameScene', { isRestart: true });
+      const gameScene = game.scene.getScene('GameScene') as any;
+      if (gameScene && typeof gameScene.restartGame === 'function') {
+        gameScene.restartGame();
+      } else {
+        game.scene.stop('GameScene');
+        game.scene.start('GameScene', { isRestart: true });
+      }
     }
     // Directly enter PLAYING mode for immediate action
     setGameState('PLAYING');
@@ -222,6 +257,10 @@ export const App: React.FC = () => {
     setStats(getInitialStats());
     const game = gameInstanceRef.current;
     if (game) {
+      const gameScene = game.scene.getScene('GameScene') as any;
+      if (gameScene && typeof gameScene.cleanupSceneState === 'function') {
+        gameScene.cleanupSceneState();
+      }
       game.scene.sleep('GameScene');
       game.scene.resume('BackgroundScene');
     }
@@ -316,12 +355,12 @@ export const App: React.FC = () => {
 
       {gameState === 'GAME_OVER' && (
         <GameOverModal
-          score={stats.score}
-          highScore={highScore}
-          level={stats.level}
-          wave={stats.wave}
-          bestCombo={stats.combo}
-          survivalTime={stats.survivalTime}
+          score={gameOverData.score}
+          highScore={gameOverData.highScore}
+          level={gameOverData.level}
+          wave={gameOverData.wave}
+          bestCombo={gameOverData.bestCombo}
+          survivalTime={gameOverData.survivalTime}
           isNewHighScore={isNewHighScore}
           onRestart={handleRestart}
           onMainMenu={handleMainMenu}

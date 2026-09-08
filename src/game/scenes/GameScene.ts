@@ -515,12 +515,7 @@ export class GameScene extends Phaser.Scene {
     this.scale.on('resize', onResize);
 
     this.events.once('shutdown', () => {
-      // 1. Kill all running tweens, timers, and camera FX immediately
-      this.tweens.killAll();
-      this.time.removeAllEvents();
-      this.cameras.main.resetFX();
-
-      // 2. Unregister event listeners
+      this.cleanupSceneState();
       this.events.off('pause', onPause);
       this.events.off('resume', onResume);
       EventBus.off('input:mobileMove', onMobileMove);
@@ -530,18 +525,10 @@ export class GameScene extends Phaser.Scene {
       EventBus.off('intro:complete', onIntroComplete);
       this.scale.off('resize', onResize);
 
-      // 3. Clear keyboard captures
       if (this.input.keyboard) {
         this.input.keyboard.removeAllKeys(true);
       }
 
-      // 4. Destroy wave spawner
-      if (this.waveSpawnTimer) {
-        this.waveSpawnTimer.destroy();
-        this.waveSpawnTimer = null;
-      }
-
-      // 5. Cleanly destroy all particle emitters
       if (this.redMuzzleEmitter) this.redMuzzleEmitter.destroy();
       if (this.redSparkEmitter) this.redSparkEmitter.destroy();
       if (this.cyanSparkEmitter) this.cyanSparkEmitter.destroy();
@@ -549,44 +536,177 @@ export class GameScene extends Phaser.Scene {
       if (this.shrapnelEmitter) this.shrapnelEmitter.destroy();
       if (this.playerEngineParticles) this.playerEngineParticles.destroy();
 
-      // 6. Destroy arena branding container
       if (this.arenaBrandingContainer) {
         this.arenaBrandingContainer.destroy();
       }
-
-      // 7. Clear mines & pools
-      this.enemyMines.forEach((m) => {
-        if (m.sprite && m.sprite.active) m.sprite.destroy();
-      });
-      this.enemyMines = [];
-      if (this.playerBullets) this.playerBullets.clear(true, true);
-      if (this.enemyBullets) this.enemyBullets.clear(true, true);
-      if (this.bossBullets) this.bossBullets.clear(true, true);
-      if (this.enemies) this.enemies.clear(true, true);
-      if (this.asteroids) this.asteroids.clear(true, true);
-      if (this.powerUps) this.powerUps.clear(true, true);
-      if (this.xpGems) this.xpGems.clear(true, true);
-      if (this.bossGroup) this.bossGroup.clear(true, true);
-      this.boss = null;
-      this.activePowerUps.clear();
     });
 
     if (this.game.canvas) {
       this.game.canvas.focus();
     }
 
-    // Direct action on restart vs first launch countdown briefing
     if (this.isRestartGame) {
       this.isIntroPaused = false;
       this.physics.resume();
-      this.game.events.emit('background:setLevel', 1);
-      this.game.events.emit('background:setSpeedMultiplier', 1.0);
-      this.game.events.emit('background:setDrift', 0);
       this.startLevel(1);
     } else {
       this.isIntroPaused = true;
       this.physics.pause();
     }
+    this.emitStats(true);
+  }
+
+  public cleanupSceneState(): void {
+    this.tweens.killAll();
+    this.time.removeAllEvents();
+    this.cameras.main.resetFX();
+
+    if (this.waveSpawnTimer) {
+      this.waveSpawnTimer.destroy();
+      this.waveSpawnTimer = null;
+    }
+
+    this.enemyMines.forEach((m) => {
+      if (m.sprite && m.sprite.active) m.sprite.destroy();
+    });
+    this.enemyMines = [];
+
+    if (this.playerBullets) this.playerBullets.clear(true, true);
+    if (this.enemyBullets) this.enemyBullets.clear(true, true);
+    if (this.bossBullets) this.bossBullets.clear(true, true);
+    if (this.enemies) this.enemies.clear(true, true);
+    if (this.asteroids) this.asteroids.clear(true, true);
+    if (this.powerUps) this.powerUps.clear(true, true);
+    if (this.xpGems) this.xpGems.clear(true, true);
+    if (this.bossGroup) this.bossGroup.clear(true, true);
+    this.boss = null;
+    this.activePowerUps.clear();
+  }
+
+  public restartGame(): void {
+    this.cleanupSceneState();
+
+    this.score = 0;
+    this.survivalTime = 0;
+    this.playerLevel = 1;
+    this.playerXp = 0;
+    this.nextLevelXp = 100;
+    this.currentLevel = 1;
+    this.currentSectorId = 1;
+    this.maxLevelReached = 1;
+    this.combo = 0;
+    this.comboMultiplier = 1;
+    this.comboTimer = 0;
+    this.bestCombo = Storage.getBestCombo();
+    this.playerHealth = 100;
+    this.maxHealth = 100;
+    this.playerShield = 100;
+    this.maxShield = 100;
+    this.basePlayerSpeed = 480;
+    this.playerSpeed = 480;
+    this.weaponType = 'BLASTER';
+    this.damageMultiplier = 1.0;
+    this.fireRateBonus = 0;
+    this.magnetRadius = 140;
+    this.isSlowMo = false;
+    this.currentMissionIndex = 0;
+    this.nextEventTime = 75;
+    this.boss = null;
+    this.activePowerUps.clear();
+
+    this.missions.forEach((m) => {
+      m.progress = 0;
+      m.completed = false;
+    });
+
+    const { width, height } = this.scale;
+    const spawnY = Math.min(height - 85, height * 0.84);
+    if (this.player) {
+      this.player.setPosition(width / 2, spawnY);
+      this.player.setVelocity(0, 0);
+      this.player.setRotation(0);
+      this.player.setScale(1);
+      this.player.setAlpha(1);
+      this.player.clearTint();
+      this.player.setActive(true).setVisible(true);
+    }
+    if (this.playerEngineParticles) {
+      this.playerEngineParticles.start();
+    }
+
+    this.isAlive = true;
+    this.isLevelUpPaused = false;
+    this.isIntroPaused = false;
+    this.isInvulnerable = false;
+    this.physics.resume();
+
+    this.game.events.emit('background:setLevel', 1);
+    this.game.events.emit('background:setSpeedMultiplier', 1.0);
+    this.game.events.emit('background:setDrift', 0);
+
+    this.startLevel(1);
+    this.emitStats(true);
+  }
+
+  public prepareForIntro(): void {
+    this.cleanupSceneState();
+
+    this.score = 0;
+    this.survivalTime = 0;
+    this.playerLevel = 1;
+    this.playerXp = 0;
+    this.nextLevelXp = 100;
+    this.currentLevel = 1;
+    this.currentSectorId = 1;
+    this.maxLevelReached = 1;
+    this.combo = 0;
+    this.comboMultiplier = 1;
+    this.comboTimer = 0;
+    this.bestCombo = Storage.getBestCombo();
+    this.playerHealth = 100;
+    this.maxHealth = 100;
+    this.playerShield = 100;
+    this.maxShield = 100;
+    this.basePlayerSpeed = 480;
+    this.playerSpeed = 480;
+    this.weaponType = 'BLASTER';
+    this.damageMultiplier = 1.0;
+    this.fireRateBonus = 0;
+    this.magnetRadius = 140;
+    this.isSlowMo = false;
+    this.currentMissionIndex = 0;
+    this.nextEventTime = 75;
+    this.boss = null;
+    this.activePowerUps.clear();
+
+    this.missions.forEach((m) => {
+      m.progress = 0;
+      m.completed = false;
+    });
+
+    const { width, height } = this.scale;
+    const spawnY = Math.min(height - 85, height * 0.84);
+    if (this.player) {
+      this.player.setPosition(width / 2, spawnY);
+      this.player.setVelocity(0, 0);
+      this.player.setRotation(0);
+      this.player.setScale(1);
+      this.player.setAlpha(1);
+      this.player.clearTint();
+      this.player.setActive(true).setVisible(true);
+    }
+    if (this.playerEngineParticles) {
+      this.playerEngineParticles.start();
+    }
+
+    this.isAlive = true;
+    this.isLevelUpPaused = false;
+    this.isIntroPaused = true;
+    this.physics.pause();
+
+    this.game.events.emit('background:setLevel', 1);
+    this.game.events.emit('background:setSpeedMultiplier', 1.0);
+    this.game.events.emit('background:setDrift', 0);
     this.emitStats(true);
   }
 
@@ -961,15 +1081,14 @@ export class GameScene extends Phaser.Scene {
 
   private spawnOpeningSequence(): void {
     const width = this.scale.width;
-    // Initial scout pair at 400ms
-    this.time.delayedCall(400, () => {
-      if (!this.isAlive || this.boss) return;
+    // Immediate scout pair on frame 1
+    if (this.isAlive && !this.boss) {
       this.createEnemy('scout', width * 0.35, -35);
       this.createEnemy('scout', width * 0.65, -35);
-    });
+    }
 
-    // Follow-up arrowhead flight at 2200ms
-    this.time.delayedCall(2200, () => {
+    // Follow-up arrowhead flight at 1500ms
+    this.time.delayedCall(1500, () => {
       if (!this.isAlive || this.boss) return;
       this.createEnemy('scout', width * 0.5, -40);
       this.createEnemy('scout', width * 0.36, -70);
@@ -2280,15 +2399,17 @@ export class GameScene extends Phaser.Scene {
     Storage.setBestSurvivalTime(this.survivalTime);
     Storage.setHighScore(this.score);
 
-    this.time.delayedCall(1200, () => {
+    const finalData = {
+      score: this.score,
+      level: this.playerLevel,
+      wave: this.currentLevel,
+      bestCombo: this.bestCombo,
+      survivalTime: this.survivalTime,
+    };
+
+    this.time.delayedCall(1000, () => {
       this.physics.pause();
-      EventBus.emit('game:over', {
-        score: this.score,
-        level: this.playerLevel,
-        wave: this.currentLevel,
-        bestCombo: this.bestCombo,
-        survivalTime: this.survivalTime,
-      });
+      EventBus.emit('game:over', finalData);
     });
   }
 
