@@ -46,7 +46,7 @@ export class GameScene extends Phaser.Scene {
   private survivalTime = 0; // in seconds
   private playerLevel = 1;
   private playerXp = 0;
-  private nextLevelXp = 50;
+  private nextLevelXp = 100;
   private currentLevel = 1; // 1 to 7
   private currentSectorId = 1;
   private maxLevelReached = 1;
@@ -82,7 +82,7 @@ export class GameScene extends Phaser.Scene {
       progress: 0,
       target: 10,
       completed: false,
-      rewardText: '+1,500 SCORE | +60 XP',
+      rewardText: '+2,000 SCORE | +15 XP',
     },
     {
       id: 'm2',
@@ -91,7 +91,7 @@ export class GameScene extends Phaser.Scene {
       progress: 0,
       target: 3,
       completed: false,
-      rewardText: '+2,500 SCORE | +90 XP',
+      rewardText: '+3,000 SCORE | +20 XP',
     },
     {
       id: 'm3',
@@ -100,7 +100,7 @@ export class GameScene extends Phaser.Scene {
       progress: 0,
       target: 60,
       completed: false,
-      rewardText: '+3,500 SCORE | +120 XP',
+      rewardText: '+4,000 SCORE | +25 XP',
     },
     {
       id: 'm4',
@@ -109,7 +109,7 @@ export class GameScene extends Phaser.Scene {
       progress: 0,
       target: 4,
       completed: false,
-      rewardText: '+3,000 SCORE | +100 XP',
+      rewardText: '+3,500 SCORE | +25 XP',
     },
     {
       id: 'm5',
@@ -118,7 +118,7 @@ export class GameScene extends Phaser.Scene {
       progress: 0,
       target: 1,
       completed: false,
-      rewardText: '+8,000 SCORE | +300 XP',
+      rewardText: '+10,000 SCORE | +50 XP',
     },
   ];
   private currentMissionIndex = 0;
@@ -200,7 +200,7 @@ export class GameScene extends Phaser.Scene {
     this.survivalTime = 0;
     this.playerLevel = 1;
     this.playerXp = 0;
-    this.nextLevelXp = 50;
+    this.nextLevelXp = 100;
     this.currentLevel = 1;
     this.currentSectorId = 1;
     this.maxLevelReached = 1;
@@ -467,6 +467,7 @@ export class GameScene extends Phaser.Scene {
       this.isLevelUpPaused = false;
       this.physics.resume();
       EventBus.emit('alert:levelUp', { level: this.playerLevel, upgradeTitle: option.title });
+      this.emitStats(true);
     };
     const onSkinChanged = (newSkinId: string) => {
       const key = `player_ship_${newSkinId.toLowerCase()}`;
@@ -501,7 +502,25 @@ export class GameScene extends Phaser.Scene {
     this.events.on('pause', onPause);
     this.events.on('resume', onResume);
 
+    // Responsive Window Resize Handler
+    const onResize = (gameSize: Phaser.Structs.Size) => {
+      if (this.player && this.player.active) {
+        this.player.x = Phaser.Math.Clamp(this.player.x, 35, gameSize.width - 35);
+        this.player.y = Phaser.Math.Clamp(this.player.y, 45, gameSize.height - 45);
+      }
+      if (this.arenaBrandingContainer) {
+        this.arenaBrandingContainer.setPosition(gameSize.width / 2, gameSize.height * 0.52);
+      }
+    };
+    this.scale.on('resize', onResize);
+
     this.events.once('shutdown', () => {
+      // 1. Kill all running tweens, timers, and camera FX immediately
+      this.tweens.killAll();
+      this.time.removeAllEvents();
+      this.cameras.main.resetFX();
+
+      // 2. Unregister event listeners
       this.events.off('pause', onPause);
       this.events.off('resume', onResume);
       EventBus.off('input:mobileMove', onMobileMove);
@@ -509,10 +528,33 @@ export class GameScene extends Phaser.Scene {
       EventBus.off('upgrade:selected', onUpgrade);
       EventBus.off('player:skinChanged', onSkinChanged);
       EventBus.off('intro:complete', onIntroComplete);
+      this.scale.off('resize', onResize);
+
+      // 3. Clear keyboard captures
+      if (this.input.keyboard) {
+        this.input.keyboard.removeAllKeys(true);
+      }
+
+      // 4. Destroy wave spawner
       if (this.waveSpawnTimer) {
         this.waveSpawnTimer.destroy();
         this.waveSpawnTimer = null;
       }
+
+      // 5. Cleanly destroy all particle emitters
+      if (this.redMuzzleEmitter) this.redMuzzleEmitter.destroy();
+      if (this.redSparkEmitter) this.redSparkEmitter.destroy();
+      if (this.cyanSparkEmitter) this.cyanSparkEmitter.destroy();
+      if (this.explosionEmitter) this.explosionEmitter.destroy();
+      if (this.shrapnelEmitter) this.shrapnelEmitter.destroy();
+      if (this.playerEngineParticles) this.playerEngineParticles.destroy();
+
+      // 6. Destroy arena branding container
+      if (this.arenaBrandingContainer) {
+        this.arenaBrandingContainer.destroy();
+      }
+
+      // 7. Clear mines & pools
       this.enemyMines.forEach((m) => {
         if (m.sprite && m.sprite.active) m.sprite.destroy();
       });
@@ -529,17 +571,6 @@ export class GameScene extends Phaser.Scene {
       this.activePowerUps.clear();
     });
 
-    // 7. Responsive Window Resize Handler
-    this.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
-      if (this.player && this.player.active) {
-        this.player.x = Phaser.Math.Clamp(this.player.x, 35, gameSize.width - 35);
-        this.player.y = Phaser.Math.Clamp(this.player.y, 45, gameSize.height - 45);
-      }
-      if (this.arenaBrandingContainer) {
-        this.arenaBrandingContainer.setPosition(gameSize.width / 2, gameSize.height * 0.52);
-      }
-    });
-
     if (this.game.canvas) {
       this.game.canvas.focus();
     }
@@ -548,6 +579,9 @@ export class GameScene extends Phaser.Scene {
     if (this.isRestartGame) {
       this.isIntroPaused = false;
       this.physics.resume();
+      this.game.events.emit('background:setLevel', 1);
+      this.game.events.emit('background:setSpeedMultiplier', 1.0);
+      this.game.events.emit('background:setDrift', 0);
       this.startLevel(1);
     } else {
       this.isIntroPaused = true;
@@ -1029,7 +1063,7 @@ export class GameScene extends Phaser.Scene {
       case 'scout':
         enemy.setData('hp', Math.max(1, Math.floor(1 * (this.currentLevel >= 3 ? diff : 1))));
         enemy.setData('score', 120);
-        enemy.setData('xp', 15);
+        enemy.setData('xp', 10);
         enemy.setVelocity(0, 160 * speedMult);
         enemy.setData('sineOffset', Math.random() * 10);
         break;
@@ -1037,7 +1071,7 @@ export class GameScene extends Phaser.Scene {
       case 'interceptor':
         enemy.setData('hp', Math.max(2, Math.floor(2 * (this.currentLevel >= 4 ? diff : 1))));
         enemy.setData('score', 190);
-        enemy.setData('xp', 25);
+        enemy.setData('xp', 15);
         enemy.setVelocity(0, 230 * speedMult);
         enemy.setData('diveTimer', 0);
         break;
@@ -1045,7 +1079,7 @@ export class GameScene extends Phaser.Scene {
       case 'tank':
         enemy.setData('hp', Math.max(8, Math.floor(9 * diff)));
         enemy.setData('score', 480);
-        enemy.setData('xp', 65);
+        enemy.setData('xp', 35);
         enemy.setVelocity(0, 75 * speedMult);
         enemy.setData('shootTimer', 0);
         break;
@@ -1053,7 +1087,7 @@ export class GameScene extends Phaser.Scene {
       case 'shooter':
         enemy.setData('hp', Math.max(3, Math.floor(3.8 * diff)));
         enemy.setData('score', 320);
-        enemy.setData('xp', 40);
+        enemy.setData('xp', 22);
         enemy.setVelocity(0, 110 * speedMult);
         enemy.setData('targetY', Phaser.Math.Between(90, 230));
         enemy.setData('shootTimer', 0);
@@ -1062,7 +1096,7 @@ export class GameScene extends Phaser.Scene {
       case 'bomber':
         enemy.setData('hp', Math.max(4, Math.floor(5 * diff)));
         enemy.setData('score', 400);
-        enemy.setData('xp', 55);
+        enemy.setData('xp', 30);
         enemy.setVelocity(Phaser.Math.Between(-50, 50), 90 * speedMult);
         enemy.setData('mineTimer', 0);
         break;
@@ -1071,7 +1105,7 @@ export class GameScene extends Phaser.Scene {
         enemy.setData('hp', Math.max(12, Math.floor(13 * diff)));
         enemy.setData('shield', Math.max(5, Math.floor(6 * diff)));
         enemy.setData('score', 850);
-        enemy.setData('xp', 110);
+        enemy.setData('xp', 50);
         enemy.setVelocity(110 * (Math.random() < 0.5 ? 1 : -1), 85 * speedMult);
         enemy.setData('shootTimer', 0);
         break;
@@ -1249,7 +1283,7 @@ export class GameScene extends Phaser.Scene {
 
     const hpMap = { large: 6, medium: 3, small: 1 };
     const scoreMap = { large: 150, medium: 80, small: 40 };
-    const xpMap = { large: 30, medium: 15, small: 8 };
+    const xpMap = { large: 15, medium: 8, small: 4 };
 
     ast.setData('hp', hpMap[size]);
     ast.setData('score', scoreMap[size]);
@@ -1654,23 +1688,23 @@ export class GameScene extends Phaser.Scene {
     this.showFloatingText(`MISSION COMPLETED: ${mission.title}!`, this.scale.width / 2, this.scale.height / 2.5, '#22c55e', '22px');
 
     if (mission.id === 'm1') {
-      this.addScore(1500, this.player.x, this.player.y);
-      this.playerXp += 60;
+      this.addScore(2000, this.player.x, this.player.y);
+      this.playerXp += 15;
     } else if (mission.id === 'm2') {
-      this.addScore(2500, this.player.x, this.player.y);
-      this.playerXp += 90;
-    } else if (mission.id === 'm3') {
-      this.addScore(3500, this.player.x, this.player.y);
-      this.playerXp += 120;
-    } else if (mission.id === 'm4') {
       this.addScore(3000, this.player.x, this.player.y);
-      this.playerXp += 100;
+      this.playerXp += 20;
+    } else if (mission.id === 'm3') {
+      this.addScore(4000, this.player.x, this.player.y);
+      this.playerXp += 25;
+    } else if (mission.id === 'm4') {
+      this.addScore(3500, this.player.x, this.player.y);
+      this.playerXp += 25;
     } else if (mission.id === 'm5') {
-      this.addScore(8000, this.player.x, this.player.y);
-      this.playerXp += 300;
+      this.addScore(10000, this.player.x, this.player.y);
+      this.playerXp += 50;
     }
 
-    if (this.playerXp >= this.nextLevelXp) {
+    if (!this.isLevelUpPaused && this.isAlive && this.playerXp >= this.nextLevelXp) {
       this.triggerLevelUp();
     }
 
@@ -1831,7 +1865,7 @@ export class GameScene extends Phaser.Scene {
 
     this.spawnPowerUp(bx - 40, by);
     this.spawnPowerUp(bx + 40, by);
-    this.spawnXpGem(bx, by, 300);
+    this.spawnXpGem(bx, by, 80);
 
     this.bossGroup.clear(true, true);
     this.boss = null;
@@ -1872,6 +1906,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private collectXpGem(gem: Phaser.Physics.Arcade.Sprite): void {
+    if (!this.isAlive || this.isLevelUpPaused) return;
+
     const val = gem.getData('value') || 10;
     gem.setActive(false).setVisible(false);
     gem.body.stop();
@@ -1882,20 +1918,25 @@ export class GameScene extends Phaser.Scene {
 
     if (this.playerXp >= this.nextLevelXp) {
       this.triggerLevelUp();
+    } else {
+      this.emitStats();
     }
-    this.emitStats();
   }
 
   private triggerLevelUp(): void {
+    if (!this.isAlive || this.isLevelUpPaused) return;
+    this.isLevelUpPaused = true;
+
     this.playerLevel++;
-    this.playerXp -= this.nextLevelXp;
-    this.nextLevelXp = Math.floor(this.nextLevelXp * 1.45);
+    // Calculate rollover XP, strictly capped so leftover XP can NEVER automatically fill or re-trigger the next level
+    const excessXp = Math.max(0, this.playerXp - this.nextLevelXp);
+    this.nextLevelXp = Math.round(this.nextLevelXp * 1.45);
+    this.playerXp = Math.min(excessXp, Math.floor(this.nextLevelXp * 0.25));
 
     SoundEffects.playLevelUp();
     this.cameras.main.flash(300, 255, 0, 85);
 
     const options = this.generateUpgradeOptions();
-    this.isLevelUpPaused = true;
     this.physics.pause();
     EventBus.emit('game:levelUp', options);
 

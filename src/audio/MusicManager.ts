@@ -188,6 +188,13 @@ class MusicManagerClass {
    * Ensures music is playing without restarting the current track if already active
    */
   public ensurePlaying(): void {
+    if (this.fadeInterval) {
+      clearInterval(this.fadeInterval);
+      this.fadeInterval = null;
+    }
+    if (this.audio) {
+      this.audio.volume = this.volume;
+    }
     if (this.isMuted) return;
     const audio = this.initAudio();
     if (audio.paused) {
@@ -231,6 +238,13 @@ class MusicManagerClass {
    * Resume music from exact paused timestamp
    */
   public resume(): void {
+    if (this.fadeInterval) {
+      clearInterval(this.fadeInterval);
+      this.fadeInterval = null;
+    }
+    if (this.audio) {
+      this.audio.volume = this.volume;
+    }
     if (this.isMuted) return;
     const audio = this.initAudio();
     if (!audio.src || audio.src === '') {

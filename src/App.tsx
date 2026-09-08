@@ -40,7 +40,7 @@ export const App: React.FC = () => {
     wave: 1,
     level: 1,
     xp: 0,
-    nextLevelXp: 50,
+    nextLevelXp: 100,
     combo: 0,
     comboMultiplier: 1,
     comboTimer: 0,
@@ -207,6 +207,7 @@ export const App: React.FC = () => {
     if (game) {
       game.scene.resume('GameScene');
       game.scene.resume('BackgroundScene');
+      game.scene.stop('GameScene');
       game.scene.start('GameScene', { isRestart: true });
     }
     // Directly enter PLAYING mode for immediate action
