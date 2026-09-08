@@ -53,124 +53,153 @@ export class TextureGenerator {
 
       if (!scene.textures.exists(texKey)) {
         const canvas = document.createElement('canvas');
-        canvas.width = 72;
-        canvas.height = 80;
+        canvas.width = 76;
+        canvas.height = 84;
         const ctx = canvas.getContext('2d')!;
 
-        // 1. Aerodynamic Outer Wing Armor (High-Tech Swept Delta)
+        // 1. Aerodynamic Outer Wing Armor (High-Tech Swept Delta with Chamfered Edges)
         ctx.shadowColor = theme.glow;
-        ctx.shadowBlur = 14;
+        ctx.shadowBlur = 16;
 
-        // Base Outer Hull
-        const baseGrad = ctx.createLinearGradient(0, 0, 72, 80);
+        // Base Outer Titanium-Carbon Fuselage
+        const baseGrad = ctx.createLinearGradient(0, 0, 76, 84);
         baseGrad.addColorStop(0, theme.secondary);
-        baseGrad.addColorStop(0.5, theme.primary);
-        baseGrad.addColorStop(1, '#020617');
+        baseGrad.addColorStop(0.4, theme.primary);
+        baseGrad.addColorStop(0.85, '#05070e');
+        baseGrad.addColorStop(1, '#010204');
         ctx.fillStyle = baseGrad;
         ctx.beginPath();
-        ctx.moveTo(36, 2);      // Needle nose tip
-        ctx.lineTo(44, 22);     // Forward fuselage step
-        ctx.lineTo(70, 56);     // Right main wing tip
-        ctx.lineTo(60, 60);     // Wing trailing edge
-        ctx.lineTo(52, 54);     // Aileron notch
-        ctx.lineTo(46, 74);     // Right engine nacelle
-        ctx.lineTo(36, 68);     // Rear center spine
-        ctx.lineTo(26, 74);     // Left engine nacelle
-        ctx.lineTo(20, 54);     // Left aileron notch
-        ctx.lineTo(12, 60);     // Left wing trailing edge
-        ctx.lineTo(2, 56);      // Left main wing tip
-        ctx.lineTo(28, 22);     // Left forward step
+        ctx.moveTo(38, 2);      // Needle nose apex
+        ctx.lineTo(47, 22);     // Forward canard step
+        ctx.lineTo(74, 58);     // Right main wingtip
+        ctx.lineTo(64, 63);     // Wing trailing edge
+        ctx.lineTo(55, 56);     // Aileron notch
+        ctx.lineTo(49, 78);     // Right engine nacelle
+        ctx.lineTo(38, 71);     // Rear center thrust spine
+        ctx.lineTo(27, 78);     // Left engine nacelle
+        ctx.lineTo(21, 56);     // Left aileron notch
+        ctx.lineTo(12, 63);     // Left wing trailing edge
+        ctx.lineTo(2, 58);      // Left main wingtip
+        ctx.lineTo(29, 22);     // Left forward step
         ctx.closePath();
         ctx.fill();
 
-        // High-Coherence Neon Armor Border
+        // High-Coherence Neon Armor Border with Specular Trim
         ctx.strokeStyle = theme.trim;
-        ctx.lineWidth = 2.2;
+        ctx.lineWidth = 2.4;
         ctx.stroke();
 
-        // 2. Mid-Armor Composite Plating (Layered Depth)
-        ctx.shadowBlur = 4;
-        const plateGrad = ctx.createLinearGradient(36, 12, 36, 64);
-        plateGrad.addColorStop(0, theme.primary);
-        plateGrad.addColorStop(1, theme.secondary);
-        ctx.fillStyle = plateGrad;
-        ctx.beginPath();
-        ctx.moveTo(36, 12);
-        ctx.lineTo(54, 46);
-        ctx.lineTo(44, 52);
-        ctx.lineTo(36, 58);
-        ctx.lineTo(28, 52);
-        ctx.lineTo(18, 46);
-        ctx.closePath();
-        ctx.fill();
-
-        // Metallic Surface Panel Seams
-        ctx.strokeStyle = theme.trim;
+        // 2. Specular Lighting on Leading Wing Edges
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
         ctx.lineWidth = 1.2;
         ctx.beginPath();
-        ctx.moveTo(36, 14);
-        ctx.lineTo(36, 56);
-        ctx.moveTo(24, 38);
-        ctx.lineTo(48, 38);
-        ctx.moveTo(20, 48);
-        ctx.lineTo(36, 44);
-        ctx.lineTo(52, 48);
+        ctx.moveTo(38, 3);
+        ctx.lineTo(47, 22);
+        ctx.lineTo(73, 57);
+        ctx.moveTo(38, 3);
+        ctx.lineTo(29, 22);
+        ctx.lineTo(3, 57);
         ctx.stroke();
 
-        // 3. Glowing Leading-Edge Energy Conduits
-        ctx.strokeStyle = theme.glow;
-        ctx.lineWidth = 1.8;
-        ctx.shadowColor = theme.glow;
-        ctx.shadowBlur = 8;
+        // 3. Mid-Armor Composite Plating (Layered Depth & Heat Shield)
+        ctx.shadowBlur = 6;
+        const plateGrad = ctx.createLinearGradient(38, 12, 38, 66);
+        plateGrad.addColorStop(0, theme.secondary);
+        plateGrad.addColorStop(0.5, theme.primary);
+        plateGrad.addColorStop(1, '#080c14');
+        ctx.fillStyle = plateGrad;
         ctx.beginPath();
-        ctx.moveTo(42, 24);
-        ctx.lineTo(66, 54);
-        ctx.moveTo(30, 24);
-        ctx.lineTo(6, 54);
-        ctx.stroke();
-
-        // 4. Sleek Aerodynamic Cockpit Glass Canopy
-        const canopyGrad = ctx.createLinearGradient(36, 18, 36, 44);
-        canopyGrad.addColorStop(0, '#ffffff');
-        canopyGrad.addColorStop(0.3, theme.cockpit);
-        canopyGrad.addColorStop(0.7, theme.primary);
-        canopyGrad.addColorStop(1, '#000000');
-        ctx.fillStyle = canopyGrad;
-        ctx.shadowColor = theme.cockpit;
-        ctx.shadowBlur = 10;
-        ctx.beginPath();
-        ctx.ellipse(36, 30, 6, 14, 0, 0, Math.PI * 2);
+        ctx.moveTo(38, 12);
+        ctx.lineTo(57, 48);
+        ctx.lineTo(47, 55);
+        ctx.lineTo(38, 62);
+        ctx.lineTo(29, 55);
+        ctx.lineTo(19, 48);
+        ctx.closePath();
         ctx.fill();
 
-        // Cockpit Specular Reflection Flash
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1.0;
+        // Precision Metallic Surface Panel Seams
+        ctx.strokeStyle = theme.trim;
+        ctx.lineWidth = 1.3;
         ctx.beginPath();
-        ctx.ellipse(35, 26, 2.5, 7, -0.2, 0, Math.PI * 2);
+        ctx.moveTo(38, 14);
+        ctx.lineTo(38, 60);
+        ctx.moveTo(26, 40);
+        ctx.lineTo(50, 40);
+        ctx.moveTo(22, 50);
+        ctx.lineTo(38, 46);
+        ctx.lineTo(54, 50);
         ctx.stroke();
 
-        // 5. Wingtip Railgun Batteries with Energy Capacitors
+        // 4. Glowing Leading-Edge Energy Conduits
+        ctx.strokeStyle = theme.glow;
+        ctx.lineWidth = 2.0;
+        ctx.shadowColor = theme.glow;
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.moveTo(45, 25);
+        ctx.lineTo(70, 56);
+        ctx.moveTo(31, 25);
+        ctx.lineTo(6, 56);
+        ctx.stroke();
+
+        // 5. Sleek Faceted Diamond Cockpit Glass Canopy
+        const canopyGrad = ctx.createLinearGradient(38, 18, 38, 46);
+        canopyGrad.addColorStop(0, '#ffffff');
+        canopyGrad.addColorStop(0.25, theme.cockpit);
+        canopyGrad.addColorStop(0.7, theme.primary);
+        canopyGrad.addColorStop(1, '#020408');
+        ctx.fillStyle = canopyGrad;
+        ctx.shadowColor = theme.cockpit;
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.moveTo(38, 16);     // Canopy nose
+        ctx.lineTo(44, 28);     // Right canopy facet
+        ctx.lineTo(43, 42);     // Right canopy rear
+        ctx.lineTo(38, 46);     // Rear spine apex
+        ctx.lineTo(33, 42);     // Left canopy rear
+        ctx.lineTo(32, 28);     // Left canopy facet
+        ctx.closePath();
+        ctx.fill();
+
+        // Cockpit Glass Specular Reflection Streak
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(36, 20);
+        ctx.lineTo(34, 38);
+        ctx.stroke();
+
+        // 6. Wingtip Railgun Batteries with Charged Capacitors
         ctx.fillStyle = theme.trim;
-        ctx.fillRect(68, 42, 3, 16);
-        ctx.fillRect(1, 42, 3, 16);
+        ctx.fillRect(72, 44, 3.5, 18);
+        ctx.fillRect(1, 44, 3.5, 18);
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(69, 40, 2, 4);
-        ctx.fillRect(2, 40, 2, 4);
+        ctx.shadowColor = '#ffffff';
+        ctx.shadowBlur = 8;
+        ctx.fillRect(72.5, 42, 2.5, 4);
+        ctx.fillRect(1.5, 42, 2.5, 4);
 
-        // 6. Dual Hyper-Velocity Thruster Ports (Glowing Plasma Combustion)
-        const nozzleGrad = ctx.createRadialGradient(26, 73, 1, 26, 73, 6);
-        nozzleGrad.addColorStop(0, '#ffffff');
-        nozzleGrad.addColorStop(0.5, theme.engine);
-        nozzleGrad.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = nozzleGrad;
-        ctx.fillRect(23, 68, 7, 7);
+        // 7. Dual Hyper-Velocity Thruster Nozzles (Incandescent Plasma Core)
+        const nozzleL = ctx.createRadialGradient(27, 76, 1, 27, 76, 7);
+        nozzleL.addColorStop(0, '#ffffff');
+        nozzleL.addColorStop(0.4, theme.engine);
+        nozzleL.addColorStop(0.8, theme.glow);
+        nozzleL.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = nozzleL;
+        ctx.beginPath();
+        ctx.arc(27, 76, 6, 0, Math.PI * 2);
+        ctx.fill();
 
-        const nozzleGradR = ctx.createRadialGradient(46, 73, 1, 46, 73, 6);
-        nozzleGradR.addColorStop(0, '#ffffff');
-        nozzleGradR.addColorStop(0.5, theme.engine);
-        nozzleGradR.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = nozzleGradR;
-        ctx.fillRect(43, 68, 7, 7);
+        const nozzleR = ctx.createRadialGradient(49, 76, 1, 49, 76, 7);
+        nozzleR.addColorStop(0, '#ffffff');
+        nozzleR.addColorStop(0.4, theme.engine);
+        nozzleR.addColorStop(0.8, theme.glow);
+        nozzleR.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = nozzleR;
+        ctx.beginPath();
+        ctx.arc(49, 76, 6, 0, Math.PI * 2);
+        ctx.fill();
 
         scene.textures.addCanvas(texKey, canvas);
         if (!scene.textures.exists(`player_ship_${skinKey}`)) {
@@ -185,16 +214,16 @@ export class TextureGenerator {
       const engineKey = `engine_glow_${skinKey}`;
       if (!scene.textures.exists(engineKey)) {
         const canvas = document.createElement('canvas');
-        canvas.width = 24;
-        canvas.height = 24;
+        canvas.width = 28;
+        canvas.height = 28;
         const ctx = canvas.getContext('2d')!;
-        const grad = ctx.createRadialGradient(12, 12, 1, 12, 12, 11);
+        const grad = ctx.createRadialGradient(14, 14, 1, 14, 14, 13);
         grad.addColorStop(0, '#ffffff');
-        grad.addColorStop(0.4, theme.engine);
-        grad.addColorStop(0.8, theme.glow);
+        grad.addColorStop(0.35, theme.engine);
+        grad.addColorStop(0.75, theme.glow);
         grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, 24, 24);
+        ctx.fillRect(0, 0, 28, 28);
         scene.textures.addCanvas(engineKey, canvas);
       }
     });
@@ -214,454 +243,597 @@ export class TextureGenerator {
     }
 
     // 2. Player Weapon Projectiles (SIGNATURE BRIGHT NEON RED WEAPON SYSTEM)
-    // 2.1 Blaster (Signature Neon Red Energy Bolt) (14 x 36)
+    // 2.1 Blaster (Incandescent Core + Neon Red Corona) (18 x 40)
     if (!scene.textures.exists('laser_blaster')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 16;
-      canvas.height = 36;
+      canvas.width = 18;
+      canvas.height = 40;
       const ctx = canvas.getContext('2d')!;
       ctx.shadowColor = '#ff0033';
-      ctx.shadowBlur = 14;
-      const grad = ctx.createLinearGradient(8, 0, 8, 36);
+      ctx.shadowBlur = 16;
+      const grad = ctx.createLinearGradient(9, 0, 9, 40);
       grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.35, '#ff0033');
+      grad.addColorStop(0.3, '#ff0044');
       grad.addColorStop(0.75, '#ff0055');
       grad.addColorStop(1, 'rgba(255, 0, 85, 0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.ellipse(8, 18, 6, 16, 0, 0, Math.PI * 2);
+      ctx.ellipse(9, 20, 7, 18, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Sharp Energy Spine
+      // Sharp Incandescent Plasma Spine
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 2.0;
       ctx.beginPath();
-      ctx.moveTo(8, 6);
-      ctx.lineTo(8, 26);
+      ctx.moveTo(9, 6);
+      ctx.lineTo(9, 30);
       ctx.stroke();
 
       scene.textures.addCanvas('laser_blaster', canvas);
       scene.textures.addCanvas('laser_player', canvas);
     }
 
-    // 2.2 Rapid Fire Needle (High-Frequency Red Stinger) (10 x 28)
+    // 2.2 Rapid Fire Needle (High-Frequency Red Stinger) (12 x 32)
     if (!scene.textures.exists('laser_rapid')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 10;
-      canvas.height = 28;
-      const ctx = canvas.getContext('2d')!;
-      ctx.shadowColor = '#ff0055';
-      ctx.shadowBlur = 12;
-      const grad = ctx.createLinearGradient(5, 0, 5, 28);
-      grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.4, '#ff2255');
-      grad.addColorStop(0.8, '#dc2626');
-      grad.addColorStop(1, 'rgba(220, 38, 38, 0)');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.ellipse(5, 14, 3.5, 12, 0, 0, Math.PI * 2);
-      ctx.fill();
-      scene.textures.addCanvas('laser_rapid', canvas);
-    }
-
-    // 2.3 Double Shot Heavy (Dual Heavy Crimson Rods) (18 x 38)
-    if (!scene.textures.exists('laser_double')) {
-      const canvas = document.createElement('canvas');
-      canvas.width = 20;
-      canvas.height = 38;
-      const ctx = canvas.getContext('2d')!;
-      ctx.shadowColor = '#ff0033';
-      ctx.shadowBlur = 16;
-      const grad = ctx.createLinearGradient(10, 0, 10, 38);
-      grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.4, '#ff0033');
-      grad.addColorStop(0.8, '#b91c1c');
-      grad.addColorStop(1, 'rgba(185, 28, 28, 0)');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.ellipse(10, 19, 7, 17, 0, 0, Math.PI * 2);
-      ctx.fill();
-      scene.textures.addCanvas('laser_double', canvas);
-    }
-
-    // 2.4 Triple Shot (Branching Crimson Plasma) (16 x 32)
-    if (!scene.textures.exists('laser_triple')) {
-      const canvas = document.createElement('canvas');
-      canvas.width = 16;
+      canvas.width = 12;
       canvas.height = 32;
       const ctx = canvas.getContext('2d')!;
       ctx.shadowColor = '#ff0055';
       ctx.shadowBlur = 14;
-      const grad = ctx.createLinearGradient(8, 0, 8, 32);
+      const grad = ctx.createLinearGradient(6, 0, 6, 32);
       grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.45, '#ff0055');
-      grad.addColorStop(0.8, '#990022');
-      grad.addColorStop(1, 'rgba(153, 0, 34, 0)');
+      grad.addColorStop(0.3, '#ff2255');
+      grad.addColorStop(0.75, '#dc2626');
+      grad.addColorStop(1, 'rgba(220, 38, 38, 0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.ellipse(8, 16, 6, 14, 0, 0, Math.PI * 2);
+      ctx.ellipse(6, 16, 4, 14, 0, 0, Math.PI * 2);
       ctx.fill();
+
+      // Sharp Core Needle
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(6, 4);
+      ctx.lineTo(6, 26);
+      ctx.stroke();
+
+      scene.textures.addCanvas('laser_rapid', canvas);
+    }
+
+    // 2.3 Double Shot Heavy (Dual Heavy Crimson Rods) (22 x 40)
+    if (!scene.textures.exists('laser_double')) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 22;
+      canvas.height = 40;
+      const ctx = canvas.getContext('2d')!;
+      ctx.shadowColor = '#ff0033';
+      ctx.shadowBlur = 18;
+      const grad = ctx.createLinearGradient(11, 0, 11, 40);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.35, '#ff0033');
+      grad.addColorStop(0.8, '#99001f');
+      grad.addColorStop(1, 'rgba(153, 0, 31, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.ellipse(11, 20, 8, 18, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Twin Inner Rail Cores
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(8, 8);
+      ctx.lineTo(8, 32);
+      ctx.moveTo(14, 8);
+      ctx.lineTo(14, 32);
+      ctx.stroke();
+
+      scene.textures.addCanvas('laser_double', canvas);
+    }
+
+    // 2.4 Triple Shot (Trident Crimson Plasma Bolt) (18 x 36)
+    if (!scene.textures.exists('laser_triple')) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 18;
+      canvas.height = 36;
+      const ctx = canvas.getContext('2d')!;
+      ctx.shadowColor = '#ff0055';
+      ctx.shadowBlur = 16;
+      const grad = ctx.createLinearGradient(9, 0, 9, 36);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.35, '#ff0055');
+      grad.addColorStop(0.8, '#88001b');
+      grad.addColorStop(1, 'rgba(136, 0, 27, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.ellipse(9, 18, 7, 16, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Sharp Trident Center Core
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.0;
+      ctx.beginPath();
+      ctx.moveTo(9, 4);
+      ctx.lineTo(9, 28);
+      ctx.stroke();
+
       scene.textures.addCanvas('laser_triple', canvas);
     }
 
-    // 2.5 Spread Shot (Neon Red Plasma Darts) (16 x 28)
+    // 2.5 Spread Shot (Neon Red Diamond Plasma Darts) (18 x 32)
     if (!scene.textures.exists('laser_spread')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 16;
-      canvas.height = 28;
+      canvas.width = 18;
+      canvas.height = 32;
       const ctx = canvas.getContext('2d')!;
       ctx.shadowColor = '#ef4444';
-      ctx.shadowBlur = 12;
-      const grad = ctx.createLinearGradient(8, 0, 8, 28);
+      ctx.shadowBlur = 14;
+      const grad = ctx.createLinearGradient(9, 0, 9, 32);
       grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.45, '#ef4444');
+      grad.addColorStop(0.35, '#ef4444');
       grad.addColorStop(0.8, '#7f1d1d');
       grad.addColorStop(1, 'rgba(127, 29, 29, 0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.ellipse(8, 14, 5, 12, 0, 0, Math.PI * 2);
+      ctx.moveTo(9, 2);
+      ctx.lineTo(16, 16);
+      ctx.lineTo(9, 30);
+      ctx.lineTo(2, 16);
+      ctx.closePath();
       ctx.fill();
+
+      // Core Glint
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(8, 8, 2, 14);
+
       scene.textures.addCanvas('laser_spread', canvas);
     }
 
-    // 2.6 Hyperbeam (Continuous Crimson Laser with Lightning Core) (24 x 56)
+    // 2.6 Hyperbeam (Continuous Crimson Laser with Lightning Core) (28 x 64)
     if (!scene.textures.exists('laser_hyperbeam')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 24;
-      canvas.height = 56;
+      canvas.width = 28;
+      canvas.height = 64;
       const ctx = canvas.getContext('2d')!;
       ctx.shadowColor = '#ff0033';
-      ctx.shadowBlur = 20;
-      const grad = ctx.createLinearGradient(12, 0, 12, 56);
+      ctx.shadowBlur = 22;
+      const grad = ctx.createLinearGradient(14, 0, 14, 64);
       grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.25, '#ff0055');
-      grad.addColorStop(0.7, '#ff0033');
-      grad.addColorStop(1, 'rgba(255, 0, 51, 0.1)');
+      grad.addColorStop(0.2, '#ff0055');
+      grad.addColorStop(0.65, '#ff0033');
+      grad.addColorStop(1, 'rgba(255, 0, 51, 0.15)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.ellipse(12, 28, 8, 26, 0, 0, Math.PI * 2);
+      ctx.ellipse(14, 32, 10, 30, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Internal Blinding Core Rod
+      // Internal Blinding Core Lightning Rod
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = 3.0;
       ctx.beginPath();
-      ctx.moveTo(12, 4);
-      ctx.lineTo(12, 48);
+      ctx.moveTo(14, 4);
+      ctx.lineTo(14, 56);
+      ctx.stroke();
+
+      // Pulsing Harmonic Energy Rings
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(14, 20, 6, 0, Math.PI * 2);
+      ctx.arc(14, 42, 6, 0, Math.PI * 2);
       ctx.stroke();
 
       scene.textures.addCanvas('laser_hyperbeam', canvas);
       scene.textures.addCanvas('laser_heavy', canvas);
     }
 
-    // 2.7 Plasma Shot (Thermonuclear Crimson Plasma Sphere) (40 x 40)
+    // 2.7 Plasma Shot (Thermonuclear Crimson Plasma Sphere) (44 x 44)
     if (!scene.textures.exists('laser_plasma')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 40;
-      canvas.height = 40;
+      canvas.width = 44;
+      canvas.height = 44;
       const ctx = canvas.getContext('2d')!;
       ctx.shadowColor = '#ff0033';
-      ctx.shadowBlur = 20;
-      const grad = ctx.createRadialGradient(20, 20, 3, 20, 20, 18);
+      ctx.shadowBlur = 22;
+      const grad = ctx.createRadialGradient(22, 22, 3, 22, 22, 20);
       grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.35, '#ff0055');
-      grad.addColorStop(0.7, '#ff0033');
-      grad.addColorStop(0.9, '#990022');
+      grad.addColorStop(0.3, '#ff0055');
+      grad.addColorStop(0.65, '#ff0033');
+      grad.addColorStop(0.85, '#990022');
       grad.addColorStop(1, 'rgba(153, 0, 34, 0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.arc(20, 20, 18, 0, Math.PI * 2);
+      ctx.arc(22, 22, 20, 0, Math.PI * 2);
       ctx.fill();
 
-      // Radiating Solar Flares
+      // Radiating Solar Corona Flares
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.2;
       ctx.beginPath();
-      ctx.arc(20, 20, 10, 0, Math.PI * 2);
+      ctx.arc(22, 22, 11, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Plasma Arcs
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(10, 22); ctx.lineTo(34, 22);
+      ctx.moveTo(22, 10); ctx.lineTo(22, 34);
       ctx.stroke();
 
       scene.textures.addCanvas('laser_plasma', canvas);
     }
 
     // 3. Enemy Textures (6 Distinct High-Detail Archetypes)
-    // 3.1 Scout (Razor Stealth Interceptor) (48 x 52)
+    // 3.1 Scout (Razor Stealth Interceptor) (52 x 56)
     if (!scene.textures.exists('enemy_scout')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 48;
-      canvas.height = 52;
+      canvas.width = 52;
+      canvas.height = 56;
       const ctx = canvas.getContext('2d')!;
       ctx.shadowColor = '#ff0055';
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur = 14;
 
       // Base Stealth Hull
-      const grad = ctx.createLinearGradient(24, 0, 24, 52);
+      const grad = ctx.createLinearGradient(26, 0, 26, 56);
       grad.addColorStop(0, '#2d0614');
-      grad.addColorStop(0.6, '#150209');
-      grad.addColorStop(1, '#020002');
+      grad.addColorStop(0.5, '#16030a');
+      grad.addColorStop(1, '#030004');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.moveTo(24, 48);      // Forward nose dagger
-      ctx.lineTo(4, 8);        // Left swept-forward wingtip
-      ctx.lineTo(16, 16);      // Wing notch
-      ctx.lineTo(24, 10);      // Center rear intake
-      ctx.lineTo(32, 16);      // Right wing notch
-      ctx.lineTo(44, 8);       // Right swept wingtip
+      ctx.moveTo(26, 52);      // Forward nose dagger
+      ctx.lineTo(4, 10);       // Left swept-forward wingtip
+      ctx.lineTo(17, 18);      // Wing notch
+      ctx.lineTo(26, 12);      // Center rear intake
+      ctx.lineTo(35, 18);      // Right wing notch
+      ctx.lineTo(48, 10);      // Right swept wingtip
       ctx.closePath();
       ctx.fill();
 
-      // Sharp Crimson Trim
+      // Sharp Crimson Trim & Leading Edge
       ctx.strokeStyle = '#ff0055';
-      ctx.lineWidth = 2.0;
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+
+      // Specular Reflection on Wing Edges
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(26, 50);
+      ctx.lineTo(6, 12);
+      ctx.moveTo(26, 50);
+      ctx.lineTo(46, 12);
       ctx.stroke();
 
       // Wing Armor Panels
       ctx.strokeStyle = '#f43f5e';
-      ctx.lineWidth = 1.2;
+      ctx.lineWidth = 1.3;
       ctx.beginPath();
-      ctx.moveTo(12, 14);
-      ctx.lineTo(24, 38);
-      ctx.lineTo(36, 14);
+      ctx.moveTo(14, 16);
+      ctx.lineTo(26, 40);
+      ctx.lineTo(38, 16);
       ctx.stroke();
 
-      // Menacing Cyclops Sensor Slit
+      // Menacing Cyclops Sensor Array with Glow
       ctx.fillStyle = '#ffffff';
       ctx.shadowColor = '#ff0055';
-      ctx.shadowBlur = 12;
+      ctx.shadowBlur = 14;
       ctx.beginPath();
-      ctx.ellipse(24, 32, 4.5, 2.5, 0, 0, Math.PI * 2);
+      ctx.ellipse(26, 34, 5, 3, 0, 0, Math.PI * 2);
       ctx.fill();
+
+      // Sensor Iris Ring
+      ctx.strokeStyle = '#ff0055';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // Dual Micro Thruster Ports
+      ctx.fillStyle = '#ff0033';
+      ctx.fillRect(19, 10, 3, 4);
+      ctx.fillRect(30, 10, 3, 4);
 
       scene.textures.addCanvas('enemy_scout', canvas);
     }
 
-    // 3.2 Interceptor (High-Speed Swept Pursuit Striker) (48 x 52)
+    // 3.2 Interceptor (High-Speed Swept Pursuit Striker) (52 x 56)
     if (!scene.textures.exists('enemy_interceptor')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 48;
-      canvas.height = 52;
+      canvas.width = 52;
+      canvas.height = 56;
       const ctx = canvas.getContext('2d')!;
       ctx.shadowColor = '#ff0033';
-      ctx.shadowBlur = 12;
+      ctx.shadowBlur = 14;
 
       // Dark Gunmetal & Steel Composite Hull
-      const grad = ctx.createLinearGradient(24, 0, 24, 52);
-      grad.addColorStop(0, '#222736');
-      grad.addColorStop(0.5, '#12141c');
-      grad.addColorStop(1, '#08090d');
+      const grad = ctx.createLinearGradient(26, 0, 26, 56);
+      grad.addColorStop(0, '#262c3d');
+      grad.addColorStop(0.5, '#141722');
+      grad.addColorStop(1, '#090a10');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.moveTo(24, 50);
-      ctx.lineTo(46, 14);
-      ctx.lineTo(36, 6);
-      ctx.lineTo(24, 18);
-      ctx.lineTo(12, 6);
-      ctx.lineTo(2, 14);
+      ctx.moveTo(26, 54);
+      ctx.lineTo(50, 16);
+      ctx.lineTo(39, 8);
+      ctx.lineTo(26, 20);
+      ctx.lineTo(13, 8);
+      ctx.lineTo(2, 16);
       ctx.closePath();
       ctx.fill();
 
       // Sharp Crimson Trim & Edge Lighting
       ctx.strokeStyle = '#ff0033';
-      ctx.lineWidth = 2.0;
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+
+      // Specular Edge Highlighting
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(26, 52);
+      ctx.lineTo(48, 17);
+      ctx.moveTo(26, 52);
+      ctx.lineTo(4, 17);
       ctx.stroke();
 
       // Forward Kinetic Disruptor Needle Barrels
       ctx.fillStyle = '#ff0055';
-      ctx.fillRect(44, 18, 3, 14);
-      ctx.fillRect(1, 18, 3, 14);
+      ctx.fillRect(47, 20, 3.5, 16);
+      ctx.fillRect(1.5, 20, 3.5, 16);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(48, 33, 1.5, 3);
+      ctx.fillRect(2.5, 33, 1.5, 3);
 
       // Energized Central Crimson Conduit
       ctx.fillStyle = '#ffffff';
       ctx.shadowColor = '#ff0033';
-      ctx.shadowBlur = 10;
-      ctx.fillRect(22, 20, 4, 18);
+      ctx.shadowBlur = 12;
+      ctx.fillRect(24, 22, 4, 20);
 
       scene.textures.addCanvas('enemy_interceptor', canvas);
       scene.textures.addCanvas('enemy_striker', canvas);
     }
 
-    // 3.3 Tank (Armored Citadel Dreadnought) (76 x 80)
+    // 3.3 Tank (Armored Citadel Dreadnought) (80 x 86)
     if (!scene.textures.exists('enemy_tank')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 76;
-      canvas.height = 80;
+      canvas.width = 80;
+      canvas.height = 86;
       const ctx = canvas.getContext('2d')!;
       ctx.shadowColor = '#ff0055';
-      ctx.shadowBlur = 14;
+      ctx.shadowBlur = 16;
 
       // Heavy Dark Metallic Composite Armor Plating
-      const grad = ctx.createLinearGradient(38, 0, 38, 80);
-      grad.addColorStop(0, '#282d3c');
-      grad.addColorStop(0.5, '#161922');
-      grad.addColorStop(1, '#0a0b10');
+      const grad = ctx.createLinearGradient(40, 0, 40, 86);
+      grad.addColorStop(0, '#2c3345');
+      grad.addColorStop(0.5, '#171b26');
+      grad.addColorStop(1, '#090b10');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.moveTo(38, 74);
-      ctx.lineTo(70, 48);
-      ctx.lineTo(70, 14);
-      ctx.lineTo(52, 4);
-      ctx.lineTo(38, 16);
-      ctx.lineTo(24, 4);
-      ctx.lineTo(6, 14);
-      ctx.lineTo(6, 48);
+      ctx.moveTo(40, 80);
+      ctx.lineTo(74, 52);
+      ctx.lineTo(74, 16);
+      ctx.lineTo(55, 4);
+      ctx.lineTo(40, 18);
+      ctx.lineTo(25, 4);
+      ctx.lineTo(6, 16);
+      ctx.lineTo(6, 52);
       ctx.closePath();
       ctx.fill();
 
       ctx.strokeStyle = '#ff0055';
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = 2.8;
+      ctx.stroke();
+
+      // Specular Armor Plate Lines
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(40, 78);
+      ctx.lineTo(72, 51);
+      ctx.moveTo(40, 78);
+      ctx.lineTo(8, 51);
       ctx.stroke();
 
       // Reinforced Gunmetal Sponsons
-      ctx.fillStyle = '#1c202b';
-      ctx.fillRect(10, 24, 12, 28);
-      ctx.fillRect(54, 24, 12, 28);
+      ctx.fillStyle = '#1e2330';
+      ctx.fillRect(10, 26, 14, 30);
+      ctx.fillRect(56, 26, 14, 30);
       ctx.strokeStyle = '#e11d48';
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(10, 24, 12, 28);
-      ctx.strokeRect(54, 24, 12, 28);
+      ctx.lineWidth = 1.6;
+      ctx.strokeRect(10, 26, 14, 30);
+      ctx.strokeRect(56, 26, 14, 30);
 
-      // Exposed Crimson Reactor Core (Vulnerable Weakpoint)
-      const coreGrad = ctx.createRadialGradient(38, 38, 2, 38, 38, 14);
+      // Heavy Cannon Barrels on Sponsons
+      ctx.fillStyle = '#0f121a';
+      ctx.fillRect(14, 56, 6, 14);
+      ctx.fillRect(60, 56, 6, 14);
+      ctx.fillStyle = '#ff0055';
+      ctx.fillRect(15, 68, 4, 3);
+      ctx.fillRect(61, 68, 4, 3);
+
+      // Exposed Crimson Reactor Core (Thermonuclear Glow)
+      const coreGrad = ctx.createRadialGradient(40, 42, 2, 40, 42, 16);
       coreGrad.addColorStop(0, '#ffffff');
-      coreGrad.addColorStop(0.4, '#ff0033');
-      coreGrad.addColorStop(0.8, '#99001f');
-      coreGrad.addColorStop(1, 'rgba(153, 0, 31, 0)');
+      coreGrad.addColorStop(0.35, '#ff0033');
+      coreGrad.addColorStop(0.8, '#880018');
+      coreGrad.addColorStop(1, 'rgba(136, 0, 24, 0)');
       ctx.fillStyle = coreGrad;
       ctx.beginPath();
-      ctx.arc(38, 38, 14, 0, Math.PI * 2);
+      ctx.arc(40, 42, 16, 0, Math.PI * 2);
       ctx.fill();
+
+      // Reactor Containment Grid
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(40, 42, 9, 0, Math.PI * 2);
+      ctx.moveTo(31, 42); ctx.lineTo(49, 42);
+      ctx.moveTo(40, 33); ctx.lineTo(40, 51);
+      ctx.stroke();
 
       scene.textures.addCanvas('enemy_tank', canvas);
       scene.textures.addCanvas('enemy_cruiser', canvas);
     }
 
-    // 3.4 Shooter (Tactical Assault Rail Gunship) (60 x 64)
+    // 3.4 Shooter (Tactical Assault Rail Gunship) (64 x 70)
     if (!scene.textures.exists('enemy_shooter')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 60;
-      canvas.height = 64;
+      canvas.width = 64;
+      canvas.height = 70;
       const ctx = canvas.getContext('2d')!;
       ctx.shadowColor = '#ff0055';
-      ctx.shadowBlur = 12;
+      ctx.shadowBlur = 14;
 
       // Dark Iron Composite Fuselage
-      const grad = ctx.createLinearGradient(30, 0, 30, 64);
-      grad.addColorStop(0, '#242938');
-      grad.addColorStop(0.6, '#131620');
+      const grad = ctx.createLinearGradient(32, 0, 32, 70);
+      grad.addColorStop(0, '#282e40');
+      grad.addColorStop(0.6, '#141722');
       grad.addColorStop(1, '#090a10');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.moveTo(30, 58);
-      ctx.lineTo(56, 26);
-      ctx.lineTo(50, 8);
-      ctx.lineTo(38, 14);
-      ctx.lineTo(30, 4);
-      ctx.lineTo(22, 14);
-      ctx.lineTo(10, 8);
-      ctx.lineTo(4, 26);
+      ctx.moveTo(32, 64);
+      ctx.lineTo(60, 28);
+      ctx.lineTo(53, 8);
+      ctx.lineTo(40, 16);
+      ctx.lineTo(32, 4);
+      ctx.lineTo(24, 16);
+      ctx.lineTo(11, 8);
+      ctx.lineTo(4, 28);
       ctx.closePath();
       ctx.fill();
 
       ctx.strokeStyle = '#ff0055';
-      ctx.lineWidth = 2.2;
+      ctx.lineWidth = 2.4;
       ctx.stroke();
 
       // Twin Forward Railgun Batteries with Red Energy Conduits
       ctx.fillStyle = '#ff0033';
-      ctx.fillRect(16, 44, 5, 14);
-      ctx.fillRect(39, 44, 5, 14);
+      ctx.fillRect(17, 48, 6, 16);
+      ctx.fillRect(41, 48, 6, 16);
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(17, 54, 3, 4);
-      ctx.fillRect(40, 54, 3, 4);
+      ctx.fillRect(18, 60, 4, 4);
+      ctx.fillRect(42, 60, 4, 4);
+
+      // Targeting Radome Core
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = '#ff0033';
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.arc(32, 30, 6, 0, Math.PI * 2);
+      ctx.fill();
 
       scene.textures.addCanvas('enemy_shooter', canvas);
       scene.textures.addCanvas('enemy_gunship', canvas);
     }
 
-    // 3.5 Bomber (Heavy Munitions Hazard Drone) (48 x 52)
+    // 3.5 Bomber (Heavy Munitions Hazard Drone) (52 x 58)
     if (!scene.textures.exists('enemy_bomber')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 48;
-      canvas.height = 52;
+      canvas.width = 52;
+      canvas.height = 58;
       const ctx = canvas.getContext('2d')!;
       ctx.shadowColor = '#ff0033';
-      ctx.shadowBlur = 14;
+      ctx.shadowBlur = 16;
 
       // Heavy Charcoal Armor with Hazard Grooves
-      const grad = ctx.createLinearGradient(24, 0, 24, 52);
-      grad.addColorStop(0, '#262833');
-      grad.addColorStop(0.6, '#141620');
+      const grad = ctx.createLinearGradient(26, 0, 26, 58);
+      grad.addColorStop(0, '#2a2c38');
+      grad.addColorStop(0.6, '#151722');
       grad.addColorStop(1, '#090a0f');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.moveTo(24, 48);
-      ctx.lineTo(44, 12);
-      ctx.lineTo(24, 22);
-      ctx.lineTo(4, 12);
+      ctx.moveTo(26, 54);
+      ctx.lineTo(48, 14);
+      ctx.lineTo(26, 24);
+      ctx.lineTo(4, 14);
       ctx.closePath();
       ctx.fill();
 
       ctx.strokeStyle = '#dc2626';
-      ctx.lineWidth = 2.2;
+      ctx.lineWidth = 2.4;
+      ctx.stroke();
+
+      // Hazard Warning Chevrons on Wings
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(12, 22); ctx.lineTo(16, 26);
+      ctx.moveTo(16, 22); ctx.lineTo(20, 26);
+      ctx.moveTo(36, 22); ctx.lineTo(32, 26);
+      ctx.moveTo(40, 22); ctx.lineTo(36, 26);
       ctx.stroke();
 
       // Pulsing Thermonuclear Detonation Core
-      const nukeGrad = ctx.createRadialGradient(24, 30, 2, 24, 30, 10);
+      const nukeGrad = ctx.createRadialGradient(26, 34, 2, 26, 34, 12);
       nukeGrad.addColorStop(0, '#ffffff');
-      nukeGrad.addColorStop(0.4, '#ff0033');
-      nukeGrad.addColorStop(0.8, '#99001f');
-      nukeGrad.addColorStop(1, 'rgba(153, 0, 31, 0)');
+      nukeGrad.addColorStop(0.35, '#ff0033');
+      nukeGrad.addColorStop(0.8, '#880018');
+      nukeGrad.addColorStop(1, 'rgba(136, 0, 24, 0)');
       ctx.fillStyle = nukeGrad;
       ctx.beginPath();
-      ctx.arc(24, 30, 10, 0, Math.PI * 2);
+      ctx.arc(26, 34, 12, 0, Math.PI * 2);
       ctx.fill();
 
       scene.textures.addCanvas('enemy_bomber', canvas);
     }
 
-    // 3.6 Elite Reaper (Apex Command Battlecruiser) (80 x 84)
+    // 3.6 Elite Reaper (Apex Command Battlecruiser) (86 x 92)
     if (!scene.textures.exists('enemy_elite')) {
       const canvas = document.createElement('canvas');
-      canvas.width = 80;
-      canvas.height = 84;
+      canvas.width = 86;
+      canvas.height = 92;
       const ctx = canvas.getContext('2d')!;
       ctx.shadowColor = '#ff0033';
-      ctx.shadowBlur = 16;
+      ctx.shadowBlur = 18;
 
       // Command Dreadnought Hull
-      const grad = ctx.createLinearGradient(40, 0, 40, 84);
-      grad.addColorStop(0, '#32384a');
-      grad.addColorStop(0.5, '#181b24');
+      const grad = ctx.createLinearGradient(43, 0, 43, 92);
+      grad.addColorStop(0, '#363d50');
+      grad.addColorStop(0.5, '#1a1e28');
       grad.addColorStop(1, '#090a10');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.moveTo(40, 78);
-      ctx.lineTo(76, 36);
-      ctx.lineTo(64, 8);
-      ctx.lineTo(50, 20);
-      ctx.lineTo(40, 6);
-      ctx.lineTo(30, 20);
+      ctx.moveTo(43, 86);
+      ctx.lineTo(82, 40);
+      ctx.lineTo(70, 8);
+      ctx.lineTo(54, 22);
+      ctx.lineTo(43, 6);
+      ctx.lineTo(32, 22);
       ctx.lineTo(16, 8);
-      ctx.lineTo(4, 36);
+      ctx.lineTo(4, 40);
       ctx.closePath();
       ctx.fill();
 
       ctx.strokeStyle = '#ff0033';
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = 2.8;
+      ctx.stroke();
+
+      // Royal Gold/Crimson Armor Accents
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(43, 14);
+      ctx.lineTo(54, 26);
+      ctx.lineTo(43, 38);
+      ctx.lineTo(32, 26);
+      ctx.closePath();
       ctx.stroke();
 
       // Protective Crimson Deflector Pylon Halo
       ctx.strokeStyle = '#ff0055';
-      ctx.lineWidth = 1.8;
+      ctx.lineWidth = 2.0;
       ctx.beginPath();
-      ctx.arc(40, 40, 18, 0, Math.PI * 2);
+      ctx.arc(43, 44, 20, 0, Math.PI * 2);
       ctx.stroke();
 
       // Forward Sensor Array & Command Visor
       ctx.fillStyle = '#ffffff';
       ctx.shadowColor = '#ff0033';
-      ctx.shadowBlur = 14;
+      ctx.shadowBlur = 16;
       ctx.beginPath();
-      ctx.ellipse(40, 52, 6, 3, 0, 0, Math.PI * 2);
+      ctx.ellipse(43, 58, 7, 3.5, 0, 0, Math.PI * 2);
       ctx.fill();
 
       scene.textures.addCanvas('enemy_elite', canvas);
@@ -789,18 +961,24 @@ export class TextureGenerator {
       scene.textures.addCanvas('energy_mine', canvas);
     }
 
-    // 5. Boss Textures (4 Unique Bosses)
-    // 5.1 Boss 1: VOID DESTROYER (210 x 170)
+    // 5. Boss Textures (4 Unique High-Detail Dreadnoughts)
+    // 5.1 Boss 1: VOID DESTROYER (220 x 180) - Heavy Shadow Battleship
     if (!scene.textures.exists('boss_void_destroyer')) {
       const canvas = document.createElement('canvas');
       canvas.width = 220;
       canvas.height = 180;
       const ctx = canvas.getContext('2d')!;
       ctx.shadowColor = '#9333ea';
-      ctx.shadowBlur = 18;
-      ctx.fillStyle = '#0f041c';
+      ctx.shadowBlur = 24;
+
+      // Dark Void Titanium Composite Hull
+      const grad = ctx.createLinearGradient(110, 0, 110, 180);
+      grad.addColorStop(0, '#2e1065');
+      grad.addColorStop(0.4, '#140326');
+      grad.addColorStop(1, '#070110');
+      ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.moveTo(110, 172);
+      ctx.moveTo(110, 174);
       ctx.lineTo(150, 140);
       ctx.lineTo(205, 110);
       ctx.lineTo(215, 45);
@@ -816,33 +994,83 @@ export class TextureGenerator {
       ctx.lineTo(70, 140);
       ctx.closePath();
       ctx.fill();
-      ctx.strokeStyle = '#c084fc';
-      ctx.lineWidth = 3.5;
+
+      // Sharp Violet Outer Keel
+      ctx.strokeStyle = '#a855f7';
+      ctx.lineWidth = 3.2;
       ctx.stroke();
-      const core = ctx.createRadialGradient(110, 95, 4, 110, 95, 28);
+
+      // Specular Armor Plate Lines
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(110, 170); ctx.lineTo(150, 138);
+      ctx.moveTo(110, 170); ctx.lineTo(70, 138);
+      ctx.moveTo(150, 138); ctx.lineTo(195, 108);
+      ctx.moveTo(70, 138); ctx.lineTo(25, 108);
+      ctx.stroke();
+
+      // Broadside Weapon Sponsons
+      ctx.fillStyle = '#7e22ce';
+      ctx.fillRect(185, 60, 18, 6);
+      ctx.fillRect(185, 75, 18, 6);
+      ctx.fillRect(17, 60, 18, 6);
+      ctx.fillRect(17, 75, 18, 6);
+
+      // Bioluminescent Conduit Lines
+      ctx.strokeStyle = '#c084fc';
+      ctx.lineWidth = 1.8;
+      ctx.shadowColor = '#c084fc';
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.moveTo(90, 60); ctx.lineTo(110, 85); ctx.lineTo(130, 60);
+      ctx.moveTo(80, 95); ctx.lineTo(140, 95);
+      ctx.stroke();
+
+      // Thermonuclear Dark Matter Reactor Core
+      const core = ctx.createRadialGradient(110, 100, 3, 110, 100, 32);
       core.addColorStop(0, '#ffffff');
-      core.addColorStop(0.3, '#c084fc');
-      core.addColorStop(0.7, '#7e22ce');
-      core.addColorStop(1, 'rgba(126, 34, 206, 0.1)');
+      core.addColorStop(0.25, '#f3e8ff');
+      core.addColorStop(0.55, '#c084fc');
+      core.addColorStop(0.85, '#6b21a8');
+      core.addColorStop(1, 'rgba(107, 33, 168, 0)');
       ctx.fillStyle = core;
       ctx.beginPath();
-      ctx.arc(110, 95, 28, 0, Math.PI * 2);
+      ctx.arc(110, 100, 32, 0, Math.PI * 2);
       ctx.fill();
+
+      // Reactor Containment Ring
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(110, 100, 14, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Forward Command Bridge
+      ctx.fillStyle = '#f0abfc';
+      ctx.fillRect(104, 145, 12, 5);
+
       scene.textures.addCanvas('boss_void_destroyer', canvas);
       scene.textures.addCanvas('boss_mothership', canvas);
     }
 
-    // 5.2 Boss 2: NEBULA QUEEN (230 x 180)
+    // 5.2 Boss 2: NEBULA QUEEN (240 x 190) - Bio-Cybernetic Cruiser
     if (!scene.textures.exists('boss_nebula_queen')) {
       const canvas = document.createElement('canvas');
       canvas.width = 240;
       canvas.height = 190;
       const ctx = canvas.getContext('2d')!;
       ctx.shadowColor = '#06b6d4';
-      ctx.shadowBlur = 18;
-      ctx.fillStyle = '#031b26';
+      ctx.shadowBlur = 24;
+
+      // Deep Azure Hull with Cyber Weave
+      const grad = ctx.createLinearGradient(120, 0, 120, 190);
+      grad.addColorStop(0, '#0e3b52');
+      grad.addColorStop(0.45, '#051f2d');
+      grad.addColorStop(1, '#020b10');
+      ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.moveTo(120, 180);
+      ctx.moveTo(120, 184);
       ctx.lineTo(170, 130);
       ctx.lineTo(230, 90);
       ctx.lineTo(220, 35);
@@ -856,32 +1084,75 @@ export class TextureGenerator {
       ctx.lineTo(70, 130);
       ctx.closePath();
       ctx.fill();
+
+      // Razor Cyan Trim
       ctx.strokeStyle = '#22d3ee';
-      ctx.lineWidth = 3.5;
+      ctx.lineWidth = 3.4;
       ctx.stroke();
-      const qCore = ctx.createRadialGradient(120, 90, 4, 120, 90, 30);
+
+      // Wing Swept Specular Edges
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(120, 180); ctx.lineTo(225, 90);
+      ctx.moveTo(120, 180); ctx.lineTo(15, 90);
+      ctx.stroke();
+
+      // Bioluminescent Tendril Arrays
+      ctx.strokeStyle = '#06b6d4';
+      ctx.lineWidth = 2.0;
+      ctx.shadowColor = '#22d3ee';
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.moveTo(100, 50); ctx.lineTo(120, 80); ctx.lineTo(140, 50);
+      ctx.moveTo(70, 100); ctx.lineTo(120, 120); ctx.lineTo(170, 100);
+      ctx.stroke();
+
+      // Tachyon Nova Core
+      const qCore = ctx.createRadialGradient(120, 95, 4, 120, 95, 34);
       qCore.addColorStop(0, '#ffffff');
-      qCore.addColorStop(0.3, '#22d3ee');
-      qCore.addColorStop(0.8, '#0891b2');
-      qCore.addColorStop(1, 'rgba(8, 145, 178, 0)');
+      qCore.addColorStop(0.3, '#67e8f9');
+      qCore.addColorStop(0.65, '#0891b2');
+      qCore.addColorStop(0.9, '#155e75');
+      qCore.addColorStop(1, 'rgba(21, 94, 117, 0)');
       ctx.fillStyle = qCore;
       ctx.beginPath();
-      ctx.arc(120, 90, 30, 0, Math.PI * 2);
+      ctx.arc(120, 95, 34, 0, Math.PI * 2);
       ctx.fill();
+
+      // Prismatic Focusing Diamond
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(120, 83); ctx.lineTo(132, 95); ctx.lineTo(120, 107); ctx.lineTo(108, 95);
+      ctx.closePath();
+      ctx.stroke();
+
+      // Dual Pulse Emitters
+      ctx.fillStyle = '#a5f3fc';
+      ctx.fillRect(60, 120, 6, 12);
+      ctx.fillRect(174, 120, 6, 12);
+
       scene.textures.addCanvas('boss_nebula_queen', canvas);
     }
 
-    // 5.3 Boss 3: STAR EATER (240 x 180)
+    // 5.3 Boss 3: STAR EATER (250 x 190) - Solar Leviathan Dreadnought
     if (!scene.textures.exists('boss_star_eater')) {
       const canvas = document.createElement('canvas');
       canvas.width = 250;
       canvas.height = 190;
       const ctx = canvas.getContext('2d')!;
       ctx.shadowColor = '#f97316';
-      ctx.shadowBlur = 20;
-      ctx.fillStyle = '#260a02';
+      ctx.shadowBlur = 26;
+
+      // Heavy Carbonized Magma Armor
+      const grad = ctx.createLinearGradient(125, 0, 125, 190);
+      grad.addColorStop(0, '#431407');
+      grad.addColorStop(0.45, '#220803');
+      grad.addColorStop(1, '#0c0201');
+      ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.moveTo(125, 184);
+      ctx.moveTo(125, 186);
       ctx.lineTo(180, 135);
       ctx.lineTo(240, 100);
       ctx.lineTo(235, 40);
@@ -895,32 +1166,66 @@ export class TextureGenerator {
       ctx.lineTo(70, 135);
       ctx.closePath();
       ctx.fill();
-      ctx.strokeStyle = '#fb923c';
-      ctx.lineWidth = 4;
+
+      // Radiant Molten Edge
+      ctx.strokeStyle = '#f97316';
+      ctx.lineWidth = 3.6;
       ctx.stroke();
-      const sCore = ctx.createRadialGradient(125, 95, 5, 125, 95, 32);
+
+      // Armor Heat Dissipation Vents
+      ctx.fillStyle = '#ffedd5';
+      ctx.fillRect(165, 70, 24, 4);
+      ctx.fillRect(165, 80, 24, 4);
+      ctx.fillRect(61, 70, 24, 4);
+      ctx.fillRect(61, 80, 24, 4);
+
+      // Specular Ridge Lines
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.moveTo(125, 182); ctx.lineTo(235, 100);
+      ctx.moveTo(125, 182); ctx.lineTo(15, 100);
+      ctx.stroke();
+
+      // Fusion Flare Core
+      const sCore = ctx.createRadialGradient(125, 100, 5, 125, 100, 36);
       sCore.addColorStop(0, '#ffffff');
-      sCore.addColorStop(0.4, '#f97316');
-      sCore.addColorStop(0.8, '#b45309');
-      sCore.addColorStop(1, 'rgba(180, 83, 9, 0)');
+      sCore.addColorStop(0.28, '#fef08a');
+      sCore.addColorStop(0.58, '#f97316');
+      sCore.addColorStop(0.85, '#9a3412');
+      sCore.addColorStop(1, 'rgba(154, 52, 18, 0)');
       ctx.fillStyle = sCore;
       ctx.beginPath();
-      ctx.arc(125, 95, 32, 0, Math.PI * 2);
+      ctx.arc(125, 100, 36, 0, Math.PI * 2);
       ctx.fill();
+
+      // Solar Corona Ring
+      ctx.strokeStyle = '#ffedd5';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.arc(125, 100, 18, 0, Math.PI * 2);
+      ctx.stroke();
+
       scene.textures.addCanvas('boss_star_eater', canvas);
     }
 
-    // 5.4 Boss 4: GALACTIC CORE (250 x 190)
+    // 5.4 Boss 4: GALACTIC CORE (260 x 200) - Singularity Flagship
     if (!scene.textures.exists('boss_galactic_core')) {
       const canvas = document.createElement('canvas');
       canvas.width = 260;
       canvas.height = 200;
       const ctx = canvas.getContext('2d')!;
       ctx.shadowColor = '#ec4899';
-      ctx.shadowBlur = 22;
-      ctx.fillStyle = '#1c0316';
+      ctx.shadowBlur = 28;
+
+      // Obsidian Cosmic Chassis
+      const grad = ctx.createLinearGradient(130, 0, 130, 200);
+      grad.addColorStop(0, '#4a0429');
+      grad.addColorStop(0.45, '#200212');
+      grad.addColorStop(1, '#090005');
+      ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.moveTo(130, 192);
+      ctx.moveTo(130, 194);
       ctx.lineTo(190, 140);
       ctx.lineTo(250, 105);
       ctx.lineTo(245, 45);
@@ -934,18 +1239,51 @@ export class TextureGenerator {
       ctx.lineTo(70, 140);
       ctx.closePath();
       ctx.fill();
-      ctx.strokeStyle = '#f472b6';
-      ctx.lineWidth = 4;
+
+      // Neon Rose Primary Keel
+      ctx.strokeStyle = '#f43f5e';
+      ctx.lineWidth = 3.8;
       ctx.stroke();
-      const gCore = ctx.createRadialGradient(130, 100, 6, 130, 100, 36);
+
+      // Gold Quantum Stabilizers
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(130, 25); ctx.lineTo(155, 60); ctx.lineTo(130, 95); ctx.lineTo(105, 60);
+      ctx.closePath();
+      ctx.stroke();
+
+      // High-Voltage Shroud Overlays
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.moveTo(130, 190); ctx.lineTo(245, 105);
+      ctx.moveTo(130, 190); ctx.lineTo(15, 105);
+      ctx.stroke();
+
+      // Event Horizon Singularity Reactor
+      const gCore = ctx.createRadialGradient(130, 105, 6, 130, 105, 40);
       gCore.addColorStop(0, '#ffffff');
-      gCore.addColorStop(0.3, '#ec4899');
-      gCore.addColorStop(0.7, '#be185d');
-      gCore.addColorStop(1, 'rgba(190, 24, 93, 0)');
+      gCore.addColorStop(0.25, '#fbcfe8');
+      gCore.addColorStop(0.6, '#ec4899');
+      gCore.addColorStop(0.85, '#831843');
+      gCore.addColorStop(1, 'rgba(131, 24, 67, 0)');
       ctx.fillStyle = gCore;
       ctx.beginPath();
-      ctx.arc(130, 100, 36, 0, Math.PI * 2);
+      ctx.arc(130, 105, 40, 0, Math.PI * 2);
       ctx.fill();
+
+      // Dual Interlocking Chrono Rings
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(130, 105, 20, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = '#f472b6';
+      ctx.beginPath();
+      ctx.arc(130, 105, 26, 0, Math.PI * 2);
+      ctx.stroke();
+
       scene.textures.addCanvas('boss_galactic_core', canvas);
     }
 
@@ -1432,6 +1770,68 @@ export class TextureGenerator {
       ctx.closePath();
       ctx.fill();
       scene.textures.addCanvas('core_flash', canvas);
+    }
+
+    // 13. Sub-Warp Spawn Gate Ring (64 x 64)
+    if (!scene.textures.exists('spawn_warp_gate')) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d')!;
+      ctx.shadowColor = '#00f0ff';
+      ctx.shadowBlur = 16;
+
+      // Outer Distortion Ring
+      ctx.strokeStyle = '#00f0ff';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.arc(32, 32, 26, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Inner Counter-Rotating Ring
+      ctx.strokeStyle = '#ff0055';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(32, 32, 16, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Energy Crosshairs
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(32, 4); ctx.lineTo(32, 12);
+      ctx.moveTo(32, 52); ctx.lineTo(32, 60);
+      ctx.moveTo(4, 32); ctx.lineTo(12, 32);
+      ctx.moveTo(52, 32); ctx.lineTo(60, 32);
+      ctx.stroke();
+
+      scene.textures.addCanvas('spawn_warp_gate', canvas);
+    }
+
+    // 14. Level-Up Golden Shockwave Ring (80 x 80)
+    if (!scene.textures.exists('shockwave_gold')) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 80;
+      canvas.height = 80;
+      const ctx = canvas.getContext('2d')!;
+      const grad = ctx.createRadialGradient(40, 40, 24, 40, 40, 39);
+      grad.addColorStop(0, 'rgba(250, 204, 21, 0)');
+      grad.addColorStop(0.4, 'rgba(255, 255, 255, 0.95)');
+      grad.addColorStop(0.7, 'rgba(234, 179, 8, 0.85)');
+      grad.addColorStop(1, 'rgba(202, 138, 4, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(40, 40, 39, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Core Golden Rings
+      ctx.strokeStyle = '#fef08a';
+      ctx.lineWidth = 2.0;
+      ctx.beginPath();
+      ctx.arc(40, 40, 28, 0, Math.PI * 2);
+      ctx.stroke();
+
+      scene.textures.addCanvas('shockwave_gold', canvas);
     }
   }
 }

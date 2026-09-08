@@ -105,8 +105,9 @@ html, body {
 }
 
 .cyber-btn:active {
-  transform: translateY(1px);
-  box-shadow: 0 0 10px rgba(255, 0, 51, 0.4);
+  transform: scale(0.97) translateY(1px);
+  box-shadow: 0 0 10px rgba(255, 0, 51, 0.5);
+  filter: brightness(0.92);
 }
 
 /* Secondary Button (Neutral Dark Sci-Fi) */
@@ -149,6 +150,12 @@ html, body {
   background: linear-gradient(180deg, rgba(255, 0, 85, 0.5) 0%, rgba(220, 38, 38, 0.35) 100%);
   box-shadow: 0 0 35px rgba(255, 0, 85, 0.75), inset 0 0 15px rgba(255, 0, 85, 0.4);
   transform: translateY(-2px);
+}
+
+.cyber-btn-danger:active, .cyber-btn-red:active {
+  transform: scale(0.97) translateY(1px);
+  box-shadow: 0 0 15px rgba(255, 0, 85, 0.5);
+  filter: brightness(0.92);
 }
 
 /* Glowing Neon Text */

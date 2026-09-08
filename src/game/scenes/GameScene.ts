@@ -1174,6 +1174,31 @@ export class GameScene extends Phaser.Scene {
     enemy.setData('type', type);
     enemy.setDepth(8);
 
+    // Sub-warp entrance effect
+    if (this.textures.exists('spawn_warp_gate') && y > -60) {
+      const gate = this.add.image(x, Math.max(20, y + 25), 'spawn_warp_gate');
+      gate.setDepth(6);
+      gate.setScale(0.2);
+      gate.setAlpha(0.85);
+      gate.setBlendMode(Phaser.BlendModes.ADD);
+      this.tweens.add({
+        targets: gate,
+        scale: 1.15,
+        alpha: 0,
+        rotation: 2.2,
+        duration: 260,
+        ease: 'Power2',
+        onComplete: () => gate.destroy(),
+      });
+      enemy.setScale(0.7);
+      this.tweens.add({
+        targets: enemy,
+        scale: 1,
+        duration: 160,
+        ease: 'Back.easeOut',
+      });
+    }
+
     const levelFactor = (this.playerLevel - 1) * 0.08 + (this.currentLevel - 1) * 0.12;
     const diff = 1 + levelFactor;
     const speedMult = 1 + Math.min(0.35, levelFactor * 0.35);
@@ -1594,6 +1619,8 @@ export class GameScene extends Phaser.Scene {
         this.destroyEnemy(enemy);
       } else {
         enemy.setData('hp', currentHp);
+        // Tactile micro knockback impulse
+        enemy.y = Math.max(10, enemy.y - 3.5);
         enemy.setTintFill(0xff3366);
         this.time.delayedCall(60, () => {
           if (enemy.active) enemy.clearTint();
@@ -1618,6 +1645,7 @@ export class GameScene extends Phaser.Scene {
       this.destroyAsteroid(asteroid);
     } else {
       asteroid.setData('hp', hp);
+      asteroid.y = Math.max(10, asteroid.y - 2);
       asteroid.setTintFill(0xff0055);
       this.time.delayedCall(60, () => {
         if (asteroid.active) asteroid.clearTint();
@@ -1680,13 +1708,13 @@ export class GameScene extends Phaser.Scene {
   private damagePlayer(amount: number): void {
     if (this.isInvulnerable || !this.isAlive) return;
 
-    this.cameras.main.shake(180, 0.012);
+    this.cameras.main.shake(200, 0.014);
 
     if (this.playerShield > 0) {
       this.playerShield = Math.max(0, this.playerShield - amount * 1.3);
       SoundEffects.playShieldAbsorb();
-      this.redSparkEmitter.explode(12, this.player.x, this.player.y);
-      this.player.setTintFill(0xff2a5f);
+      this.cyanSparkEmitter.explode(14, this.player.x, this.player.y);
+      this.player.setTintFill(0x00f0ff);
       this.time.delayedCall(70, () => {
         if (this.player && this.player.active) {
           this.player.clearTint();
@@ -1694,10 +1722,19 @@ export class GameScene extends Phaser.Scene {
       });
       if (this.playerShield === 0) {
         this.activePowerUps.delete('SHIELD');
+        this.showFloatingText('SHIELD COLLAPSED', this.player.x, this.player.y - 20, '#00f0ff', '18px');
       }
     } else {
       this.playerHealth = Math.max(0, this.playerHealth - amount);
       SoundEffects.playHit();
+      this.cameras.main.flash(160, 220, 0, 50);
+      this.redSparkEmitter.explode(18, this.player.x, this.player.y);
+      this.player.setTintFill(0xff0033);
+      this.time.delayedCall(80, () => {
+        if (this.player && this.player.active) {
+          this.player.clearTint();
+        }
+      });
     }
 
     this.emitStats(true);
@@ -1881,7 +1918,18 @@ export class GameScene extends Phaser.Scene {
     this.explosionEmitter.explode(isLarge ? 20 : 12, x, y);
 
     if (isLarge) {
-      this.cameras.main.shake(200, 0.008);
+      this.cameras.main.shake(200, 0.009);
+      // Secondary chain micro-explosions for heavy hulls
+      for (let i = 1; i <= 2; i++) {
+        this.time.delayedCall(i * 75, () => {
+          const ox = Phaser.Math.Between(-16, 16);
+          const oy = Phaser.Math.Between(-16, 16);
+          this.explosionEmitter.explode(8, x + ox, y + oy);
+          this.redSparkEmitter.explode(10, x + ox, y + oy);
+        });
+      }
+    } else {
+      this.cameras.main.shake(70, 0.003);
     }
   }
 
@@ -2053,7 +2101,27 @@ export class GameScene extends Phaser.Scene {
     this.playerXp = Math.min(excessXp, Math.floor(this.nextLevelXp * 0.25));
 
     SoundEffects.playLevelUp();
-    this.cameras.main.flash(300, 255, 0, 85);
+    this.cameras.main.flash(320, 255, 230, 100);
+    this.cameras.main.shake(160, 0.007);
+
+    // Radiant Golden Nova Shockwave Ring
+    if (this.textures.exists('shockwave_gold')) {
+      const ring = this.add.image(this.player.x, this.player.y, 'shockwave_gold');
+      ring.setDepth(20);
+      ring.setScale(0.2);
+      ring.setAlpha(1);
+      ring.setBlendMode(Phaser.BlendModes.ADD);
+      this.tweens.add({
+        targets: ring,
+        scale: 4.8,
+        alpha: 0,
+        duration: 480,
+        ease: 'Power2',
+        onComplete: () => ring.destroy(),
+      });
+    }
+
+    this.showFloatingText(`RANK ${this.playerLevel} REACHED!`, this.player.x, this.player.y - 35, '#facc15', '20px');
 
     const options = this.generateUpgradeOptions();
     this.physics.pause();
