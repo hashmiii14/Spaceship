@@ -5,16 +5,26 @@ import { AudioTrack } from '../types/game';
 export interface FourthTrackConfig extends AudioTrack {}
 
 /**
- * Configurable 4th track entry:
- * Points to user-provided file /audio/fourth-track.mp3
+ * Track: Apun Jaise Tapori (Munna Bhai M.B.B.S.)
  */
-export const fourthTrack: FourthTrackConfig = {
-  id: 'fourth-track',
+export const apunJaiseTaporiTrack: AudioTrack = {
+  id: 'apun-jaise-tapori',
   title: 'Apun Jaise Tapori',
   artist: 'Munna Bhai M.B.B.S.',
-  url: '/audio/fourth-track.mp3',
+  url: '/audio/apun-jaise-tapori.mp3',
 };
 
+// Backwards compatibility alias
+export const fourthTrack: FourthTrackConfig = apunJaiseTaporiTrack;
+
+/**
+ * Sequential Playlist:
+ * 1. Chipi Chipi Chapa Chapa
+ * 2. Apun Jaise Tapori
+ * 3. Gangnam Style
+ * 4. Axel F
+ * (Repeats continuously in this exact order)
+ */
 export const PLAYLIST: AudioTrack[] = [
   {
     id: 'chipi-chipi',
@@ -22,19 +32,19 @@ export const PLAYLIST: AudioTrack[] = [
     artist: 'Christell',
     url: '/audio/chipi-chipi.mp3',
   },
-  {
-    id: 'axel-f',
-    title: 'Axel F',
-    artist: 'Crazy Frog',
-    url: '/audio/axel-f.mp3',
-  },
+  apunJaiseTaporiTrack,
   {
     id: 'gangnam-style',
     title: 'Gangnam Style',
     artist: 'PSY',
     url: '/audio/gangnam-style.mp3',
   },
-  fourthTrack,
+  {
+    id: 'axel-f',
+    title: 'Axel F',
+    artist: 'Crazy Frog',
+    url: '/audio/axel-f.mp3',
+  },
 ];
 
 class MusicManagerClass {
