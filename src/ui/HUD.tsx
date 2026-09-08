@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Shield,
-  Heart,
+  Activity,
   Trophy,
   Pause,
   Play,
   Music,
   Zap,
-  Flame,
   Crosshair,
   Award,
   Clock,
@@ -45,16 +44,16 @@ interface PriorityAlert {
 const POWERUP_ICONS: Record<PowerUpType, { label: string; color: string; icon: React.ReactNode }> = {
   SHIELD: { label: 'SHIELD', color: '#00f0ff', icon: <Shield className="w-3.5 h-3.5" /> },
   RAPID_FIRE: { label: 'RAPID', color: '#ff0055', icon: <Zap className="w-3.5 h-3.5" /> },
-  DOUBLE_DAMAGE: { label: 'OVERCHARGE', color: '#ff0033', icon: <Flame className="w-3.5 h-3.5" /> },
+  DOUBLE_DAMAGE: { label: 'OVERCHARGE', color: '#ff0033', icon: <Zap className="w-3.5 h-3.5" /> },
   SPREAD_SHOT: { label: 'SPREAD', color: '#f43f5e', icon: <Crosshair className="w-3.5 h-3.5" /> },
   PLASMA_CANNON: { label: 'PLASMA', color: '#ff2a5f', icon: <Zap className="w-3.5 h-3.5" /> },
-  HYPERBEAM: { label: 'HYPERBEAM', color: '#ff0044', icon: <Flame className="w-3.5 h-3.5" /> },
+  HYPERBEAM: { label: 'HYPERBEAM', color: '#ff0044', icon: <Zap className="w-3.5 h-3.5" /> },
   SLOW_MO: { label: 'CHRONO', color: '#818cf8', icon: <Clock className="w-3.5 h-3.5" /> },
   NUKE: { label: 'NUKE', color: '#ef4444', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
-  HEALTH: { label: 'REPAIR', color: '#22c55e', icon: <Heart className="w-3.5 h-3.5" /> },
+  HEALTH: { label: 'REPAIR', color: '#22c55e', icon: <Activity className="w-3.5 h-3.5" /> },
   SCORE_BOOST: { label: '2X SCORE', color: '#a855f7', icon: <Award className="w-3.5 h-3.5" /> },
   TRIPLE_SHOT: { label: 'TRIPLE', color: '#ff5500', icon: <Crosshair className="w-3.5 h-3.5" /> },
-  DOUBLE_SHOT: { label: 'DOUBLE', color: '#ff0055', icon: <Flame className="w-3.5 h-3.5" /> },
+  DOUBLE_SHOT: { label: 'DOUBLE', color: '#ff0055', icon: <Crosshair className="w-3.5 h-3.5" /> },
   SLOW_MOTION: { label: 'CHRONO', color: '#818cf8', icon: <Clock className="w-3.5 h-3.5" /> },
 };
 
@@ -294,7 +293,7 @@ export const HUD: React.FC<HUDProps> = React.memo(({
         <div className="flex items-center justify-between w-full">
           {/* Mini HP & Shield Bars */}
           <div className="flex items-center gap-1.5 bg-black/80 border border-red-900/40 px-2 py-0.5 rounded w-32 shadow-[0_0_10px_rgba(255,0,51,0.15)]">
-            <Heart className="w-2.5 h-2.5 text-red-500 shrink-0" />
+            <Activity className="w-2.5 h-2.5 text-red-500 shrink-0" />
             <div className="bar-track flex-1 h-1.5 bg-gray-950">
               <div className="bar-fill-hp h-full transition-all duration-150" style={{ width: `${hpPercent}%` }} />
             </div>
@@ -368,7 +367,7 @@ export const HUD: React.FC<HUDProps> = React.memo(({
           <div className="cyber-panel-military px-2 sm:px-3 py-1 sm:py-2.5 flex flex-col gap-1 sm:gap-2 w-36 sm:w-64 border-red-500/40">
             {/* Hull HP */}
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <Heart className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-500 shrink-0" />
+              <Activity className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-500 shrink-0" />
               <div className="bar-track flex-1 h-1.5 sm:h-2.5">
                 <div
                   className="bar-fill-hp transition-all duration-150"

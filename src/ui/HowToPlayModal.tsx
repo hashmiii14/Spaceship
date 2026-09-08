@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Shield, Zap, Flame, Crosshair, Heart, Award, Skull, Target, Sparkles, Clock, AlertTriangle } from 'lucide-react';
+import { X, Shield, Zap, Crosshair, Activity, Award, Target, Clock, AlertTriangle, Cpu } from 'lucide-react';
 import { SoundEffects } from '../audio/SoundEffects';
 
 interface HowToPlayModalProps {
@@ -74,7 +74,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ onClose }) => {
           {/* XP & Upgrades System */}
           <div>
             <h3 className="text-sm font-black font-mono tracking-widest text-purple-400 uppercase mb-3 flex items-center gap-2">
-              <Sparkles className="w-4 h-4" /> XP & SYSTEM ENHANCEMENTS
+              <Cpu className="w-4 h-4 text-purple-400" /> XP & SYSTEM ENHANCEMENTS
             </h3>
             <div className="bg-purple-950/30 border border-purple-500/30 rounded-lg p-3 text-xs font-mono text-gray-300 space-y-1.5">
               <p>- Destroying enemies and asteroids releases purple XP Gems.</p>
@@ -86,7 +86,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ onClose }) => {
           {/* Kill Combo Multipliers */}
           <div>
             <h3 className="text-sm font-black font-mono tracking-widest text-yellow-400 uppercase mb-3 flex items-center gap-2">
-              <Flame className="w-4 h-4" /> COMBAT KILL COMBOS
+              <Crosshair className="w-4 h-4 text-yellow-400" /> COMBAT KILL COMBOS
             </h3>
             <div className="bg-yellow-950/30 border border-yellow-500/30 rounded-lg p-3 text-xs font-mono text-gray-300 space-y-1.5">
               <p>- Chain rapid kills within 2.5 seconds to build your combo multiplier up to 20x score!</p>
@@ -117,7 +117,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ onClose }) => {
               </div>
 
               <div className="bg-black/50 border border-pink-500/30 rounded-lg p-2.5 flex items-start gap-2">
-                <Flame className="w-4 h-4 text-pink-400 shrink-0 mt-0.5" />
+                <Zap className="w-4 h-4 text-pink-400 shrink-0 mt-0.5" />
                 <div>
                   <div className="font-bold text-pink-300">OVERDRIVE</div>
                   <div className="text-[10px] text-gray-400">2.5x damage booster on all attacks</div>
@@ -141,7 +141,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ onClose }) => {
               </div>
 
               <div className="bg-black/50 border border-green-500/30 rounded-lg p-2.5 flex items-start gap-2">
-                <Heart className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
+                <Activity className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
                 <div>
                   <div className="font-bold text-green-300">HULL REPAIR</div>
                   <div className="text-[10px] text-gray-400">Restores +35 HP hull integrity</div>
@@ -153,7 +153,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ onClose }) => {
           {/* Enemy Threats & Bosses */}
           <div>
             <h3 className="text-sm font-black font-mono tracking-widest text-cyan-400 uppercase mb-3 flex items-center gap-2">
-              <Skull className="w-4 h-4" /> 7 SECTOR PROGRESSION & BOSSES
+              <Target className="w-4 h-4 text-red-400" /> 7 SECTOR PROGRESSION & BOSSES
             </h3>
             <div className="space-y-2 text-xs font-mono text-gray-300">
               <div className="bg-black/50 border border-red-500/20 rounded-lg p-2.5 flex justify-between items-center">

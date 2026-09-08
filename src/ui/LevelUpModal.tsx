@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Zap, Shield, Heart, Crosshair, Sparkles, Wind, Magnet, ChevronRight } from 'lucide-react';
+import { Zap, Shield, Activity, Crosshair, Wind, Magnet, ChevronRight } from 'lucide-react';
 import { LevelUpOption } from '../types/game';
 import { SoundEffects } from '../audio/SoundEffects';
 
@@ -41,7 +41,7 @@ const RARITY_STYLES: Record<string, { border: string; glow: string; badge: strin
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   weapon: <Crosshair className="w-4 h-4 sm:w-5 sm:h-5" />,
-  hull: <Heart className="w-4 h-4 sm:w-5 sm:h-5" />,
+  hull: <Activity className="w-4 h-4 sm:w-5 sm:h-5" />,
   shield: <Shield className="w-4 h-4 sm:w-5 sm:h-5" />,
   speed: <Wind className="w-4 h-4 sm:w-5 sm:h-5" />,
   damage: <Zap className="w-4 h-4 sm:w-5 sm:h-5" />,
@@ -75,11 +75,11 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ options, onSelect })
       <div className="w-full max-w-lg md:max-w-4xl flex flex-col items-center my-auto py-2 sm:py-4">
         {/* Header Title */}
         <div className="flex items-center gap-2 mb-1">
-          <Sparkles className="w-4 h-4 sm:w-6 sm:h-6 text-red-400 animate-spin" />
+          <Zap className="w-4 h-4 sm:w-6 sm:h-6 text-red-400 animate-pulse" />
           <h2 className="text-xl sm:text-3xl md:text-4xl font-black font-['Orbitron'] tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white via-rose-200 to-red-500 neon-glow-red text-center">
             SYSTEM MATRIX LEVEL-UP
           </h2>
-          <Sparkles className="w-4 h-4 sm:w-6 sm:h-6 text-red-400 animate-spin" />
+          <Zap className="w-4 h-4 sm:w-6 sm:h-6 text-red-400 animate-pulse" />
         </div>
         <p className="text-[10px] sm:text-xs md:text-sm font-mono tracking-[0.2em] text-gray-400 uppercase mb-3 sm:mb-6 text-center">
           SELECT 1 TACTICAL UPGRADE TO RESUME COMBAT

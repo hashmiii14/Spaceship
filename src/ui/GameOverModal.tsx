@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { RotateCcw, Home, Trophy, Sparkles, Skull, Clock, Flame, Award } from 'lucide-react';
+import { RotateCcw, Home, Trophy, AlertTriangle, Crown, Clock, Zap, Award } from 'lucide-react';
 import { SoundEffects } from '../audio/SoundEffects';
 
 interface GameOverModalProps {
@@ -71,9 +71,9 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/90 p-4 select-none pointer-events-auto">
       <div className="cyber-panel cyber-panel-danger w-full max-w-lg p-6 sm:p-8 flex flex-col items-center text-center shadow-[0_0_60px_rgba(255,0,85,0.4)]">
-        {/* Skull Icon / Title */}
+        {/* Warning Icon / Title */}
         <div className="w-14 h-14 rounded-full bg-red-950/60 border border-red-500/50 flex items-center justify-center mb-3 text-red-400">
-          <Skull className="w-8 h-8" />
+          <AlertTriangle className="w-8 h-8" />
         </div>
 
         <h2 className="text-4xl sm:text-5xl font-black font-['Orbitron'] tracking-widest text-red-500 neon-glow-magenta mb-1">
@@ -86,11 +86,11 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
         {/* New Record Celebration Badge */}
         {isNewHighScore && (
           <div className="animate-celebrate bg-gradient-to-r from-yellow-500/20 via-yellow-400/30 to-yellow-500/20 border-2 border-yellow-400/80 rounded-xl px-4 py-2.5 mb-5 flex items-center gap-2 text-yellow-300 shadow-[0_0_25px_rgba(250,204,21,0.5)]">
-            <Sparkles className="w-5 h-5 text-yellow-400 animate-spin" />
+            <Crown className="w-5 h-5 text-yellow-400 animate-pulse" />
             <span className="text-sm sm:text-base font-black font-['Orbitron'] tracking-wider">
               NEW GALACTIC HIGH SCORE!
             </span>
-            <Sparkles className="w-5 h-5 text-yellow-400 animate-spin" />
+            <Crown className="w-5 h-5 text-yellow-400 animate-pulse" />
           </div>
         )}
 
@@ -136,7 +136,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
 
           <div className="bg-black/50 border border-gray-800 rounded p-2 flex flex-col items-center">
             <span className="text-[10px] text-gray-400 uppercase flex items-center gap-1">
-              <Flame className="w-3 h-3 text-yellow-400" /> MAX COMBO
+              <Zap className="w-3 h-3 text-yellow-400" /> MAX COMBO
             </span>
             <span className="font-bold text-yellow-300 mt-0.5">{bestCombo}x</span>
           </div>

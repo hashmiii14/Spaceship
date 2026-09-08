@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Volume2, VolumeX, Music, HelpCircle, Play, Trophy, Settings, Sparkles, Flame } from 'lucide-react';
+import { Volume2, VolumeX, Music, BookOpen, Play, Trophy, Sliders } from 'lucide-react';
 import { SoundEffects } from '../audio/SoundEffects';
-import { Storage } from '../utils/storage';
 import { SettingsModal } from './SettingsModal';
 
 interface MainMenuProps {
@@ -24,8 +23,6 @@ export const MainMenu: React.FC<MainMenuProps> = React.memo(({
   onToggleSound,
 }) => {
   const [showSettings, setShowSettings] = useState(false);
-  const bestLevel = Storage.getBestLevel();
-  const bestCombo = Storage.getBestCombo();
 
   const handlePlayClick = () => {
     SoundEffects.playClick();
@@ -56,26 +53,14 @@ export const MainMenu: React.FC<MainMenuProps> = React.memo(({
     <div className="absolute inset-0 flex flex-col items-center justify-between p-4 sm:p-6 z-30 pointer-events-auto select-none bg-gradient-to-b from-black/50 via-transparent to-black/80">
       {/* Top Bar / Records */}
       <div className="w-full max-w-5xl flex justify-between items-center pt-2 px-2 flex-wrap gap-3">
-        {/* Galactic Records */}
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="cyber-panel-military flex items-center gap-2 border-red-500/50 px-3.5 py-1.5 rounded-full">
+        {/* Galactic Records: Single Clean Best Score Display */}
+        <div className="flex items-center">
+          <div className="cyber-panel-military flex items-center gap-2.5 border-red-500/50 bg-black/80 px-4 py-1.5 rounded-full shadow-[0_0_15px_rgba(255,0,51,0.25)]">
             <Trophy className="w-4 h-4 text-red-400" />
-            <span className="text-[11px] uppercase tracking-widest text-gray-400 font-bold">BEST SCORE:</span>
+            <span className="text-[11px] uppercase tracking-widest text-gray-400 font-bold font-mono">BEST SCORE:</span>
             <span className="text-base font-bold font-mono text-red-400 tracking-wider neon-glow-red">
               {highScore.toLocaleString()}
             </span>
-          </div>
-
-          <div className="hidden sm:flex cyber-panel-military items-center gap-2 border-red-500/40 px-3 py-1.5 rounded-full text-xs font-mono text-rose-300">
-            <Sparkles className="w-3.5 h-3.5 text-red-400" />
-            <span className="text-gray-400">BEST SECTOR:</span>
-            <span className="font-bold">{bestLevel}</span>
-          </div>
-
-          <div className="hidden sm:flex cyber-panel-military items-center gap-2 border-red-500/40 px-3 py-1.5 rounded-full text-xs font-mono text-rose-300">
-            <Flame className="w-3.5 h-3.5 text-red-400" />
-            <span className="text-gray-400">MAX COMBO:</span>
-            <span className="font-bold">{bestCombo}x</span>
           </div>
         </div>
 
@@ -145,7 +130,7 @@ export const MainMenu: React.FC<MainMenuProps> = React.memo(({
             onClick={handleHowToPlayClick}
             className="cyber-btn cyber-btn-secondary py-3 text-sm sm:text-base tracking-widest flex items-center justify-center gap-2 bg-black/80 border-gray-800 hover:border-red-500"
           >
-            <HelpCircle className="w-4 h-4 text-red-400" />
+            <BookOpen className="w-4 h-4 text-red-400" />
             HOW TO PLAY
           </button>
 
@@ -153,7 +138,7 @@ export const MainMenu: React.FC<MainMenuProps> = React.memo(({
             onClick={handleSettingsClick}
             className="cyber-btn cyber-btn-secondary py-3 text-sm sm:text-base tracking-widest flex items-center justify-center gap-2 bg-black/80 border-gray-800 hover:border-red-500"
           >
-            <Settings className="w-4 h-4 text-red-400" />
+            <Sliders className="w-4 h-4 text-red-400" />
             SETTINGS
           </button>
         </div>
