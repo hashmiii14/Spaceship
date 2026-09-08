@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Crosshair } from 'lucide-react';
 import { EventBus } from '../utils/EventBus';
 
-export const MobileControls: React.FC = () => {
+const MobileControlsComponent: React.FC = () => {
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const joystickBaseRef = useRef<HTMLDivElement>(null);
   const [knobPos, setKnobPos] = useState({ x: 0, y: 0 });
@@ -141,4 +141,6 @@ export const MobileControls: React.FC = () => {
     </div>
   );
 };
+
+export const MobileControls = React.memo(MobileControlsComponent);
 

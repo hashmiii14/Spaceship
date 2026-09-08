@@ -57,17 +57,41 @@ class MusicManagerClass {
   private consecutiveErrors: number = 0;
   private isTransitioning: boolean = false;
   private fadeInterval: ReturnType<typeof setInterval> | null = null;
+  private userHasInteracted: boolean = false;
+  private pendingPlayOnInteraction: boolean = false;
 
   constructor() {
     this.isMuted = !Storage.getMusicEnabled();
     this.volume = Storage.getMusicVolume();
+
+    // Listen for first user interaction globally to unlock audio
+    if (typeof window !== 'undefined') {
+      const unlockAudio = () => {
+        this.unlock();
+        window.removeEventListener('pointerdown', unlockAudio);
+        window.removeEventListener('keydown', unlockAudio);
+      };
+      window.addEventListener('pointerdown', unlockAudio, { passive: true });
+      window.addEventListener('keydown', unlockAudio, { passive: true });
+    }
+  }
+
+  /**
+   * Unlocks audio playback upon user interaction
+   */
+  public unlock(): void {
+    this.userHasInteracted = true;
+    if (this.pendingPlayOnInteraction && !this.isMuted) {
+      this.pendingPlayOnInteraction = false;
+      this.safePlay();
+    }
   }
 
   /**
    * Singleton HTMLAudioElement initializer
    */
   private initAudio(): HTMLAudioElement {
-    if (!this.audio) {
+    if (!this.audio && typeof window !== 'undefined') {
       this.audio = new Audio();
       this.audio.preload = 'metadata';
       this.audio.volume = this.volume;
@@ -80,22 +104,24 @@ class MusicManagerClass {
       });
 
       // Graceful error recovery if an audio asset fails to load
-      this.audio.addEventListener('error', (e) => {
+      this.audio.addEventListener('error', () => {
         const track = this.getCurrentTrack();
-        console.warn(`[MusicManager] Track unavailable: ${track.title} (${track.url})`, e);
+        if (!this.audio?.error) return;
+        console.warn(`[MusicManager] Audio error on ${track.title} (${track.url}): code ${this.audio.error.code}`);
         this.consecutiveErrors++;
         if (this.consecutiveErrors < PLAYLIST.length) {
           setTimeout(() => {
-            this.nextTrack();
-          }, 350);
+            if (this.isPlaying) {
+              this.nextTrack();
+            }
+          }, 400);
         } else {
-          console.warn('[MusicManager] All playlist audio assets failed to load.');
           this.isPlaying = false;
           this.emitState();
         }
       });
     }
-    return this.audio;
+    return this.audio!;
   }
 
   public getCurrentTrack(): AudioTrack {
@@ -134,7 +160,7 @@ class MusicManagerClass {
   }
 
   /**
-   * Safe play helper to handle promise rejections and AbortError
+   * Safe play helper to handle promise rejections, AbortError, and Autoplay policies
    */
   private async safePlay(): Promise<void> {
     if (this.isMuted || !this.audio) {
@@ -149,9 +175,13 @@ class MusicManagerClass {
     try {
       await this.audio.play();
       this.isPlaying = true;
+      this.consecutiveErrors = 0;
       this.emitState();
     } catch (err: any) {
-      if (err && err.name !== 'AbortError') {
+      if (err && err.name === 'NotAllowedError') {
+        // Autoplay policy prevented playback before interaction
+        this.pendingPlayOnInteraction = true;
+      } else if (err && err.name !== 'AbortError') {
         console.warn(`[MusicManager] Play failed on ${this.getCurrentTrack().title}:`, err);
       }
       this.isPlaying = false;
@@ -162,7 +192,7 @@ class MusicManagerClass {
   /**
    * Internal clean track loader with guaranteed single-source playback
    */
-  private async loadAndPlay(trackIndex: number): Promise<void> {
+  private async loadAndPlay(trackIndex: number, resetTimestamp: boolean = true): Promise<void> {
     if (this.isTransitioning) return;
     this.isTransitioning = true;
 
@@ -172,16 +202,27 @@ class MusicManagerClass {
       const audio = this.initAudio();
       this.isInitialized = true;
 
+      if (this.fadeInterval) {
+        clearInterval(this.fadeInterval);
+        this.fadeInterval = null;
+      }
+
       // Cleanly halt previous playback before switching source
       try {
         audio.pause();
       } catch {}
 
-      audio.src = track.url;
-      audio.currentTime = 0;
-      try {
-        audio.load();
-      } catch {}
+      if (audio.src !== window.location.origin + track.url && !audio.src.endsWith(track.url)) {
+        audio.src = track.url;
+        if (resetTimestamp) {
+          audio.currentTime = 0;
+        }
+        try {
+          audio.load();
+        } catch {}
+      } else if (resetTimestamp) {
+        audio.currentTime = 0;
+      }
 
       // Update UI immediately
       this.emitState();
@@ -192,6 +233,18 @@ class MusicManagerClass {
     } finally {
       this.isTransitioning = false;
     }
+  }
+
+  /**
+   * Cleanly starts playlist from specified index (default 0: Chipi Chipi)
+   * Resets currentTime to 0:00 and guarantees fresh start.
+   */
+  public async startPlaylist(startIndex: number = 0): Promise<void> {
+    if (this.fadeInterval) {
+      clearInterval(this.fadeInterval);
+      this.fadeInterval = null;
+    }
+    await this.loadAndPlay(startIndex, true);
   }
 
   /**
@@ -209,7 +262,7 @@ class MusicManagerClass {
     const audio = this.initAudio();
     if (audio.paused) {
       if (!audio.src || audio.src === '' || !this.isInitialized) {
-        this.loadAndPlay(this.currentTrackIndex);
+        this.loadAndPlay(this.currentTrackIndex, false);
       } else {
         this.resume();
       }
@@ -221,7 +274,7 @@ class MusicManagerClass {
    */
   public async play(trackIndex?: number): Promise<void> {
     const targetIndex = trackIndex !== undefined ? trackIndex : this.currentTrackIndex;
-    await this.loadAndPlay(targetIndex);
+    await this.loadAndPlay(targetIndex, true);
   }
 
   /**
@@ -239,6 +292,24 @@ class MusicManagerClass {
           this.audio.pause();
         } catch {}
       }
+    }
+    this.isPlaying = false;
+    this.emitState();
+  }
+
+  /**
+   * Cleanly stops music and halts any active audio
+   */
+  public stop(): void {
+    if (this.fadeInterval) {
+      clearInterval(this.fadeInterval);
+      this.fadeInterval = null;
+    }
+    if (this.audio) {
+      try {
+        this.audio.pause();
+        this.audio.currentTime = 0;
+      } catch {}
     }
     this.isPlaying = false;
     this.emitState();

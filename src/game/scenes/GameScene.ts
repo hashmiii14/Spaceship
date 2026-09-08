@@ -179,6 +179,10 @@ export class GameScene extends Phaser.Scene {
   private cyanSparkEmitter!: Phaser.GameObjects.Particles.ParticleEmitter;
   private explosionEmitter!: Phaser.GameObjects.Particles.ParticleEmitter;
   private shrapnelEmitter!: Phaser.GameObjects.Particles.ParticleEmitter;
+  private flashPool: Phaser.GameObjects.Image[] = [];
+  private shockwavePool: Phaser.GameObjects.Image[] = [];
+  private lastEmittedDrift: number = 0;
+  private isLowPerformanceDevice: boolean = false;
 
   // Throttling
   private lastStatsEmitTime = 0;
@@ -280,6 +284,28 @@ export class GameScene extends Phaser.Scene {
       emitting: false,
     });
     this.shrapnelEmitter.setDepth(16);
+
+    // 1b. Pre-allocated Flash & Shockwave Pools (Zero GC allocations during explosions)
+    this.isLowPerformanceDevice = width <= 768 || (typeof navigator !== 'undefined' && (navigator.hardwareConcurrency || 4) <= 4);
+    this.flashPool = [];
+    this.shockwavePool = [];
+    const poolSize = this.isLowPerformanceDevice ? 10 : 16;
+    for (let i = 0; i < poolSize; i++) {
+      if (this.textures.exists('core_flash')) {
+        const flash = this.add.image(0, 0, 'core_flash');
+        flash.setDepth(18);
+        flash.setBlendMode(Phaser.BlendModes.ADD);
+        flash.setActive(false).setVisible(false);
+        this.flashPool.push(flash);
+      }
+      if (this.textures.exists('shockwave_ring')) {
+        const ring = this.add.image(0, 0, 'shockwave_ring');
+        ring.setDepth(17);
+        ring.setBlendMode(Phaser.BlendModes.ADD);
+        ring.setActive(false).setVisible(false);
+        this.shockwavePool.push(ring);
+      }
+    }
 
     // 2. Physics Groups (Reusable Pools)
     this.playerBullets = this.physics.add.group({
@@ -571,14 +597,36 @@ export class GameScene extends Phaser.Scene {
     });
     this.enemyMines = [];
 
-    if (this.playerBullets) this.playerBullets.clear(true, true);
-    if (this.enemyBullets) this.enemyBullets.clear(true, true);
-    if (this.bossBullets) this.bossBullets.clear(true, true);
-    if (this.enemies) this.enemies.clear(true, true);
-    if (this.asteroids) this.asteroids.clear(true, true);
-    if (this.powerUps) this.powerUps.clear(true, true);
-    if (this.xpGems) this.xpGems.clear(true, true);
-    if (this.bossGroup) this.bossGroup.clear(true, true);
+    const deactivateGroup = (group: Phaser.Physics.Arcade.Group) => {
+      if (!group) return;
+      group.children.iterate((child: any) => {
+        if (child) {
+          child.setActive(false).setVisible(false);
+          if (child.body) {
+            child.body.stop();
+            child.body.enable = false;
+          }
+        }
+        return true;
+      });
+    };
+
+    deactivateGroup(this.playerBullets);
+    deactivateGroup(this.enemyBullets);
+    deactivateGroup(this.bossBullets);
+    deactivateGroup(this.enemies);
+    deactivateGroup(this.asteroids);
+    deactivateGroup(this.powerUps);
+    deactivateGroup(this.xpGems);
+    deactivateGroup(this.bossGroup);
+
+    if (this.flashPool) {
+      this.flashPool.forEach((f) => f.setActive(false).setVisible(false));
+    }
+    if (this.shockwavePool) {
+      this.shockwavePool.forEach((r) => r.setActive(false).setVisible(false));
+    }
+
     this.boss = null;
     this.activePowerUps.clear();
   }
@@ -786,8 +834,11 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    // Parallax background drift
-    this.game.events.emit('background:setDrift', vx);
+    // Parallax background drift (throttled to significant changes)
+    if (Math.abs(vx - this.lastEmittedDrift) > 0.04) {
+      this.lastEmittedDrift = vx;
+      this.game.events.emit('background:setDrift', vx);
+    }
 
 
     // 4. Shooting (Immediate response, holding Spacebar continuous fire)
@@ -1876,46 +1927,56 @@ export class GameScene extends Phaser.Scene {
   // DESTRUCTION & REWARDS
   // ==========================================
   private createLayeredExplosion(x: number, y: number, isLarge: boolean = false): void {
-    // 1. Core Flash (Blinding white/crimson glint)
-    if (this.textures.exists('core_flash')) {
-      const flash = this.add.image(x, y, 'core_flash');
-      flash.setDepth(18);
+    // 1. Core Flash (from pre-allocated pool)
+    const flash = this.flashPool.find((f) => !f.active) || this.flashPool[0];
+    if (flash) {
+      flash.setPosition(x, y);
       flash.setScale(isLarge ? 1.4 : 0.85);
-      flash.setBlendMode(Phaser.BlendModes.ADD);
+      flash.setAlpha(1);
+      flash.setActive(true).setVisible(true);
+      this.tweens.killTweensOf(flash);
       this.tweens.add({
         targets: flash,
         scale: isLarge ? 2.2 : 1.4,
         alpha: 0,
         duration: 140,
-        onComplete: () => flash.destroy(),
+        onComplete: () => {
+          flash.setActive(false).setVisible(false);
+        },
       });
     }
 
-    // 2. Shockwave Ring (Expanding planar ripple)
-    if (this.textures.exists('shockwave_ring')) {
-      const ring = this.add.image(x, y, 'shockwave_ring');
-      ring.setDepth(17);
+    // 2. Shockwave Ring (from pre-allocated pool)
+    const ring = this.shockwavePool.find((r) => !r.active) || this.shockwavePool[0];
+    if (ring) {
+      ring.setPosition(x, y);
       ring.setScale(0.2);
       ring.setAlpha(0.95);
-      ring.setBlendMode(Phaser.BlendModes.ADD);
+      ring.setActive(true).setVisible(true);
+      this.tweens.killTweensOf(ring);
       this.tweens.add({
         targets: ring,
         scale: isLarge ? 2.4 : 1.3,
         alpha: 0,
         duration: isLarge ? 380 : 260,
         ease: 'Power2',
-        onComplete: () => ring.destroy(),
+        onComplete: () => {
+          ring.setActive(false).setVisible(false);
+        },
       });
     }
 
     // 3. High-velocity Shrapnel Needle Shards
+    const shrapnelCount = this.isLowPerformanceDevice ? (isLarge ? 6 : 3) : (isLarge ? 10 : 5);
     if (this.shrapnelEmitter) {
-      this.shrapnelEmitter.explode(isLarge ? 10 : 5, x, y);
+      this.shrapnelEmitter.explode(shrapnelCount, x, y);
     }
 
     // 4. Crimson Sparks & Smoke
-    this.redSparkEmitter.explode(isLarge ? 24 : 16, x, y);
-    this.explosionEmitter.explode(isLarge ? 20 : 12, x, y);
+    const sparkCount = this.isLowPerformanceDevice ? (isLarge ? 14 : 10) : (isLarge ? 24 : 16);
+    const smokeCount = this.isLowPerformanceDevice ? (isLarge ? 12 : 8) : (isLarge ? 20 : 12);
+    this.redSparkEmitter.explode(sparkCount, x, y);
+    this.explosionEmitter.explode(smokeCount, x, y);
 
     if (isLarge) {
       this.cameras.main.shake(200, 0.009);
@@ -2081,7 +2142,7 @@ export class GameScene extends Phaser.Scene {
     gem.body.enable = false;
 
     this.playerXp += val;
-    this.showFloatingText(`+${val} XP`, this.player.x, this.player.y - 10, '#a855f7', '14px');
+    SoundEffects.playXp();
 
     if (this.playerXp >= this.nextLevelXp) {
       this.triggerLevelUp();
@@ -2412,9 +2473,8 @@ export class GameScene extends Phaser.Scene {
   // ==========================================
   // SCORE & FLOATING TEXT
   // ==========================================
-  private addScore(amount: number, x: number, y: number): void {
+  private addScore(amount: number, _x?: number, _y?: number): void {
     this.score += amount;
-    this.showFloatingText(`+${amount}`, x, y, '#ff0055');
   }
 
   private showFloatingText(

@@ -24,6 +24,14 @@ class SoundEffectsManager {
     return this.ctx;
   }
 
+  public unlock(): void {
+    if (!this.ctx && typeof window !== 'undefined') {
+      this.getContext();
+    } else if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume().catch(() => {});
+    }
+  }
+
   public setEnabled(val: boolean) {
     this.enabled = val;
     Storage.setSoundEnabled(val);
@@ -305,6 +313,33 @@ class SoundEffectsManager {
 
     osc.start(now);
     osc.stop(now + 0.16);
+  }
+
+  public playXp() {
+    if (!this.enabled) return;
+    const nowMs = performance.now();
+    if (nowMs - (this as any).lastXpTime < 60) return;
+    (this as any).lastXpTime = nowMs;
+
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1100, now);
+    osc.frequency.exponentialRampToValueAtTime(1750, now + 0.05);
+
+    gain.gain.setValueAtTime(0.08 * this.volume, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.06);
   }
 
   public playPowerUp() {

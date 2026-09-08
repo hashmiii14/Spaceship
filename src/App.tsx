@@ -89,13 +89,12 @@ export const App: React.FC = () => {
       game.scene.sleep('GameScene');
     });
 
-    // Listen for stats updates from GameScene
+    // Listen for stats updates from GameScene (high-frequency, zero disk I/O)
     EventBus.on('stats:update', (newStats: Partial<PlayerStats>) => {
       setStats((prev) => {
         const updated = { ...prev, ...newStats };
         if (updated.score > updated.highScore) {
           updated.highScore = updated.score;
-          Storage.setHighScore(updated.score);
           setHighScore(updated.score);
         }
         return updated;
@@ -117,7 +116,7 @@ export const App: React.FC = () => {
       setLevelUpOptions(options);
     });
 
-    // Listen for Game Over
+    // Listen for Game Over - persist high score here once
     EventBus.on('game:over', ({ score, level, wave, bestCombo, survivalTime }: { score: number; level?: number; wave?: number; bestCombo?: number; survivalTime?: number }) => {
       const savedHigh = Storage.getHighScore();
       const finalHigh = Math.max(score, savedHigh);
@@ -137,7 +136,7 @@ export const App: React.FC = () => {
       });
       setGameState('GAME_OVER');
       setLevelUpOptions(null);
-      MusicManager.fadeOut(600);
+      MusicManager.stop();
     });
 
     // Listen for Toggle Pause via ESC key
@@ -176,6 +175,8 @@ export const App: React.FC = () => {
 
   // Handlers
   const handleStartGame = () => {
+    SoundEffects.unlock();
+    MusicManager.unlock();
     setStats(getInitialStats());
     const game = gameInstanceRef.current;
     if (game) {
@@ -194,7 +195,7 @@ export const App: React.FC = () => {
     setBossInfo({ active: false, name: '', currentHp: 0, maxHp: 0, phase: 1 });
 
     if (musicEnabled) {
-      MusicManager.ensurePlaying();
+      MusicManager.startPlaylist(0);
     }
   };
 
@@ -226,6 +227,8 @@ export const App: React.FC = () => {
   };
 
   const handleRestart = () => {
+    SoundEffects.unlock();
+    MusicManager.unlock();
     // Reset all React state to pristine game start values immediately
     setStats(getInitialStats());
     setIsNewHighScore(false);
@@ -249,7 +252,7 @@ export const App: React.FC = () => {
     setGameState('PLAYING');
 
     if (musicEnabled) {
-      MusicManager.ensurePlaying();
+      MusicManager.startPlaylist(0);
     }
   };
 
@@ -268,7 +271,7 @@ export const App: React.FC = () => {
     setLevelUpOptions(null);
     setBossWarning(false);
     setBossInfo({ active: false, name: '', currentHp: 0, maxHp: 0, phase: 1 });
-    MusicManager.fadeOut(400);
+    MusicManager.stop();
   };
 
   const handleToggleMusic = () => {
