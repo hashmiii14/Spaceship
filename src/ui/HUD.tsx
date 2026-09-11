@@ -364,7 +364,7 @@ export const HUD: React.FC<HUDProps> = React.memo(({
           </div>
 
           {/* Vitals: Hull HP, Shield, and XP Bars */}
-          <div className="cyber-panel-military px-2 sm:px-3 py-1 sm:py-2.5 flex flex-col gap-1 sm:gap-2 w-36 sm:w-64 border-red-500/40">
+          <div className="cyber-panel-military px-2 sm:px-3 py-1 sm:py-2.5 flex flex-col gap-1 sm:gap-2 min-w-[155px] w-auto sm:w-64 border-red-500/40">
             {/* Hull HP */}
             <div className="flex items-center gap-1.5 sm:gap-2">
               <Activity className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-500 shrink-0" />
@@ -409,11 +409,17 @@ export const HUD: React.FC<HUDProps> = React.memo(({
               </span>
             </div>
 
-            {/* Pilot Identity Callsign Tag */}
-            <div className="flex items-center gap-1.5 pt-1 border-t border-red-900/40 text-[8px] sm:text-[10px] font-mono tracking-wider">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shrink-0" />
-              <span className="text-red-400 font-bold uppercase">PILOT:</span>
-              <span className="text-gray-200 font-bold tracking-widest truncate">MUHAMMAD HASHMI</span>
+            {/* Pilot Identity Callsign Tag (High-Contrast, Prominent & Glowing) */}
+            <div className="flex items-center justify-between gap-1.5 pt-1 sm:pt-1.5 mt-0.5 border-t border-red-500/30">
+              <div className="flex items-center gap-1 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_#ff0055] animate-pulse shrink-0" />
+                <span className="text-rose-400 font-black tracking-wider uppercase text-[8px] sm:text-[10px]">
+                  PILOT:
+                </span>
+              </div>
+              <span className="text-white font-extrabold font-['Orbitron'] tracking-wider sm:tracking-widest text-[9px] sm:text-[11px] drop-shadow-[0_0_8px_rgba(255,255,255,0.85)] text-right truncate">
+                MUHAMMAD HASHMI
+              </span>
             </div>
           </div>
 

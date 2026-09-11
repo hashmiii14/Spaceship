@@ -405,20 +405,30 @@ export class GameScene extends Phaser.Scene {
     });
     this.playerEngineParticles.setDepth(9);
 
-    // 3b. Subtle Fixed Arena/Track Branding Watermark ("MUHAMMAD HASHMI")
+    // 3b. Fixed Arena Branding Signature ("MUHAMMAD HASHMI") - High Contrast, Glow & Outline
     const arenaBrandingText = this.add.text(0, 0, 'MUHAMMAD HASHMI', {
       fontFamily: 'Orbitron, Rajdhani, sans-serif',
-      fontSize: '10px',
+      fontSize: '13px',
       fontStyle: 'bold',
-      color: '#cbd5e1',
+      color: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 3,
       align: 'center',
+      shadow: {
+        offsetX: 0,
+        offsetY: 0,
+        color: '#ff0055',
+        blur: 10,
+        stroke: true,
+        fill: true,
+      },
     }).setOrigin(0.5, 0.5);
 
-    const leftLine = this.add.rectangle(-84, 0, 18, 1, 0xff0033, 0.5);
-    const rightLine = this.add.rectangle(84, 0, 18, 1, 0xff0033, 0.5);
-    const leftDot = this.add.rectangle(-70, 0, 2, 2, 0xff0033, 0.75);
-    const rightDot = this.add.rectangle(70, 0, 2, 2, 0xff0033, 0.75);
-    const bottomAccent = this.add.rectangle(0, 8, 28, 1, 0xff0033, 0.4);
+    const leftLine = this.add.rectangle(-95, 0, 24, 2, 0xff0055, 0.9);
+    const rightLine = this.add.rectangle(95, 0, 24, 2, 0xff0055, 0.9);
+    const leftDot = this.add.rectangle(-78, 0, 3, 3, 0xffffff, 1.0);
+    const rightDot = this.add.rectangle(78, 0, 3, 3, 0xffffff, 1.0);
+    const bottomAccent = this.add.rectangle(0, 11, 46, 1.5, 0xff0055, 0.75);
 
     this.arenaBrandingContainer = this.add.container(width / 2, height * 0.52, [
       leftLine,
@@ -428,8 +438,8 @@ export class GameScene extends Phaser.Scene {
       arenaBrandingText,
       bottomAccent,
     ]);
-    this.arenaBrandingContainer.setDepth(1);
-    this.arenaBrandingContainer.setAlpha(0.24);
+    this.arenaBrandingContainer.setDepth(2);
+    this.arenaBrandingContainer.setAlpha(0.72);
 
     // 4. Keyboard Controls & Browser Scroll Prevention
     if (this.input.keyboard) {

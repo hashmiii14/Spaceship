@@ -218,38 +218,31 @@ const MobileControlsComponent: React.FC = () => {
       </div>
 
       {/* Right Combat Controls: Auto Fire Toggle + Primary Fire Button */}
-      <div className="flex flex-col items-end gap-2.5 pointer-events-auto touch-none">
-        {/* Auto Fire Toggle Pill (Above Fire Button for Comfortable Thumb Reach) */}
+      <div className="flex flex-col items-end gap-1.5 pointer-events-auto touch-none">
+        {/* Compact Auto Fire Toggle Mini-Pill */}
         <button
           type="button"
           onPointerDown={handleToggleAutoFire}
-          className={`px-3 py-1.5 rounded-full border flex items-center gap-1.5 pointer-events-auto touch-none transition-all active:scale-95 shadow-md cursor-pointer ${
+          className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border flex items-center gap-1 pointer-events-auto touch-none transition-all active:scale-90 shadow-sm cursor-pointer ${
             isAutoFire
-              ? 'bg-red-950/80 border-rose-400 text-rose-100 shadow-[0_0_18px_rgba(255,0,51,0.5)]'
-              : 'bg-black/70 border-red-500/40 text-gray-400 hover:text-white hover:border-red-400/60'
+              ? 'bg-red-950/90 border-rose-400 text-rose-100 shadow-[0_0_12px_rgba(255,0,51,0.6)]'
+              : 'bg-black/80 border-red-500/35 text-gray-400 hover:text-white hover:border-red-400/60'
           }`}
           title="Toggle Auto Fire Mode"
         >
-          <Zap className={`w-3.5 h-3.5 ${isAutoFire ? 'text-amber-400 animate-pulse' : 'text-gray-500'}`} />
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] sm:text-[11px] font-black font-['Orbitron'] tracking-wider">
-              AUTO FIRE
-            </span>
-            <span
-              className={`text-[9px] sm:text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border ${
-                isAutoFire
-                  ? 'bg-red-600/60 border-rose-300 text-white'
-                  : 'bg-gray-900 border-gray-700 text-gray-400'
-              }`}
-            >
-              {isAutoFire ? 'ON' : 'OFF'}
-            </span>
-          </div>
+          <Zap className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${isAutoFire ? 'text-amber-300 animate-pulse' : 'text-gray-500'}`} />
+          <span className="text-[9px] sm:text-[10px] font-black font-['Orbitron'] tracking-wider">
+            AUTO
+          </span>
           <span
-            className={`w-1.5 h-1.5 rounded-full ${
-              isAutoFire ? 'bg-rose-400 shadow-[0_0_8px_#ff0055] animate-ping' : 'bg-gray-600'
+            className={`text-[8px] sm:text-[9px] font-mono font-black px-1 rounded border leading-tight ${
+              isAutoFire
+                ? 'bg-red-600 border-rose-300 text-white shadow-[0_0_6px_#ff0055]'
+                : 'bg-gray-900 border-gray-700 text-gray-400'
             }`}
-          />
+          >
+            {isAutoFire ? 'ON' : 'OFF'}
+          </span>
         </button>
 
         {/* Touch Fire Button (Bottom Right) */}
