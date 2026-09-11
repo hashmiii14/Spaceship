@@ -131,7 +131,9 @@ export class GameScene extends Phaser.Scene {
   private keyD!: Phaser.Input.Keyboard.Key;
   private keySpace!: Phaser.Input.Keyboard.Key;
   private keyEsc!: Phaser.Input.Keyboard.Key;
+  private keyC!: Phaser.Input.Keyboard.Key;
   private mobileInput = { x: 0, y: 0, shoot: false };
+  private isAutoFire: boolean = Storage.getAutoFire();
   private arenaBrandingContainer?: Phaser.GameObjects.Container;
 
   // Weapons & Bullets (RED WEAPON POOLS)
@@ -395,6 +397,7 @@ export class GameScene extends Phaser.Scene {
         Phaser.Input.Keyboard.KeyCodes.RIGHT,
         Phaser.Input.Keyboard.KeyCodes.M,
         Phaser.Input.Keyboard.KeyCodes.N,
+        Phaser.Input.Keyboard.KeyCodes.C,
       ]);
 
       this.cursors = this.input.keyboard.createCursorKeys();
@@ -404,8 +407,14 @@ export class GameScene extends Phaser.Scene {
       this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
       this.keySpace = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
       this.keyEsc = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+      this.keyC = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.C);
       const keyM = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
       const keyN = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.N);
+
+      this.keyC.on('down', () => {
+        SoundEffects.playClick();
+        this.toggleAutoFire();
+      });
 
       keyM.on('down', () => {
         SoundEffects.playClick();
@@ -508,8 +517,17 @@ export class GameScene extends Phaser.Scene {
       this.startLevel(1);
     };
 
+    const onSetAutoFire = (enabled: boolean) => {
+      this.toggleAutoFire(enabled);
+    };
+    const onToggleAutoFire = () => {
+      this.toggleAutoFire();
+    };
+
     EventBus.on('input:mobileMove', onMobileMove);
     EventBus.on('input:mobileShoot', onMobileShoot);
+    EventBus.on('input:setAutoFire', onSetAutoFire);
+    EventBus.on('input:toggleAutoFire', onToggleAutoFire);
     EventBus.on('upgrade:selected', onUpgrade);
     EventBus.on('player:skinChanged', onSkinChanged);
     EventBus.on('intro:complete', onIntroComplete);
@@ -546,6 +564,8 @@ export class GameScene extends Phaser.Scene {
       this.events.off('resume', onResume);
       EventBus.off('input:mobileMove', onMobileMove);
       EventBus.off('input:mobileShoot', onMobileShoot);
+      EventBus.off('input:setAutoFire', onSetAutoFire);
+      EventBus.off('input:toggleAutoFire', onToggleAutoFire);
       EventBus.off('upgrade:selected', onUpgrade);
       EventBus.off('player:skinChanged', onSkinChanged);
       EventBus.off('intro:complete', onIntroComplete);
@@ -661,6 +681,11 @@ export class GameScene extends Phaser.Scene {
     this.nextEventTime = 75;
     this.boss = null;
     this.activePowerUps.clear();
+    this.isAutoFire = Storage.getAutoFire();
+    this.lastFiredTime = this.time ? this.time.now : 0;
+    this.mobileInput.x = 0;
+    this.mobileInput.y = 0;
+    this.mobileInput.shoot = false;
 
     this.missions.forEach((m) => {
       m.progress = 0;
@@ -726,6 +751,11 @@ export class GameScene extends Phaser.Scene {
     this.nextEventTime = 75;
     this.boss = null;
     this.activePowerUps.clear();
+    this.isAutoFire = Storage.getAutoFire();
+    this.lastFiredTime = this.time ? this.time.now : 0;
+    this.mobileInput.x = 0;
+    this.mobileInput.y = 0;
+    this.mobileInput.shoot = false;
 
     this.missions.forEach((m) => {
       m.progress = 0;
@@ -841,14 +871,12 @@ export class GameScene extends Phaser.Scene {
     }
 
 
-    // 4. Shooting (Immediate response, holding Spacebar continuous fire)
+    // 4. Central Weapon Firing (Spacebar, Mobile Fire, or Auto Fire)
     const isSpaceDown = (this.keySpace && this.keySpace.isDown) ||
-      (this.input.keyboard && this.input.keyboard.checkDown(this.keySpace));
-    const isShooting = isSpaceDown || this.mobileInput.shoot;
-    const hasRapid = this.activePowerUps.has('RAPID_FIRE');
-    const calculatedFireRate = Math.max(50, (hasRapid ? 75 : this.baseFireRate) - this.fireRateBonus);
+      (this.input.keyboard && Boolean(this.input.keyboard.checkDown(this.keySpace)));
+    const wantsToFire = isSpaceDown || this.mobileInput.shoot || this.isAutoFire;
 
-    if (isShooting && time > this.lastFiredTime + calculatedFireRate) {
+    if (wantsToFire && this.canPlayerFire(time)) {
       this.firePlayerWeapon();
       this.lastFiredTime = time;
     }
@@ -958,6 +986,33 @@ export class GameScene extends Phaser.Scene {
       b.setActive(true).setVisible(true);
     }
     return b;
+  }
+
+  // ==========================================
+  // CENTRALIZED WEAPON FIRING & AUTO-FIRE
+  // ==========================================
+  public toggleAutoFire(force?: boolean): void {
+    const next = typeof force === 'boolean' ? force : !this.isAutoFire;
+    this.isAutoFire = next;
+    Storage.setAutoFire(next);
+    EventBus.emit('input:autoFireChanged', next);
+    if (this.player && this.player.active && this.isAlive) {
+      this.showFloatingText(
+        next ? 'AUTO FIRE: ENGAGED' : 'AUTO FIRE: DISABLED',
+        this.player.x,
+        this.player.y - 35,
+        next ? '#ff0055' : '#9ca3af',
+        '16px'
+      );
+    }
+  }
+
+  private canPlayerFire(time: number): boolean {
+    if (!this.isAlive || this.isLevelUpPaused || this.isIntroPaused) return false;
+    if (!this.player || !this.player.active || !this.player.visible) return false;
+    const hasRapid = this.activePowerUps.has('RAPID_FIRE');
+    const calculatedFireRate = Math.max(50, (hasRapid ? 75 : this.baseFireRate) - this.fireRateBonus);
+    return time > this.lastFiredTime + calculatedFireRate;
   }
 
   // ==========================================

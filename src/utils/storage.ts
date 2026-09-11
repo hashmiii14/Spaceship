@@ -11,6 +11,7 @@ const STORAGE_KEYS = {
   SFX_VOLUME: 'starfall_sfx_volume',
   QUALITY: 'starfall_quality',
   SELECTED_SKIN: 'starfall_selected_skin',
+  AUTO_FIRE: 'starfall_auto_fire',
 };
 
 export const Storage = {
@@ -202,6 +203,21 @@ export const Storage = {
   setSelectedSkin(skin: ShipSkin): void {
     try {
       localStorage.setItem(STORAGE_KEYS.SELECTED_SKIN, JSON.stringify(skin));
+    } catch {}
+  },
+
+  getAutoFire(): boolean {
+    try {
+      const val = localStorage.getItem(STORAGE_KEYS.AUTO_FIRE);
+      return val === 'true';
+    } catch {
+      return false;
+    }
+  },
+
+  setAutoFire(enabled: boolean): void {
+    try {
+      localStorage.setItem(STORAGE_KEYS.AUTO_FIRE, enabled ? 'true' : 'false');
     } catch {}
   }
 };

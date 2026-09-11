@@ -56,17 +56,18 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ onClose }) => {
               <div className="bg-black/50 border border-cyan-500/20 rounded-lg p-3 flex flex-col items-center text-center">
                 <span className="text-cyan-300 font-bold mb-2 uppercase">PRIMARY CANNONS</span>
                 <span className="px-4 py-1.5 bg-cyan-950/70 border border-cyan-400/40 rounded text-cyan-300 font-bold mb-1">
-                  SPACEBAR
+                  SPACEBAR / FIRE
                 </span>
                 <span className="text-gray-400 text-[10px]">Hold for continuous fire</span>
               </div>
 
               <div className="bg-black/50 border border-cyan-500/20 rounded-lg p-3 flex flex-col items-center text-center">
-                <span className="text-cyan-300 font-bold mb-2 uppercase">TOUCH & PAUSE</span>
-                <span className="px-3 py-1 bg-cyan-950/70 border border-cyan-400/40 rounded text-cyan-300 font-bold mb-1">
-                  ESC KEY
-                </span>
-                <span className="text-gray-400 text-[10px]">Virtual joystick on mobile</span>
+                <span className="text-cyan-300 font-bold mb-2 uppercase">AUTO FIRE & TOUCH</span>
+                <div className="flex gap-1 mb-1">
+                  <span className="px-2 py-1 bg-cyan-950/70 border border-cyan-400/40 rounded text-cyan-300 font-bold">C KEY</span>
+                  <span className="px-2 py-1 bg-cyan-950/70 border border-cyan-400/40 rounded text-cyan-300 font-bold">HUD PILL</span>
+                </div>
+                <span className="text-gray-400 text-[10px]">Independent dual-thumb multi-touch</span>
               </div>
             </div>
           </div>
