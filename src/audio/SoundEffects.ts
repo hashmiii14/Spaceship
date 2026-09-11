@@ -2,13 +2,28 @@ import { Storage } from '../utils/storage';
 
 class SoundEffectsManager {
   private ctx: AudioContext | null = null;
+  private noiseBuffer: AudioBuffer | null = null;
   private enabled: boolean = true;
   private volume: number = 0.8;
   private lastLaserTime: number = 0;
+  private lastXpTime: number = 0;
 
   constructor() {
     this.enabled = Storage.getSoundEnabled();
     this.volume = Storage.getSfxVolume();
+  }
+
+  private getNoiseBuffer(ctx: AudioContext): AudioBuffer {
+    if (!this.noiseBuffer || this.noiseBuffer.sampleRate !== ctx.sampleRate) {
+      const bufferSize = Math.floor(ctx.sampleRate * 2.0);
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      this.noiseBuffer = buffer;
+    }
+    return this.noiseBuffer;
   }
 
   private getContext(): AudioContext | null {
@@ -229,15 +244,8 @@ class SoundEffectsManager {
     if (!ctx) return;
 
     const now = ctx.currentTime;
-    const bufferSize = Math.floor(ctx.sampleRate * 0.18);
-    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1;
-    }
-
     const noise = ctx.createBufferSource();
-    noise.buffer = buffer;
+    noise.buffer = this.getNoiseBuffer(ctx);
 
     const filter = ctx.createBiquadFilter();
     filter.type = 'bandpass';
@@ -252,6 +260,12 @@ class SoundEffectsManager {
     filter.connect(gain);
     gain.connect(ctx.destination);
 
+    noise.onended = () => {
+      noise.disconnect();
+      filter.disconnect();
+      gain.disconnect();
+    };
+
     noise.start(now);
     noise.stop(now + 0.18);
   }
@@ -263,15 +277,8 @@ class SoundEffectsManager {
 
     const now = ctx.currentTime;
     const duration = size === 'large' ? 0.6 : size === 'medium' ? 0.35 : 0.2;
-    const bufferSize = Math.floor(ctx.sampleRate * duration);
-    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1;
-    }
-
     const noise = ctx.createBufferSource();
-    noise.buffer = buffer;
+    noise.buffer = this.getNoiseBuffer(ctx);
 
     const filter = ctx.createBiquadFilter();
     filter.type = 'lowpass';
@@ -286,6 +293,12 @@ class SoundEffectsManager {
     noise.connect(filter);
     filter.connect(gain);
     gain.connect(ctx.destination);
+
+    noise.onended = () => {
+      noise.disconnect();
+      filter.disconnect();
+      gain.disconnect();
+    };
 
     noise.start(now);
     noise.stop(now + duration);
@@ -311,6 +324,11 @@ class SoundEffectsManager {
     osc.connect(gain);
     gain.connect(ctx.destination);
 
+    osc.onended = () => {
+      osc.disconnect();
+      gain.disconnect();
+    };
+
     osc.start(now);
     osc.stop(now + 0.16);
   }
@@ -318,8 +336,8 @@ class SoundEffectsManager {
   public playXp() {
     if (!this.enabled) return;
     const nowMs = performance.now();
-    if (nowMs - (this as any).lastXpTime < 60) return;
-    (this as any).lastXpTime = nowMs;
+    if (nowMs - this.lastXpTime < 60) return;
+    this.lastXpTime = nowMs;
 
     const ctx = this.getContext();
     if (!ctx) return;

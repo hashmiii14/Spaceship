@@ -626,7 +626,7 @@ export const HUD: React.FC<HUDProps> = React.memo(({
       {currentAlert && (
         <div className="absolute top-20 sm:top-24 left-1/2 -translate-x-1/2 pointer-events-none z-30 flex flex-col items-center animate-pulse">
           <div
-            className={`px-4 sm:px-8 py-2 rounded-lg border flex flex-col items-center text-center shadow-2xl backdrop-blur-xs ${
+            className={`px-4 sm:px-8 py-2 rounded-lg border flex flex-col items-center text-center shadow-2xl ${
               currentAlert.type === 'BOSS'
                 ? 'bg-red-950/90 border-red-500 text-red-100 shadow-[0_0_40px_rgba(255,0,51,0.7)]'
                 : currentAlert.type === 'LEVEL_UP'

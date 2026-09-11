@@ -324,7 +324,7 @@ export class BackgroundScene extends Phaser.Scene {
   }
 
   update(time: number, delta: number): void {
-    const dt = delta / 1000;
+    const dt = Math.min(delta / 1000, 0.05);
     const width = this.scale.width;
     const height = this.scale.height;
     const currentSpeed = this.speedMultiplier * this.warpFactor;

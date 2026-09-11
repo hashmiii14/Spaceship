@@ -7,9 +7,10 @@ import { SoundEffects } from '../audio/SoundEffects';
 const MobileControlsComponent: React.FC = () => {
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const joystickBaseRef = useRef<HTMLDivElement>(null);
+  const knobRef = useRef<HTMLDivElement>(null);
   const fireButtonRef = useRef<HTMLButtonElement>(null);
+  const moveVectorRef = useRef({ x: 0, y: 0 });
 
-  const [knobPos, setKnobPos] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [isShooting, setIsShooting] = useState(false);
   const [isAutoFire, setIsAutoFire] = useState<boolean>(() => Storage.getAutoFire());
@@ -47,8 +48,12 @@ const MobileControlsComponent: React.FC = () => {
       firePointerIdRef.current = null;
       setIsDragging(false);
       setIsShooting(false);
-      setKnobPos({ x: 0, y: 0 });
-      EventBus.emit('input:mobileMove', { x: 0, y: 0 });
+      if (knobRef.current) {
+        knobRef.current.style.transform = 'translate3d(0px, 0px, 0)';
+      }
+      moveVectorRef.current.x = 0;
+      moveVectorRef.current.y = 0;
+      EventBus.emit('input:mobileMove', moveVectorRef.current);
       EventBus.emit('input:mobileShoot', false);
     };
 
@@ -74,11 +79,19 @@ const MobileControlsComponent: React.FC = () => {
     const clampedDist = Math.min(dist, maxRadius);
     const angle = Math.atan2(dy, dx);
 
-    const nx = (Math.cos(angle) * clampedDist) / maxRadius;
-    const ny = (Math.sin(angle) * clampedDist) / maxRadius;
+    const kx = Math.cos(angle) * clampedDist;
+    const ky = Math.sin(angle) * clampedDist;
 
-    setKnobPos({ x: Math.cos(angle) * clampedDist, y: Math.sin(angle) * clampedDist });
-    EventBus.emit('input:mobileMove', { x: nx, y: ny });
+    if (knobRef.current) {
+      knobRef.current.style.transform = `translate3d(${kx}px, ${ky}px, 0)`;
+    }
+
+    const nx = kx / maxRadius;
+    const ny = ky / maxRadius;
+
+    moveVectorRef.current.x = nx;
+    moveVectorRef.current.y = ny;
+    EventBus.emit('input:mobileMove', moveVectorRef.current);
   }, []);
 
   // ============================================================
@@ -116,8 +129,12 @@ const MobileControlsComponent: React.FC = () => {
 
     joystickPointerIdRef.current = null;
     setIsDragging(false);
-    setKnobPos({ x: 0, y: 0 });
-    EventBus.emit('input:mobileMove', { x: 0, y: 0 });
+    if (knobRef.current) {
+      knobRef.current.style.transform = 'translate3d(0px, 0px, 0)';
+    }
+    moveVectorRef.current.x = 0;
+    moveVectorRef.current.y = 0;
+    EventBus.emit('input:mobileMove', moveVectorRef.current);
   };
 
   // ============================================================
@@ -176,7 +193,7 @@ const MobileControlsComponent: React.FC = () => {
         onPointerUp={handleJoystickPointerUp}
         onPointerCancel={handleJoystickPointerUp}
         onLostPointerCapture={handleJoystickPointerUp}
-        className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border border-red-500/35 bg-black/40 backdrop-blur-[2px] relative flex items-center justify-center pointer-events-auto touch-none shadow-[0_0_15px_rgba(255,0,51,0.15)] transition-all cursor-crosshair"
+        className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border border-red-500/35 bg-black/75 relative flex items-center justify-center pointer-events-auto touch-none shadow-[0_0_15px_rgba(255,0,51,0.15)] transition-all cursor-crosshair"
       >
         {/* Outer Ring Accent */}
         <div className="absolute inset-1.5 rounded-full border border-dashed border-red-500/20 pointer-events-none" />
@@ -187,13 +204,15 @@ const MobileControlsComponent: React.FC = () => {
 
         {/* Joystick Knob */}
         <div
+          ref={knobRef}
           className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full border transition-transform pointer-events-none ${
             isDragging
               ? 'bg-red-600/80 border-rose-300 shadow-[0_0_20px_rgba(255,0,51,0.8)] scale-105'
               : 'bg-red-950/40 border-red-500/50'
           }`}
           style={{
-            transform: `translate(${knobPos.x}px, ${knobPos.y}px)`,
+            transform: 'translate3d(0px, 0px, 0)',
+            willChange: 'transform',
           }}
         />
       </div>
@@ -245,8 +264,8 @@ const MobileControlsComponent: React.FC = () => {
             isShooting
               ? 'bg-red-600/80 border-rose-300 scale-95 shadow-[0_0_32px_rgba(255,0,51,0.95)]'
               : isAutoFire
-              ? 'bg-red-950/50 border-rose-500/70 backdrop-blur-[2px] shadow-[0_0_20px_rgba(255,0,51,0.35)]'
-              : 'bg-black/50 border-red-500/60 backdrop-blur-[2px] shadow-[0_0_18px_rgba(255,0,51,0.25)] active:scale-95'
+              ? 'bg-red-950/80 border-rose-500/70 shadow-[0_0_20px_rgba(255,0,51,0.35)]'
+              : 'bg-black/75 border-red-500/60 shadow-[0_0_18px_rgba(255,0,51,0.25)] active:scale-95'
           }`}
           title="Fire Primary Weapons (or Auto-Fire active)"
         >

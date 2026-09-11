@@ -25,6 +25,25 @@ interface EnemyMine {
   detonated: boolean;
 }
 
+// Precomputed spread projectile vectors (Zero runtime trigonometry or array allocations)
+const SPREAD_ANGLES = [-24, -12, 0, 12, 24].map((deg) => {
+  const rad = Phaser.Math.DegToRad(deg - 90);
+  return {
+    rotation: Phaser.Math.DegToRad(deg),
+    vx: Math.cos(rad) * 720,
+    vy: Math.sin(rad) * 720,
+  };
+});
+
+const TRIPLE_ANGLES = [-15, 0, 15].map((deg) => {
+  const rad = Phaser.Math.DegToRad(deg - 90);
+  return {
+    rotation: Phaser.Math.DegToRad(deg),
+    vx: Math.cos(rad) * 700,
+    vy: Math.sin(rad) * 700,
+  };
+});
+
 export class GameScene extends Phaser.Scene {
   // Player
   private player!: Phaser.Physics.Arcade.Sprite;
@@ -40,6 +59,19 @@ export class GameScene extends Phaser.Scene {
   private isLevelUpPaused = false;
   private isIntroPaused = false;
   private isRestartGame = false;
+
+  // Object & Effect Pools
+  private warpGatePool: Phaser.GameObjects.Image[] = [];
+
+  // Stats Dirty-Checking Cache
+  private lastEmittedScore = -1;
+  private lastEmittedHealth = -1;
+  private lastEmittedShield = -1;
+  private lastEmittedXp = -1;
+  private lastEmittedLevel = -1;
+  private lastEmittedCombo = -1;
+  private lastEmittedWeapon: WeaponType = 'BLASTER';
+  private lastEmittedCurrentLevel = -1;
 
   // Progression & Stats
   private score = 0;
@@ -306,6 +338,18 @@ export class GameScene extends Phaser.Scene {
         ring.setBlendMode(Phaser.BlendModes.ADD);
         ring.setActive(false).setVisible(false);
         this.shockwavePool.push(ring);
+      }
+    }
+
+    this.warpGatePool = [];
+    const warpCount = this.isLowPerformanceDevice ? 6 : 10;
+    for (let i = 0; i < warpCount; i++) {
+      if (this.textures.exists('spawn_warp_gate')) {
+        const gate = this.add.image(0, 0, 'spawn_warp_gate');
+        gate.setDepth(6);
+        gate.setBlendMode(Phaser.BlendModes.ADD);
+        gate.setActive(false).setVisible(false);
+        this.warpGatePool.push(gate);
       }
     }
 
@@ -646,6 +690,18 @@ export class GameScene extends Phaser.Scene {
     if (this.shockwavePool) {
       this.shockwavePool.forEach((r) => r.setActive(false).setVisible(false));
     }
+    if (this.warpGatePool) {
+      this.warpGatePool.forEach((g) => g.setActive(false).setVisible(false));
+    }
+
+    this.lastEmittedScore = -1;
+    this.lastEmittedHealth = -1;
+    this.lastEmittedShield = -1;
+    this.lastEmittedXp = -1;
+    this.lastEmittedLevel = -1;
+    this.lastEmittedCombo = -1;
+    this.lastEmittedWeapon = 'BLASTER';
+    this.lastEmittedCurrentLevel = -1;
 
     this.boss = null;
     this.activePowerUps.clear();
@@ -847,11 +903,12 @@ export class GameScene extends Phaser.Scene {
       this.player.setVelocity(this.player.body.velocity.x * decay, this.player.body.velocity.y * decay);
     }
 
-    // Banking roll & pitch compression animation
+    // Banking roll & pitch compression animation (frame-rate independent across 60Hz-144Hz)
     const targetRotation = Phaser.Math.Clamp(vx, -1, 1) * 0.22;
-    this.player.rotation = Phaser.Math.Linear(this.player.rotation, targetRotation, 0.16);
+    const bankFactor = 1 - Math.exp(-12 * dt);
+    this.player.rotation = Phaser.Math.Linear(this.player.rotation, targetRotation, bankFactor);
     const targetScaleY = 1.0 - Math.abs(vy) * 0.08;
-    this.player.scaleY = Phaser.Math.Linear(this.player.scaleY, targetScaleY, 0.16);
+    this.player.scaleY = Phaser.Math.Linear(this.player.scaleY, targetScaleY, bankFactor);
 
     // Dynamic engine exhaust modulation
     if (this.playerEngineParticles) {
@@ -904,8 +961,9 @@ export class GameScene extends Phaser.Scene {
     // 9. Update Active Power-Ups
     this.updatePowerUps(time);
 
-    // 10. Throttled Stats Emission (~10Hz)
-    if (time - this.lastStatsEmitTime > 85) {
+    // 10. Throttled Stats Emission (only emits when dirty or active powerups ticking)
+    const statsInterval = this.activePowerUps.size > 0 ? 150 : 250;
+    if (time - this.lastStatsEmitTime > statsInterval) {
       this.lastStatsEmitTime = time;
       this.emitStats();
     }
@@ -1053,50 +1111,54 @@ export class GameScene extends Phaser.Scene {
       }
       SoundEffects.playPlasma();
     } else if (hasSpread) {
-      // 5-way Blazing Crimson Spread
-      const angles = [-24, -12, 0, 12, 24];
-      angles.forEach((deg) => {
-        const rad = Phaser.Math.DegToRad(deg - 90);
+      // 5-way Blazing Crimson Spread (Precomputed lookup, 0 GC allocations)
+      for (let i = 0; i < SPREAD_ANGLES.length; i++) {
+        const shot = SPREAD_ANGLES[i];
         const b = this.spawnPlayerBullet(x, y, 'laser_spread');
         if (b) {
           b.setData('damage', 1.25 * dmg);
-          b.setRotation(Phaser.Math.DegToRad(deg));
-          b.setVelocity(Math.cos(rad) * 720, Math.sin(rad) * 720);
+          b.setRotation(shot.rotation);
+          b.setVelocity(shot.vx, shot.vy);
         }
-      });
+      }
       SoundEffects.playLaser('spread');
     } else if (this.weaponType === 'TRIPLE_SHOT' || this.activePowerUps.has('TRIPLE_SHOT')) {
-      // 3-way Branching Crimson Lasers
-      const angles = [-15, 0, 15];
-      angles.forEach((deg) => {
-        const rad = Phaser.Math.DegToRad(deg - 90);
+      // 3-way Branching Crimson Lasers (Precomputed lookup, 0 GC allocations)
+      for (let i = 0; i < TRIPLE_ANGLES.length; i++) {
+        const shot = TRIPLE_ANGLES[i];
         const b = this.spawnPlayerBullet(x, y, 'laser_triple');
         if (b) {
           b.setData('damage', 1.35 * dmg);
-          b.setRotation(Phaser.Math.DegToRad(deg));
-          b.setVelocity(Math.cos(rad) * 700, Math.sin(rad) * 700);
+          b.setRotation(shot.rotation);
+          b.setVelocity(shot.vx, shot.vy);
         }
-      });
+      }
       SoundEffects.playLaser('triple');
     } else if (this.weaponType === 'DOUBLE_SHOT') {
       // Dual Heavy Crimson Rods
-      [-14, 14].forEach((offset) => {
-        const b = this.spawnPlayerBullet(x + offset, y, 'laser_double');
-        if (b) {
-          b.setData('damage', 1.5 * dmg);
-          b.setVelocity(0, -740);
-        }
-      });
+      const b1 = this.spawnPlayerBullet(x - 14, y, 'laser_double');
+      if (b1) {
+        b1.setData('damage', 1.5 * dmg);
+        b1.setVelocity(0, -740);
+      }
+      const b2 = this.spawnPlayerBullet(x + 14, y, 'laser_double');
+      if (b2) {
+        b2.setData('damage', 1.5 * dmg);
+        b2.setVelocity(0, -740);
+      }
       SoundEffects.playLaser('heavy');
     } else {
       // Standard Bright Neon Red Energy Blaster
-      [-10, 10].forEach((offset) => {
-        const b = this.spawnPlayerBullet(x + offset, y, 'laser_blaster');
-        if (b) {
-          b.setData('damage', 1.0 * dmg);
-          b.setVelocity(0, -720);
-        }
-      });
+      const b1 = this.spawnPlayerBullet(x - 10, y, 'laser_blaster');
+      if (b1) {
+        b1.setData('damage', 1.0 * dmg);
+        b1.setVelocity(0, -720);
+      }
+      const b2 = this.spawnPlayerBullet(x + 10, y, 'laser_blaster');
+      if (b2) {
+        b2.setData('damage', 1.0 * dmg);
+        b2.setVelocity(0, -720);
+      }
       SoundEffects.playLaser('normal');
     }
   }
@@ -1280,22 +1342,33 @@ export class GameScene extends Phaser.Scene {
     enemy.setData('type', type);
     enemy.setDepth(8);
 
-    // Sub-warp entrance effect
-    if (this.textures.exists('spawn_warp_gate') && y > -60) {
-      const gate = this.add.image(x, Math.max(20, y + 25), 'spawn_warp_gate');
-      gate.setDepth(6);
-      gate.setScale(0.2);
-      gate.setAlpha(0.85);
-      gate.setBlendMode(Phaser.BlendModes.ADD);
-      this.tweens.add({
-        targets: gate,
-        scale: 1.15,
-        alpha: 0,
-        rotation: 2.2,
-        duration: 260,
-        ease: 'Power2',
-        onComplete: () => gate.destroy(),
-      });
+    // Sub-warp entrance effect (reusable image pool, 0 GC)
+    if (this.textures.exists('spawn_warp_gate') && y > -60 && this.warpGatePool.length > 0) {
+      let gate: Phaser.GameObjects.Image | undefined;
+      for (let i = 0; i < this.warpGatePool.length; i++) {
+        if (!this.warpGatePool[i].active) {
+          gate = this.warpGatePool[i];
+          break;
+        }
+      }
+      if (gate) {
+        gate.setPosition(x, Math.max(20, y + 25));
+        gate.setScale(0.2);
+        gate.setAlpha(0.85);
+        gate.setRotation(0);
+        gate.setActive(true).setVisible(true);
+        this.tweens.add({
+          targets: gate,
+          scale: 1.15,
+          alpha: 0,
+          rotation: 2.2,
+          duration: 260,
+          ease: 'Power2',
+          onComplete: () => {
+            gate?.setActive(false).setVisible(false);
+          },
+        });
+      }
       enemy.setScale(0.7);
       this.tweens.add({
         targets: enemy,
@@ -1372,6 +1445,12 @@ export class GameScene extends Phaser.Scene {
     for (let i = 0; i < enemies.length; i++) {
       const e = enemies[i] as Phaser.Physics.Arcade.Sprite;
       if (!e.active) continue;
+
+      const flashUntil = e.getData('flashUntil') || 0;
+      if (flashUntil > 0 && time >= flashUntil) {
+        e.clearTint();
+        e.setData('flashUntil', 0);
+      }
 
       const type = e.getData('type');
 
@@ -1547,12 +1626,20 @@ export class GameScene extends Phaser.Scene {
   private updateAsteroids(_dt: number): void {
     const height = this.scale.height;
     const asteroids = this.asteroids.getChildren();
+    const now = this.time.now;
     for (let i = 0; i < asteroids.length; i++) {
       const a = asteroids[i] as Phaser.Physics.Arcade.Sprite;
-      if (a.active && a.y > height + 60) {
+      if (!a.active) continue;
+      if (a.y > height + 60) {
         a.setActive(false).setVisible(false);
         a.body.stop();
         a.body.enable = false;
+        continue;
+      }
+      const flashUntil = a.getData('flashUntil') || 0;
+      if (flashUntil > 0 && now >= flashUntil) {
+        a.clearTint();
+        a.setData('flashUntil', 0);
       }
     }
   }
@@ -1607,6 +1694,13 @@ export class GameScene extends Phaser.Scene {
 
   private updateBoss(time: number, dt: number): void {
     if (!this.boss || !this.boss.active) return;
+
+    const flashUntil = this.boss.getData('flashUntil') || 0;
+    if (flashUntil > 0 && time >= flashUntil) {
+      this.boss.clearTint();
+      this.boss.setData('flashUntil', 0);
+    }
+
     const width = this.scale.width;
     const slowFactor = this.isSlowMo ? 0.6 : 1.0;
 
@@ -1728,9 +1822,7 @@ export class GameScene extends Phaser.Scene {
         // Tactile micro knockback impulse
         enemy.y = Math.max(10, enemy.y - 3.5);
         enemy.setTintFill(0xff3366);
-        this.time.delayedCall(60, () => {
-          if (enemy.active) enemy.clearTint();
-        });
+        enemy.setData('flashUntil', this.time.now + 60);
         SoundEffects.playHit();
       }
     }
@@ -1753,9 +1845,7 @@ export class GameScene extends Phaser.Scene {
       asteroid.setData('hp', hp);
       asteroid.y = Math.max(10, asteroid.y - 2);
       asteroid.setTintFill(0xff0055);
-      this.time.delayedCall(60, () => {
-        if (asteroid.active) asteroid.clearTint();
-      });
+      asteroid.setData('flashUntil', this.time.now + 60);
       SoundEffects.playHit();
     }
   }
@@ -1787,9 +1877,7 @@ export class GameScene extends Phaser.Scene {
       this.destroyBoss();
     } else {
       boss.setTintFill(0xffffff);
-      this.time.delayedCall(50, () => {
-        if (boss.active) boss.clearTint();
-      });
+      boss.setData('flashUntil', this.time.now + 50);
       SoundEffects.playHit();
     }
   }
@@ -2335,13 +2423,15 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ==========================================
-  // MAGNET SENSOR VACUUM
+  // MAGNET SENSOR VACUUM (Optimized Squared-Distance & Vector Normalization)
   // ==========================================
   private updateMagnetPull(dt: number): void {
     if (!this.player || !this.player.active) return;
     const px = this.player.x;
     const py = this.player.y;
     const height = this.scale.height;
+    const magRadiusSq = this.magnetRadius * this.magnetRadius;
+    const powerRadiusSq = (this.magnetRadius * 0.8) * (this.magnetRadius * 0.8);
 
     const gems = this.xpGems.getChildren();
     for (let i = 0; i < gems.length; i++) {
@@ -2353,12 +2443,14 @@ export class GameScene extends Phaser.Scene {
         g.body.enable = false;
         continue;
       }
-      const dist = Phaser.Math.Distance.Between(g.x, g.y, px, py);
-      if (dist < this.magnetRadius) {
-        const angle = Phaser.Math.Angle.Between(g.x, g.y, px, py);
+      const dx = px - g.x;
+      const dy = py - g.y;
+      const distSq = dx * dx + dy * dy;
+      if (distSq < magRadiusSq && distSq > 0.001) {
+        const dist = Math.sqrt(distSq);
         const speed = 400 + (1 - dist / this.magnetRadius) * 250;
-        g.x += Math.cos(angle) * speed * dt;
-        g.y += Math.sin(angle) * speed * dt;
+        g.x += (dx / dist) * speed * dt;
+        g.y += (dy / dist) * speed * dt;
       }
     }
 
@@ -2367,20 +2459,25 @@ export class GameScene extends Phaser.Scene {
       const p = powers[i] as Phaser.Physics.Arcade.Sprite;
       if (!p.active) continue;
       if (p.y > height + 60) {
-        p.destroy();
+        this.tweens.killTweensOf(p);
+        p.setActive(false).setVisible(false);
+        p.body.stop();
+        p.body.enable = false;
         continue;
       }
-      const dist = Phaser.Math.Distance.Between(p.x, p.y, px, py);
-      if (dist < this.magnetRadius * 0.8) {
-        const angle = Phaser.Math.Angle.Between(p.x, p.y, px, py);
-        p.x += Math.cos(angle) * 350 * dt;
-        p.y += Math.sin(angle) * 350 * dt;
+      const dx = px - p.x;
+      const dy = py - p.y;
+      const distSq = dx * dx + dy * dy;
+      if (distSq < powerRadiusSq && distSq > 0.001) {
+        const dist = Math.sqrt(distSq);
+        p.x += (dx / dist) * 350 * dt;
+        p.y += (dy / dist) * 350 * dt;
       }
     }
   }
 
   // ==========================================
-  // POWER-UPS
+  // POWER-UPS (Pooled Sprite Instances)
   // ==========================================
   private spawnPowerUp(x: number, y: number): void {
     const types: PowerUpType[] = [
@@ -2408,11 +2505,22 @@ export class GameScene extends Phaser.Scene {
     };
 
     const texture = keyMap[selected] || 'powerup_shield';
-    const p = this.powerUps.create(x, y, texture) as Phaser.Physics.Arcade.Sprite;
+    let p = this.powerUps.getFirstDead(false) as Phaser.Physics.Arcade.Sprite;
+    if (!p) {
+      p = this.powerUps.create(x, y, texture) as Phaser.Physics.Arcade.Sprite;
+    } else {
+      p.setTexture(texture);
+      p.setPosition(x, y);
+      p.setActive(true).setVisible(true);
+      p.body.enable = true;
+      p.setScale(1);
+      p.setAlpha(1);
+    }
     p.setData('type', selected);
     p.setVelocity(0, 95);
     p.setDepth(6);
 
+    this.tweens.killTweensOf(p);
     this.tweens.add({
       targets: p,
       scale: 1.15,
@@ -2425,7 +2533,10 @@ export class GameScene extends Phaser.Scene {
 
   private collectPowerUp(powerUp: Phaser.Physics.Arcade.Sprite): void {
     const type: PowerUpType = powerUp.getData('type');
-    powerUp.destroy();
+    this.tweens.killTweensOf(powerUp);
+    powerUp.setActive(false).setVisible(false);
+    powerUp.body.stop();
+    powerUp.body.enable = false;
 
     SoundEffects.playPowerUp();
     this.redSparkEmitter.explode(14, this.player.x, this.player.y);
@@ -2597,12 +2708,38 @@ export class GameScene extends Phaser.Scene {
   }
 
   private emitStats(force: boolean = false): void {
+    if (!force) {
+      const isDirty =
+        this.score !== this.lastEmittedScore ||
+        this.playerHealth !== this.lastEmittedHealth ||
+        this.playerShield !== this.lastEmittedShield ||
+        this.playerXp !== this.lastEmittedXp ||
+        this.playerLevel !== this.lastEmittedLevel ||
+        this.combo !== this.lastEmittedCombo ||
+        this.currentLevel !== this.lastEmittedCurrentLevel ||
+        this.weaponType !== this.lastEmittedWeapon ||
+        this.activePowerUps.size > 0;
+
+      if (!isDirty) return;
+    }
+
+    this.lastEmittedScore = this.score;
+    this.lastEmittedHealth = this.playerHealth;
+    this.lastEmittedShield = this.playerShield;
+    this.lastEmittedXp = this.playerXp;
+    this.lastEmittedLevel = this.playerLevel;
+    this.lastEmittedCombo = this.combo;
+    this.lastEmittedCurrentLevel = this.currentLevel;
+    this.lastEmittedWeapon = this.weaponType;
+
     const now = this.time.now;
-    const powerUpsList = Array.from(this.activePowerUps.values()).map((p) => ({
-      type: p.type,
-      duration: Math.max(0, (p.endTime - now) / 1000),
-      maxDuration: p.duration / 1000,
-    }));
+    const powerUpsList = this.activePowerUps.size > 0
+      ? Array.from(this.activePowerUps.values()).map((p) => ({
+          type: p.type,
+          duration: Math.max(0, (p.endTime - now) / 1000),
+          maxDuration: p.duration / 1000,
+        }))
+      : [];
 
     const activeMission = this.currentMissionIndex < this.missions.length
       ? this.missions[this.currentMissionIndex]

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Phaser from 'phaser';
 import { createGameConfig } from './game/config';
 import { GameState, PlayerStats, BossInfo, AudioTrack, LevelUpOption } from './types/game';
@@ -89,9 +89,19 @@ export const App: React.FC = () => {
       game.scene.sleep('GameScene');
     });
 
-    // Listen for stats updates from GameScene (high-frequency, zero disk I/O)
+    // Listen for stats updates from GameScene (dirty-checked, zero unnecessary re-renders)
     EventBus.on('stats:update', (newStats: Partial<PlayerStats>) => {
       setStats((prev) => {
+        let changed = false;
+        for (const k in newStats) {
+          const key = k as keyof PlayerStats;
+          if (newStats[key] !== prev[key]) {
+            changed = true;
+            break;
+          }
+        }
+        if (!changed) return prev;
+
         const updated = { ...prev, ...newStats };
         if (updated.score > updated.highScore) {
           updated.highScore = updated.score;
@@ -173,8 +183,21 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Pause automatically when tab is hidden to prevent frame-time runaway and audio desync
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (gameStateRef.current === 'PLAYING') {
+          handlePause();
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   // Handlers
-  const handleStartGame = () => {
+  const handleStartGame = useCallback(() => {
     SoundEffects.unlock();
     MusicManager.unlock();
     setStats(getInitialStats());
@@ -197,14 +220,14 @@ export const App: React.FC = () => {
     if (musicEnabled) {
       MusicManager.startPlaylist(0);
     }
-  };
+  }, [musicEnabled]);
 
-  const handleIntroComplete = () => {
+  const handleIntroComplete = useCallback(() => {
     setGameState('PLAYING');
     EventBus.emit('intro:complete');
-  };
+  }, []);
 
-  const handlePause = () => {
+  const handlePause = useCallback(() => {
     const game = gameInstanceRef.current;
     if (game) {
       game.scene.pause('GameScene');
@@ -212,9 +235,9 @@ export const App: React.FC = () => {
     }
     setGameState('PAUSED');
     MusicManager.pause();
-  };
+  }, []);
 
-  const handleResume = () => {
+  const handleResume = useCallback(() => {
     const game = gameInstanceRef.current;
     if (game) {
       game.scene.resume('GameScene');
@@ -224,9 +247,9 @@ export const App: React.FC = () => {
     if (musicEnabled) {
       MusicManager.ensurePlaying();
     }
-  };
+  }, [musicEnabled]);
 
-  const handleRestart = () => {
+  const handleRestart = useCallback(() => {
     SoundEffects.unlock();
     MusicManager.unlock();
     // Reset all React state to pristine game start values immediately
@@ -254,9 +277,9 @@ export const App: React.FC = () => {
     if (musicEnabled) {
       MusicManager.startPlaylist(0);
     }
-  };
+  }, [musicEnabled]);
 
-  const handleMainMenu = () => {
+  const handleMainMenu = useCallback(() => {
     setStats(getInitialStats());
     const game = gameInstanceRef.current;
     if (game) {
@@ -272,27 +295,31 @@ export const App: React.FC = () => {
     setBossWarning(false);
     setBossInfo({ active: false, name: '', currentHp: 0, maxHp: 0, phase: 1 });
     MusicManager.stop();
-  };
+  }, []);
 
-  const handleToggleMusic = () => {
-    const nextVal = !musicEnabled;
-    setMusicEnabled(nextVal);
-    MusicManager.setMuted(!nextVal);
-    if (nextVal && gameState === 'PLAYING') {
-      MusicManager.ensurePlaying();
-    }
-  };
+  const handleToggleMusic = useCallback(() => {
+    setMusicEnabled((prev) => {
+      const nextVal = !prev;
+      MusicManager.setMuted(!nextVal);
+      if (nextVal && gameStateRef.current === 'PLAYING') {
+        MusicManager.ensurePlaying();
+      }
+      return nextVal;
+    });
+  }, []);
 
-  const handleToggleSound = () => {
-    const nextVal = !soundEnabled;
-    setSoundEnabled(nextVal);
-    SoundEffects.setEnabled(nextVal);
-  };
+  const handleToggleSound = useCallback(() => {
+    setSoundEnabled((prev) => {
+      const nextVal = !prev;
+      SoundEffects.setEnabled(nextVal);
+      return nextVal;
+    });
+  }, []);
 
-  const handleSelectUpgrade = (option: LevelUpOption) => {
+  const handleSelectUpgrade = useCallback((option: LevelUpOption) => {
     setLevelUpOptions(null);
     EventBus.emit('upgrade:selected', option);
-  };
+  }, []);
 
   return (
     <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-black flex items-center justify-center select-none font-['Rajdhani'] touch-none">

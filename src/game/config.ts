@@ -12,6 +12,14 @@ export const createGameConfig = (parent: HTMLElement): Phaser.Types.Core.GameCon
     parent: parent,
     width: '100%',
     height: '100%',
+    autoRound: true,
+  },
+  fps: {
+    min: 30,
+    target: 60,
+    forceSetTimeOut: false,
+    smoothStep: true,
+    panicMax: 120,
   },
   physics: {
     default: 'arcade',
@@ -27,5 +35,6 @@ export const createGameConfig = (parent: HTMLElement): Phaser.Types.Core.GameCon
     antialiasGL: true,
     roundPixels: true,
     powerPreference: 'high-performance',
+    batchSize: 4096,
   },
 });
