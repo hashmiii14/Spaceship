@@ -15,17 +15,16 @@ export const createGameConfig = (parent: HTMLElement): Phaser.Types.Core.GameCon
     autoRound: true,
   },
   fps: {
-    min: 30,
-    target: 60,
-    forceSetTimeOut: false,
-    smoothStep: true,
-    panicMax: 120,
+    min: 10,
+    panicMax: 10,
+    smoothStep: false,
   },
   physics: {
     default: 'arcade',
     arcade: {
       gravity: { x: 0, y: 0 },
       debug: false,
+      fixedStep: false,
     },
   },
   scene: [BootScene, BackgroundScene, GameScene],

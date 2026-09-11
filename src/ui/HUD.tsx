@@ -23,6 +23,7 @@ import { PlayerStats, BossInfo, AudioTrack, PowerUpType } from '../types/game';
 import { SoundEffects } from '../audio/SoundEffects';
 import { MusicManager } from '../audio/MusicManager';
 import { EventBus } from '../utils/EventBus';
+import { Storage } from '../utils/storage';
 
 interface HUDProps {
   stats: PlayerStats;
@@ -64,6 +65,7 @@ export const HUD: React.FC<HUDProps> = React.memo(({
   onPause,
   bossWarning,
 }) => {
+  const [isAutoFire, setIsAutoFire] = useState<boolean>(() => Storage.getAutoFire());
   const [isMuted, setIsMuted] = useState(MusicManager.getIsMuted());
   const [isPlaying, setIsPlaying] = useState(MusicManager.getIsPlaying());
   const [activeTrack, setActiveTrack] = useState<AudioTrack | null>(currentTrack || MusicManager.getCurrentTrack());
@@ -94,6 +96,7 @@ export const HUD: React.FC<HUDProps> = React.memo(({
       if (state.track) setActiveTrack(state.track);
     };
     const handleTrack = (track: AudioTrack) => setActiveTrack(track);
+    const handleAutoFire = (enabled: boolean) => setIsAutoFire(enabled);
 
     const handleBossWarning = () => {
       postAlert({
@@ -125,6 +128,7 @@ export const HUD: React.FC<HUDProps> = React.memo(({
     EventBus.on('music:mutedChanged', handleMute);
     EventBus.on('music:stateChanged', handleState);
     EventBus.on('music:trackChanged', handleTrack);
+    EventBus.on('input:autoFireChanged', handleAutoFire);
     EventBus.on('boss:warning', handleBossWarning);
     EventBus.on('alert:levelUp', handleLevelUpAlert);
     EventBus.on('alert:sector', handleSectorAlert);
@@ -133,6 +137,7 @@ export const HUD: React.FC<HUDProps> = React.memo(({
       EventBus.off('music:mutedChanged', handleMute);
       EventBus.off('music:stateChanged', handleState);
       EventBus.off('music:trackChanged', handleTrack);
+      EventBus.off('input:autoFireChanged', handleAutoFire);
       EventBus.off('boss:warning', handleBossWarning);
       EventBus.off('alert:levelUp', handleLevelUpAlert);
       EventBus.off('alert:sector', handleSectorAlert);
@@ -188,6 +193,14 @@ export const HUD: React.FC<HUDProps> = React.memo(({
   const mins = Math.floor(totalSecs / 60);
   const secs = totalSecs % 60;
   const timeFormatted = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+  const handleToggleAutoFire = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    SoundEffects.playClick();
+    const next = !isAutoFire;
+    setIsAutoFire(next);
+    EventBus.emit('input:setAutoFire', next);
+  };
 
   const handlePauseClick = () => {
     SoundEffects.playClick();
@@ -535,6 +548,32 @@ export const HUD: React.FC<HUDProps> = React.memo(({
         {/* Top Right: High Score, Pause & Telemetry */}
         <div className="flex flex-col items-end gap-1.5 sm:gap-2 pointer-events-auto">
           <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Desktop Auto Fire Toggle Button */}
+            <button
+              onClick={handleToggleAutoFire}
+              className={`hidden sm:flex items-center gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg border font-mono font-bold text-xs tracking-wider transition-all cursor-pointer select-none shadow-md ${
+                isAutoFire
+                  ? 'bg-red-950/90 border-red-500 text-white shadow-[0_0_15px_rgba(255,0,51,0.55)]'
+                  : 'bg-black/75 border-red-900/50 text-gray-400 hover:border-red-500/50 hover:text-gray-200'
+              }`}
+              title="Toggle Continuous Auto-Fire (Keyboard: C)"
+            >
+              <Crosshair className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isAutoFire ? 'text-rose-400 animate-spin' : 'text-gray-400'}`} />
+              <div className="flex flex-col text-left leading-none">
+                <span className="text-[8px] sm:text-[9px] uppercase tracking-widest text-red-400 font-bold">AUTO FIRE</span>
+                <span className={`text-[9px] sm:text-[10px] font-black tracking-widest ${isAutoFire ? 'text-rose-300' : 'text-gray-400'}`}>
+                  {isAutoFire ? 'ONLINE [C]' : 'OFF [C]'}
+                </span>
+              </div>
+              <span
+                className={`w-2 h-2 rounded-full ml-0.5 ${
+                  isAutoFire
+                    ? 'bg-red-500 shadow-[0_0_8px_#ff0055] animate-pulse'
+                    : 'bg-gray-600'
+                }`}
+              />
+            </button>
+
             {/* Best Score: desktop only */}
             <div className="hidden sm:flex cyber-panel-military px-3 py-1.5 items-center gap-2 border-red-500/40">
               <Trophy className="w-4 h-4 text-red-400" />

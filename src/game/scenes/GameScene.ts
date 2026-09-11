@@ -902,14 +902,14 @@ export class GameScene extends Phaser.Scene {
       const norm = len > 1 ? len : 1;
       const targetVx = (vx / norm) * this.playerSpeed;
       const targetVy = (vy / norm) * this.playerSpeed;
-      const smoothFactor = Math.min(1, dt * 22);
+      const smoothFactor = Math.min(1, 1 - Math.exp(-28 * dt));
       this.player.setVelocity(
         Phaser.Math.Linear(this.player.body.velocity.x, targetVx, smoothFactor),
         Phaser.Math.Linear(this.player.body.velocity.y, targetVy, smoothFactor)
       );
     } else {
-      // Instant responsive deceleration with dt-damping
-      const decay = Math.pow(0.06, dt);
+      // Instant responsive deceleration
+      const decay = Math.exp(-22 * dt);
       this.player.setVelocity(this.player.body.velocity.x * decay, this.player.body.velocity.y * decay);
     }
 
