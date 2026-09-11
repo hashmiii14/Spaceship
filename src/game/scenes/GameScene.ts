@@ -320,7 +320,7 @@ export class GameScene extends Phaser.Scene {
     this.shrapnelEmitter.setDepth(16);
 
     // 1b. Pre-allocated Flash & Shockwave Pools (Zero GC allocations during explosions)
-    this.isLowPerformanceDevice = width <= 768 || (typeof navigator !== 'undefined' && (navigator.hardwareConcurrency || 4) <= 4);
+    this.isLowPerformanceDevice = width <= 768;
     this.flashPool = [];
     this.shockwavePool = [];
     const poolSize = this.isLowPerformanceDevice ? 10 : 16;
@@ -490,58 +490,56 @@ export class GameScene extends Phaser.Scene {
       });
     }
 
-    // 5. Collisions & Overlaps (with active object filtering to skip dead pooled entities)
-    const isActiveObj = (a: any, b: any) => Boolean(a && a.active && b && b.active);
-
+    // 5. Collisions & Overlaps
     // Player Bullets -> Enemies
     this.physics.add.overlap(this.playerBullets, this.enemies, (bullet, enemy) => {
       this.handleBulletEnemyCollision(bullet as Phaser.Physics.Arcade.Image, enemy as Phaser.Physics.Arcade.Sprite);
-    }, isActiveObj, this);
+    }, undefined, this);
 
     // Player Bullets -> Asteroids
     this.physics.add.overlap(this.playerBullets, this.asteroids, (bullet, asteroid) => {
       this.handleBulletAsteroidCollision(bullet as Phaser.Physics.Arcade.Image, asteroid as Phaser.Physics.Arcade.Sprite);
-    }, isActiveObj, this);
+    }, undefined, this);
 
     // Player Bullets -> Boss (Reliable Boss Collisions)
     this.physics.add.overlap(this.playerBullets, this.bossGroup, (bullet, boss) => {
       this.handleBulletBossCollision(bullet as Phaser.Physics.Arcade.Image, boss as Phaser.Physics.Arcade.Sprite);
-    }, isActiveObj, this);
+    }, undefined, this);
 
     // Enemy Bullets -> Player
     this.physics.add.overlap(this.enemyBullets, this.player, (_p, bullet) => {
       this.handleEnemyBulletPlayerCollision(bullet as Phaser.Physics.Arcade.Image, 15);
-    }, isActiveObj, this);
+    }, undefined, this);
 
     // Boss Bullets -> Player
     this.physics.add.overlap(this.bossBullets, this.player, (_p, bullet) => {
       this.handleEnemyBulletPlayerCollision(bullet as Phaser.Physics.Arcade.Image, 25);
-    }, isActiveObj, this);
+    }, undefined, this);
 
     // Player -> Enemies (Ramming)
     this.physics.add.overlap(this.player, this.enemies, (_p, enemy) => {
       this.handlePlayerEntityCollision(enemy as Phaser.Physics.Arcade.Sprite, 30);
-    }, isActiveObj, this);
+    }, undefined, this);
 
     // Player -> Asteroids (Collision)
     this.physics.add.overlap(this.player, this.asteroids, (_p, asteroid) => {
       this.handlePlayerEntityCollision(asteroid as Phaser.Physics.Arcade.Sprite, 25);
-    }, isActiveObj, this);
+    }, undefined, this);
 
     // Player -> Boss (Ramming)
     this.physics.add.overlap(this.player, this.bossGroup, (_p, boss) => {
       this.handlePlayerEntityCollision(boss as Phaser.Physics.Arcade.Sprite, 40);
-    }, isActiveObj, this);
+    }, undefined, this);
 
     // Player -> PowerUps
     this.physics.add.overlap(this.player, this.powerUps, (_p, powerUp) => {
       this.collectPowerUp(powerUp as Phaser.Physics.Arcade.Sprite);
-    }, isActiveObj, this);
+    }, undefined, this);
 
     // Player -> XP Gems
     this.physics.add.overlap(this.player, this.xpGems, (_p, gem) => {
       this.collectXpGem(gem as Phaser.Physics.Arcade.Sprite);
-    }, isActiveObj, this);
+    }, undefined, this);
 
     // 6. External Event Listeners with Safe Shutdown Cleanup
     const onMobileMove = (dir: { x: number; y: number }) => {
@@ -902,23 +900,22 @@ export class GameScene extends Phaser.Scene {
       const norm = len > 1 ? len : 1;
       const targetVx = (vx / norm) * this.playerSpeed;
       const targetVy = (vy / norm) * this.playerSpeed;
-      const smoothFactor = Math.min(1, 1 - Math.exp(-28 * dt));
+      const smoothFactor = Math.min(1, dt * 22);
       this.player.setVelocity(
         Phaser.Math.Linear(this.player.body.velocity.x, targetVx, smoothFactor),
         Phaser.Math.Linear(this.player.body.velocity.y, targetVy, smoothFactor)
       );
     } else {
-      // Instant responsive deceleration
-      const decay = Math.exp(-22 * dt);
+      // Smooth responsive deceleration
+      const decay = Math.pow(0.06, dt);
       this.player.setVelocity(this.player.body.velocity.x * decay, this.player.body.velocity.y * decay);
     }
 
-    // Banking roll & pitch compression animation (frame-rate independent across 60Hz-144Hz)
+    // Banking roll & pitch compression animation
     const targetRotation = Phaser.Math.Clamp(vx, -1, 1) * 0.22;
-    const bankFactor = 1 - Math.exp(-12 * dt);
-    this.player.rotation = Phaser.Math.Linear(this.player.rotation, targetRotation, bankFactor);
+    this.player.rotation = Phaser.Math.Linear(this.player.rotation, targetRotation, 0.16);
     const targetScaleY = 1.0 - Math.abs(vy) * 0.08;
-    this.player.scaleY = Phaser.Math.Linear(this.player.scaleY, targetScaleY, bankFactor);
+    this.player.scaleY = Phaser.Math.Linear(this.player.scaleY, targetScaleY, 0.16);
 
     // Dynamic engine exhaust modulation
     if (this.playerEngineParticles) {

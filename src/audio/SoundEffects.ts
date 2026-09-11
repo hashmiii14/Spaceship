@@ -7,10 +7,22 @@ class SoundEffectsManager {
   private volume: number = 0.8;
   private lastLaserTime: number = 0;
   private lastXpTime: number = 0;
+  private lastHitTime: number = 0;
+  private lastEnemyLaserTime: number = 0;
+  private lastAsteroidBreakTime: number = 0;
+  private lastExplosionTime: number = 0;
 
   constructor() {
     this.enabled = Storage.getSoundEnabled();
     this.volume = Storage.getSfxVolume();
+  }
+
+  private cleanupNode(node: AudioNode, gain?: GainNode, filter?: BiquadFilterNode): void {
+    try {
+      node.disconnect();
+      if (filter) filter.disconnect();
+      if (gain) gain.disconnect();
+    } catch {}
   }
 
   private getNoiseBuffer(ctx: AudioContext): AudioBuffer {
@@ -84,6 +96,10 @@ class SoundEffectsManager {
     osc.connect(gain);
     gain.connect(ctx.destination);
 
+    osc.onended = () => {
+      this.cleanupNode(osc, gain);
+    };
+
     osc.start(now);
     osc.stop(now + 0.05);
   }
@@ -91,7 +107,7 @@ class SoundEffectsManager {
   public playLaser(type: 'normal' | 'heavy' | 'triple' | 'rapid' | 'spread' = 'normal') {
     if (!this.enabled) return;
     const nowMs = performance.now();
-    if (nowMs - this.lastLaserTime < 65) return;
+    if (nowMs - this.lastLaserTime < 50) return;
     this.lastLaserTime = nowMs;
 
     const ctx = this.getContext();
@@ -101,7 +117,9 @@ class SoundEffectsManager {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
 
+    let duration = 0.1;
     if (type === 'heavy') {
+      duration = 0.16;
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(520, now);
       osc.frequency.exponentialRampToValueAtTime(80, now + 0.16);
@@ -109,6 +127,7 @@ class SoundEffectsManager {
       gain.gain.setValueAtTime(0.28 * this.volume, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
     } else if (type === 'rapid') {
+      duration = 0.07;
       osc.type = 'square';
       osc.frequency.setValueAtTime(1100, now);
       osc.frequency.exponentialRampToValueAtTime(300, now + 0.07);
@@ -116,6 +135,7 @@ class SoundEffectsManager {
       gain.gain.setValueAtTime(0.16 * this.volume, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
     } else if (type === 'spread') {
+      duration = 0.14;
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(850, now);
       osc.frequency.exponentialRampToValueAtTime(150, now + 0.14);
@@ -123,6 +143,7 @@ class SoundEffectsManager {
       gain.gain.setValueAtTime(0.22 * this.volume, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
     } else if (type === 'triple') {
+      duration = 0.12;
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(950, now);
       osc.frequency.exponentialRampToValueAtTime(200, now + 0.12);
@@ -130,6 +151,7 @@ class SoundEffectsManager {
       gain.gain.setValueAtTime(0.2 * this.volume, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
     } else {
+      duration = 0.1;
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(880, now);
       osc.frequency.exponentialRampToValueAtTime(140, now + 0.1);
@@ -141,8 +163,12 @@ class SoundEffectsManager {
     osc.connect(gain);
     gain.connect(ctx.destination);
 
+    osc.onended = () => {
+      this.cleanupNode(osc, gain);
+    };
+
     osc.start(now);
-    osc.stop(now + (type === 'heavy' ? 0.16 : type === 'rapid' ? 0.07 : 0.12));
+    osc.stop(now + duration);
   }
 
   public playHyperbeam() {
@@ -164,6 +190,10 @@ class SoundEffectsManager {
 
     osc.connect(gain);
     gain.connect(ctx.destination);
+
+    osc.onended = () => {
+      this.cleanupNode(osc, gain);
+    };
 
     osc.start(now);
     osc.stop(now + 0.25);
@@ -188,12 +218,20 @@ class SoundEffectsManager {
     osc.connect(gain);
     gain.connect(ctx.destination);
 
+    osc.onended = () => {
+      this.cleanupNode(osc, gain);
+    };
+
     osc.start(now);
     osc.stop(now + 0.22);
   }
 
   public playEnemyLaser() {
     if (!this.enabled) return;
+    const nowMs = performance.now();
+    if (nowMs - this.lastEnemyLaserTime < 45) return;
+    this.lastEnemyLaserTime = nowMs;
+
     const ctx = this.getContext();
     if (!ctx) return;
 
@@ -211,12 +249,20 @@ class SoundEffectsManager {
     osc.connect(gain);
     gain.connect(ctx.destination);
 
+    osc.onended = () => {
+      this.cleanupNode(osc, gain);
+    };
+
     osc.start(now);
     osc.stop(now + 0.14);
   }
 
   public playHit() {
     if (!this.enabled) return;
+    const nowMs = performance.now();
+    if (nowMs - this.lastHitTime < 35) return;
+    this.lastHitTime = nowMs;
+
     const ctx = this.getContext();
     if (!ctx) return;
 
@@ -234,12 +280,20 @@ class SoundEffectsManager {
     osc.connect(gain);
     gain.connect(ctx.destination);
 
+    osc.onended = () => {
+      this.cleanupNode(osc, gain);
+    };
+
     osc.start(now);
     osc.stop(now + 0.08);
   }
 
   public playAsteroidBreak() {
     if (!this.enabled) return;
+    const nowMs = performance.now();
+    if (nowMs - this.lastAsteroidBreakTime < 40) return;
+    this.lastAsteroidBreakTime = nowMs;
+
     const ctx = this.getContext();
     if (!ctx) return;
 
@@ -261,9 +315,7 @@ class SoundEffectsManager {
     gain.connect(ctx.destination);
 
     noise.onended = () => {
-      noise.disconnect();
-      filter.disconnect();
-      gain.disconnect();
+      this.cleanupNode(noise, gain, filter);
     };
 
     noise.start(now);
@@ -274,6 +326,10 @@ class SoundEffectsManager {
     if (!this.enabled) return;
     const ctx = this.getContext();
     if (!ctx) return;
+
+    const nowMs = performance.now();
+    if (size === 'small' && nowMs - this.lastExplosionTime < 40) return;
+    this.lastExplosionTime = nowMs;
 
     const now = ctx.currentTime;
     const duration = size === 'large' ? 0.6 : size === 'medium' ? 0.35 : 0.2;
@@ -295,9 +351,7 @@ class SoundEffectsManager {
     gain.connect(ctx.destination);
 
     noise.onended = () => {
-      noise.disconnect();
-      filter.disconnect();
-      gain.disconnect();
+      this.cleanupNode(noise, gain, filter);
     };
 
     noise.start(now);
@@ -325,8 +379,7 @@ class SoundEffectsManager {
     gain.connect(ctx.destination);
 
     osc.onended = () => {
-      osc.disconnect();
-      gain.disconnect();
+      this.cleanupNode(osc, gain);
     };
 
     osc.start(now);
@@ -336,7 +389,7 @@ class SoundEffectsManager {
   public playXp() {
     if (!this.enabled) return;
     const nowMs = performance.now();
-    if (nowMs - this.lastXpTime < 60) return;
+    if (nowMs - this.lastXpTime < 50) return;
     this.lastXpTime = nowMs;
 
     const ctx = this.getContext();
@@ -355,6 +408,10 @@ class SoundEffectsManager {
 
     osc.connect(gain);
     gain.connect(ctx.destination);
+
+    osc.onended = () => {
+      this.cleanupNode(osc, gain);
+    };
 
     osc.start(now);
     osc.stop(now + 0.06);
@@ -381,6 +438,10 @@ class SoundEffectsManager {
       osc.connect(gain);
       gain.connect(ctx.destination);
 
+      osc.onended = () => {
+        this.cleanupNode(osc, gain);
+      };
+
       osc.start(t);
       osc.stop(t + 0.12);
     });
@@ -405,6 +466,10 @@ class SoundEffectsManager {
 
     osc.connect(gain);
     gain.connect(ctx.destination);
+
+    osc.onended = () => {
+      this.cleanupNode(osc, gain);
+    };
 
     osc.start(now);
     osc.stop(now + 0.12);
@@ -431,6 +496,10 @@ class SoundEffectsManager {
       osc.connect(gain);
       gain.connect(ctx.destination);
 
+      osc.onended = () => {
+        this.cleanupNode(osc, gain);
+      };
+
       osc.start(t);
       osc.stop(t + 0.2);
     });
@@ -454,6 +523,10 @@ class SoundEffectsManager {
 
     osc.connect(gain);
     gain.connect(ctx.destination);
+
+    osc.onended = () => {
+      this.cleanupNode(osc, gain);
+    };
 
     osc.start(now);
     osc.stop(now + 0.35);
@@ -479,6 +552,10 @@ class SoundEffectsManager {
 
       osc.connect(gain);
       gain.connect(ctx.destination);
+
+      osc.onended = () => {
+        this.cleanupNode(osc, gain);
+      };
 
       osc.start(t);
       osc.stop(t + 0.35);
@@ -518,6 +595,10 @@ class SoundEffectsManager {
       osc.connect(gain);
       gain.connect(ctx.destination);
 
+      osc.onended = () => {
+        this.cleanupNode(osc, gain);
+      };
+
       osc.start(t);
       osc.stop(t + 0.35);
     });
@@ -543,6 +624,10 @@ class SoundEffectsManager {
 
       osc.connect(gain);
       gain.connect(ctx.destination);
+
+      osc.onended = () => {
+        this.cleanupNode(osc, gain);
+      };
 
       osc.start(t);
       osc.stop(t + 0.3);
